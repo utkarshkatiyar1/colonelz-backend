@@ -6,7 +6,6 @@ import pdf from "html-pdf";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
-import registerModel from "../../../models/usersModels/register.model.js";
 
 
 function generateSixDigitNumber() {
@@ -74,7 +73,7 @@ const saveFileUploadData = async (
       );
 
       if (updateResult.modifiedCount === 1) {
-      
+        console.log("File Upload Data Updated Successfully");
       } else {
         // If the folder does not exist, create a new folder object
         const updateNewFolderResult = await fileuploadModel.updateOne(
@@ -149,10 +148,17 @@ export const getAllProjectMom = async (req, res) => {
 
 export const createmom = async (req, res) => {
   try {
-    const user_id  = req.body.user_id;
     const project_id = req.body.project_id;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
+    // let client_name = req.body.client_name
+    //   ? JSON.parse(req.body.client_name)
+    //   : [];
+    // let architect = req.body.architect ? JSON.parse(req.body.architect) : [];
+    // let organisor = req.body.organisor ? JSON.parse(req.body.organisor) : [];
+    // let consultant_name = req.body.consultant_name
+    //   ? JSON.parse(req.body.consultant_name)
+    //   : [];
     const client_name = req.body.client_name;
     const designer = req.body.designer;
     const organisor = req.body.organisor;
@@ -182,11 +188,7 @@ export const createmom = async (req, res) => {
       return res
         .status(400)
         .send({ status: false, message: "organiser is required" });
-    } else if(!user_id)
-    {
-      return res.status(400).send({ status: false, message: "user_id is required" });
-    }
-    else {
+    } else {
       const check_project = await projectModel.find({ project_id: project_id });
       if (check_project.length > 0) {
         const mom_id = `COl-M-${generateSixDigitNumber()}`; // generate meeting id
@@ -220,13 +222,6 @@ export const createmom = async (req, res) => {
           );
         }
         let file = [];
-        const user = await registerModel.findById({_id:user_id})
-        if(!user)
-        {
-          responseData(res,"", 404, false, "User not  found");
-
-        }
-        const userName = user.username
 
         if (successfullyUploadedFiles.length > 0) {
           let fileUrls = successfullyUploadedFiles.map((result) => ({
@@ -236,7 +231,6 @@ export const createmom = async (req, res) => {
             date: new Date()
 
           }));
-
 
           const update_mom = await projectModel.findOneAndUpdate(
             { project_id: project_id },
@@ -256,7 +250,6 @@ export const createmom = async (req, res) => {
                       },
                       remark: remark,
                       files: fileUrls,
-                      created_By :userName
                     },
                   ],
                   $position: 0,
@@ -318,7 +311,6 @@ export const createmom = async (req, res) => {
                       },
                       remark: remark,
                       files: file,
-                      created_By: userName
                     },
                   ],
                   $position: 0,
@@ -493,7 +485,8 @@ export const generatePdf = async (req, res) => {
           <ul>
             <ol>
              ${momData.files
-            .map((image) => `<li><img src="${image}" alt="Image"></li>`)
+            .map((image) => `<li>
+            <a href="${image.fileUrl}">files links</a></li>`)
             .join("")}
         </ol>
           </ul>
@@ -643,7 +636,7 @@ export const sendPdf = async (req, res) => {
           <ul>
            <ol>
              ${momData.files
-            .map((image) => `<li><img src="${image}" alt="Image"></li>`)
+            .map((image) => `<li> <a href="${image.fileUrl}">files links</a></li>`)
             .join("")}
         </ol>
           </ul>
@@ -678,7 +671,7 @@ export const sendPdf = async (req, res) => {
               res.status(500).send(err);
             } else {
               const filePath = `momdata/${mom_id}.pdf`;
-              console.log(filePath)
+             
               const mailOptions = {
                 from: "a72302492@gmail.com",
                 to: check_project[0].client[0].client_email,
