@@ -45,6 +45,7 @@ const saveFileUploadData = async (
         files: [
           {
             folder_name: existingFileUploadData.folder_name,
+            updated_date: existingFileUploadData.updated_Date,
             files: existingFileUploadData.files,
           },
         ],
@@ -61,6 +62,9 @@ const saveFileUploadData = async (
           $push: {
             "files.$.files": { $each: existingFileUploadData.files },
           },
+          $set: {
+            "files.$.updated_date": existingFileUploadData.updated_Date,
+          }
         },
         {
           arrayFilters: [
@@ -79,6 +83,7 @@ const saveFileUploadData = async (
             $push: {
               files: {
                 folder_name: existingFileUploadData.folder_name,
+                updated_date: existingFileUploadData.updated_Date,
                 files: existingFileUploadData.files,
               },
             },
@@ -144,9 +149,11 @@ const projectFileUpload = async (req, res) => {
 
         // Limit the number of files to upload to at most 5
         const filesToUpload = files.slice(0, 5);
-
+        let fileSize = []
         for (const file of filesToUpload) {
           const fileName = file.name;
+          const fileSizeInBytes = file.size;
+          fileSize.push(fileSizeInBytes / 1024)
           uploadfileName.push(file.name);
           fileUploadPromises.push(
             uploadFile(file, fileName, project_id, folder_name)
@@ -164,15 +171,20 @@ const projectFileUpload = async (req, res) => {
           (result) => result.data
         );
 
-
+        let fileUrls
         if (successfullyUploadedFiles.length > 0) {
-          let fileUrls = successfullyUploadedFiles.map((result) => ({
-            fileUrl: result.data.Location,
-            fileName: result.data.Location.split('/').pop(),
-            fileId: `FL-${generateSixDigitNumber()}`,
-            date: new Date()
+          for (let i = 0; i < fileSize.length; i++) {
+            fileUrls = successfullyUploadedFiles.map((result) => ({
+              fileUrl: result.data.Location,
+              fileName: result.data.Location.split('/').pop(),
+              fileId: `FL-${generateSixDigitNumber()}`,
+              fileSize: `${fileSize[i]} KB`,
+              date: new Date()
 
-          }));
+            }));
+
+          }
+
 
           const existingFile = await fileuploadModel.findOne({
             project_id: project_id,
@@ -183,6 +195,7 @@ const projectFileUpload = async (req, res) => {
               project_id,
               project_name,
               folder_name,
+              updated_Date: fileUrls[0].date,
               files: fileUrls,
             });
           } else {
@@ -192,6 +205,7 @@ const projectFileUpload = async (req, res) => {
                 project_id,
                 project_name,
                 folder_name,
+                updated_Date: fileUrls[0].date,
                 files: fileUrls,
               },
               true

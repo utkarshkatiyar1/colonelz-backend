@@ -46,6 +46,7 @@ const saveFileUploadData = async (
         files: [
           {
             folder_name: existingFileUploadData.folder_name,
+            updated_date: existingFileUploadData.updated_Date,
             files: existingFileUploadData.files,
           },
         ],
@@ -62,6 +63,9 @@ const saveFileUploadData = async (
           $push: {
             "files.$.files": { $each: existingFileUploadData.files },
           },
+          $set: {
+            "files.$.updated_date": existingFileUploadData.updated_Date,
+          }
         },
         {
           arrayFilters: [
@@ -74,12 +78,14 @@ const saveFileUploadData = async (
         responseData(res, "File data updated successfully", 200, true);
       } else {
         // If the folder does not exist, create a new folder object
+
         const updateNewFolderResult = await fileuploadModel.updateOne(
           { lead_id: existingFileUploadData.lead_id },
           {
             $push: {
               files: {
                 folder_name: existingFileUploadData.folder_name,
+                updated_date: existingFileUploadData.updated_Date,
                 files: existingFileUploadData.files,
               },
             },
@@ -150,13 +156,18 @@ const fileupload = async (req, res) => {
         }
 
         // Limit the number of files to upload to at most 5
+        let fileSize = []
         const filesToUpload = files.slice(0, 5);
 
         for (const file of filesToUpload) {
           const fileName = file.name;
+          const fileSizeInBytes = file.size;
+          fileSize.push(fileSizeInBytes / 1024)
+
 
           fileUploadPromises.push(uploadFile(file, fileName, lead_id, folder_name));
         }
+
 
         const responses = await Promise.all(fileUploadPromises);
         // console.log(responses)
@@ -169,15 +180,19 @@ const fileupload = async (req, res) => {
         const successfullyUploadedFiles = fileUploadResults.filter(
           (result) => result.data
         );
+        let fileUrls
         if (successfullyUploadedFiles.length > 0) {
+          for (let i = 0; i < fileSize.length; i++) {
+            fileUrls = successfullyUploadedFiles.map((result) => ({
+              fileUrl: result.data.Location,
+              fileName: result.data.Location.split('/').pop(),
+              fileId: `FL-${generateSixDigitNumber()}`,
+              fileSize: `${fileSize[i]} KB`,
+              date: new Date()
 
-          let fileUrls = successfullyUploadedFiles.map((result) => ({
-            fileUrl: result.data.Location,
-            fileName: result.data.Location.split('/').pop(),
-            fileId: `FL-${generateSixDigitNumber()}`,
-            date: new Date()
+            }));
 
-          }));
+          }
 
 
           const existingFile = await fileuploadModel.findOne({
@@ -193,6 +208,7 @@ const fileupload = async (req, res) => {
               lead_id,
               lead_Name,
               folder_name,
+              updated_Date: fileUrls[0].date,
               files: fileUrls,
             });
           } else {
@@ -202,6 +218,7 @@ const fileupload = async (req, res) => {
                 lead_id,
                 lead_Name,
                 folder_name,
+                updated_Date: new Date(),
                 files: fileUrls,
               },
               true

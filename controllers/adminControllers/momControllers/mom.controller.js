@@ -6,6 +6,7 @@ import pdf from "html-pdf";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
+import { momPdfTemplate } from "../../../utils/mom.pdf.template.js";
 
 
 function generateSixDigitNumber() {
@@ -47,6 +48,7 @@ const saveFileUploadData = async (
         files: [
           {
             folder_name: existingFileUploadData.folder_name,
+            updated_date: existingFileUploadData.updated_date,
             files: existingFileUploadData.files,
           },
         ],
@@ -62,6 +64,7 @@ const saveFileUploadData = async (
         },
         {
           $push: {
+            "files.update_date": existingFileUploadData.updated_date,
             "files.$.files": { $each: existingFileUploadData.files },
           },
         },
@@ -82,6 +85,7 @@ const saveFileUploadData = async (
             $push: {
               files: {
                 folder_name: existingFileUploadData.folder_name,
+                updated_date: existingFileUploadData.updated_date,
                 files: existingFileUploadData.files,
               },
             },
@@ -122,7 +126,7 @@ export const getAllProjectMom = async (req, res) => {
     let MomData = [];
     for (let i = 0; i < find_project.length; i++) {
       if (find_project[i].mom.length !== 0) {
-        for (let j = 0; j < find_project[i].mom.length; j++) {
+        for (let j = find_project[i].mom.length - 1; j >= 0; j--) {
           MomData.push({
             project_id: find_project[i].project_id,
             project_name: find_project[i].project_name,
@@ -130,7 +134,9 @@ export const getAllProjectMom = async (req, res) => {
             client_name: find_project[i].client[0].client_name,
             location: find_project[i].mom[j].location,
             meetingDate: find_project[i].mom[j].meetingdate,
-          })
+          });
+
+          break;
         }
 
       }
@@ -197,14 +203,18 @@ export const createmom = async (req, res) => {
         const files = req.files?.files;
         const fileUploadPromises = [];
         let successfullyUploadedFiles = [];
+        let fileSize = [];
 
         if (files) {
           const filesToUpload = Array.isArray(files)
             ? files.slice(0, 5)
             : [files];
 
+
           for (const file of filesToUpload) {
             const fileName = file.name;
+            const fileSizeInBytes = file.size;
+            fileSize.push(fileSizeInBytes / 1024)
             fileUploadPromises.push(
               uploadFile(file, fileName, project_id, mom_id)
             );
@@ -223,14 +233,19 @@ export const createmom = async (req, res) => {
         }
         let file = [];
 
+        let fileUrls
         if (successfullyUploadedFiles.length > 0) {
-          let fileUrls = successfullyUploadedFiles.map((result) => ({
-            fileUrl: result.data.Location,
-            fileName: result.data.Location.split('/').pop(),
-            fileId: `FL-${generateSixDigitNumber()}`,
-            date: new Date()
+          for (let i = 0; i < fileSize.length; i++) {
+            fileUrls = successfullyUploadedFiles.map((result) => ({
+              fileUrl: result.data.Location,
+              fileName: result.data.Location.split('/').pop(),
+              fileId: `FL-${generateSixDigitNumber()}`,
+              fileSize: `${fileSize[i]} KB`,
+              date: new Date()
 
-          }));
+            }));
+
+          }
 
           const update_mom = await projectModel.findOneAndUpdate(
             { project_id: project_id },
@@ -261,7 +276,7 @@ export const createmom = async (req, res) => {
           const existingFile = await fileuploadModel.findOne({
             project_id: project_id,
           });
-          const folder_name = `MOM`;
+          const folder_name = `mom`;
           const project_Name = existingFile.project_name;
 
           if (existingFile) {
@@ -269,6 +284,7 @@ export const createmom = async (req, res) => {
               project_id,
               project_Name,
               folder_name,
+              updated_date: new Date(),
               files: fileUrls,
             });
           } else {
@@ -278,6 +294,7 @@ export const createmom = async (req, res) => {
                 project_id,
                 project_Name,
                 folder_name,
+                updated_date: new Date(),
                 files: fileUrls,
               },
               true
@@ -402,113 +419,23 @@ export const generatePdf = async (req, res) => {
       );
 
       if (check_mom.length > 0) {
-        const momData = check_mom[0]; // Extracting the MOM data
-        const momRemarkSplit = momData.remark.split(".").filter(Boolean); // Filter to remove empty strings
-        const momRemarkHtml = momRemarkSplit
-          .map((remark) => `<li>${remark.trim()}</li>`)
-          .join("");
+        const momData = check_mom[0];
+        // Extracting the MOM data
 
 
-        const htmlTemplate = `
-<html>
-  <head>
-    <title>MOM Data Report</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
-      .content {
-        text-align: left; /* Align content to the left */
-        max-width: 600px; /* Limit width to make content centered */
-        margin: auto; /* Center content horizontally */
-      }
-      h1 {
-        color: #333;
-        text-align: center; /* Center the heading */
-      }
-      ul {
-        list-style: none; /* Remove default list styles */
-        padding: 0; /* Remove default padding */
-      }
-      li {
-        margin-bottom: 10px; /* Add space between list items */
-      }
-      .label {
-        font-weight: bold; /* Make labels bold */
-        display: inline-block; /* Display labels inline */
-        width: 150px; /* Set a fixed width for labels */
-        margin-bottom: 10px;
-      }
-      a {
-        color: blue;
-      }
-      .feedback {
-        text-align: center; /* Center the feedback section */
-        margin-top: 10px; /* Add space above the feedback section */
-      }
-    </style>
-  </head>
-  <body>
-    <div class="content">
-      <h1>MOM Data Report</h1>
-      <ul>
-        <li><span class="label">MOM_ID:</span> ${momData.mom_id}</li>
-        <li><span class="label">MOM_Date:</span> ${momData.meetingdate}</li>
-        <li><span class="label">MOM_Location:</span> ${momData.location}</li>
-        <li><span class="label">Attendees:</span>
-          <ul>
-            <li><span class="label">Client Name:</span> ${momData.attendees.client_name
-          }</li>
-            <li><span class="label">Organised By:</span> ${momData.attendees.organisor
-          }</li>
-            <li><span class="label">Architect:</span> ${momData.attendees.designer
-          }</li>
-            <li><span class="label">Other:</span> ${momData.attendees.attendees
-          }</li>
-          </ul>
-        </li>
-        <li><span class="label">MOM_Remark:</span> 
-        <br>
-          <ul>
-           <ol>
-        ${momRemarkHtml}
-      </ol>
-          </ul>
-        </li>
-        
-        <li><span class="label">Files:</span>
-          <ul>
-            <ol>
-             ${momData.files
-            .map((image) => `<li>
-            <a href="${image.fileUrl}">files links</a></li>`)
-            .join("")}
-        </ol>
-          </ul>
-        </li>
-      </ul>
-    </div>
-        <div class="feedback">
-      <p>Would you like to provide feedback on this MOM report?</p>
-      <a href="/feedback?project_id=${project_id}&mom_id=${mom_id}">Submit Feedback</a>
-    </div>
+        const htmlTemplate = momPdfTemplate(momData, check_project[0].project_name)
 
-  </body>
-</html>
-`;
+
+
+
 
         const pdfOptions = {
           format: "A4",
           border: {
-            top: "1cm",
-            right: "1cm",
-            bottom: "1cm",
-            left: "1cm",
+            top: "0.1cm",
+            right: "0.1cm",
+            bottom: "0.1cm",
+            left: "0.1cm",
           }
         };
 
@@ -541,8 +468,8 @@ export const generatePdf = async (req, res) => {
 
 export const sendPdf = async (req, res) => {
   try {
-    const project_id = req.query.project_id;
-    const mom_id = req.query.mom_id;
+    const project_id = req.body.project_id;
+    const mom_id = req.body.mom_id;
 
     const check_project = await projectModel.find({ project_id: project_id });
 
@@ -553,114 +480,22 @@ export const sendPdf = async (req, res) => {
 
       if (check_mom.length > 0) {
         const momData = check_mom[0]; // Extracting the MOM data
-        const momRemarkSplit = momData.remark.split(".").filter(Boolean); // Filter to remove empty strings
-        const momRemarkHtml = momRemarkSplit
-          .map((remark) => `<li>${remark.trim()}</li>`)
-          .join("");
 
 
 
-        const htmlTemplate = `
-<html>
-  <head>
-    <title>MOM Data Report</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
-      .content {
-        text-align: left; /* Align content to the left */
-        max-width: 600px; /* Limit width to make content centered */
-        margin: auto; /* Center content horizontally */
-      }
-      h1 {
-        color: #333;
-        text-align: center; /* Center the heading */
-      }
-      ul {
-        list-style: none; /* Remove default list styles */
-        padding: 0; /* Remove default padding */
-      }
-      li {
-        margin-bottom: 10px; /* Add space between list items */
-      }
-      .label {
-        font-weight: bold; /* Make labels bold */
-        display: inline-block; /* Display labels inline */
-        width: 150px; /* Set a fixed width for labels */
-        margin-bottom: 10px;
-      }
-      a {
-        color: blue;
-      }
-      .feedback {
-        text-align: center; /* Center the feedback section */
-        margin-top: 10px; /* Add space above the feedback section */
-      }
-    </style>
-  </head>
-  <body>
-    <div class="content">
-      <h1>MOM Data Report</h1>
-      <ul>
-        <li><span class="label">MOM_ID:</span> ${momData.mom_id}</li>
-        <li><span class="label">MOM_Date:</span> ${momData.meetingdate}</li>
-        <li><span class="label">MOM_Source:</span> ${momData.source}</li>
-        <li><span class="label">Attendees:</span>
-          <ul>
-            <li><span class="label">Client Name:</span> ${momData.attendees.client_name
-          }</li>
-            <li><span class="label">Organisor:</span> ${momData.attendees.organisor
-          }</li>
-            <li><span class="label">Architect:</span> ${momData.attendees.architect
-          }</li>
-            <li><span class="label">Consultant Name:</span> ${momData.attendees.consultant_name
-          }</li>
-          </ul>
-        </li>
-        <li><span class="label">MOM_Remark:</span> 
-        <br>
-          <ul>
-           <ol>
-        ${momRemarkHtml}
-      </ol>
-          </ul>
-        </li>
-        
-        <li><span class="label">Files:</span>
-          <ul>
-           <ol>
-             ${momData.files
-            .map((image) => `<li> <a href="${image.fileUrl}">files links</a></li>`)
-            .join("")}
-        </ol>
-          </ul>
-        </li>
-      </ul>
-    </div>
-        <div class="feedback">
-      <p>Would you like to provide feedback on this MOM report?</p>
-      <a href="/feedback?project_id=${project_id}&mom_id=${mom_id}">Submit Feedback</a>
-    </div>
 
-  </body>
-</html>
-`;
+        const htmlTemplate = momPdfTemplate(momData, check_project[0].project_name)
 
         const pdfOptions = {
           format: "A4",
           border: {
-            top: "1cm",
-            right: "1cm",
-            bottom: "1cm",
-            left: "1cm",
-          },
+            top: "0.1cm",
+            right: "0.1cm",
+            bottom: "0.1cm",
+            left: "0.1cm",
+          }
         };
+
 
         // Generate PDF
 
@@ -671,7 +506,7 @@ export const sendPdf = async (req, res) => {
               res.status(500).send(err);
             } else {
               const filePath = `momdata/${mom_id}.pdf`;
-             
+
               const mailOptions = {
                 from: "a72302492@gmail.com",
                 to: check_project[0].client[0].client_email,
