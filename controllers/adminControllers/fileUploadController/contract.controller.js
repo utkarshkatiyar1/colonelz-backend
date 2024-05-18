@@ -31,7 +31,7 @@ const s3 = new AWS.S3({
   region: "ap-south-1",
 });
 
-const uploadImage = async (req, filePath,lead_id, fileName) => {
+const uploadImage = async (req, filePath, lead_id, fileName) => {
 
   if (typeof fileName !== 'string') {
     fileName = String(fileName);
@@ -426,7 +426,7 @@ export const contractShare = async (req, res) => {
               let response;
               try {
 
-                response = await uploadImage(req, localFilePath,lead_id, contract_name);
+                response = await uploadImage(req, localFilePath, lead_id, contract_name);
 
                 if (response.status) {
 
@@ -491,7 +491,7 @@ export const contractShare = async (req, res) => {
       }
     }
     else {
-      return responseData(res, "", 400, false, "You are not Senior Architect");
+      return responseData(res, "", 400, false, "You are not a Senior Architect");
     }
   }
   catch (err) {
