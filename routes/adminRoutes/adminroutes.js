@@ -8,7 +8,6 @@ import getSingleFileData from "../../controllers/adminControllers/fileUploadCont
 
 import {
   createmom,
-  generatePdf,
   getAllMom,
   getAllProjectMom,
   getSingleMom,
@@ -87,7 +86,6 @@ router.route("/add/member/lead").post(verifyJWT, isAdmin, AddMemberInLead);
 router.route("/create/mom").post(verifyJWT, createmom);
 router.route("/getall/mom").get(verifyJWT, getAllMom);
 router.route("/getsingle/mom").get(verifyJWT, getSingleMom);
-router.route("/generate/pdf").get(generatePdf);
 router.route("/getall/project/mom").get(verifyJWT, checkAvailableUserIsAdmin, getAllProjectMom);
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 
