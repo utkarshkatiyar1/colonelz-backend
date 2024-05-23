@@ -17,8 +17,8 @@ function generateStrongPassword() {
 }
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    port: 465,
+    secure: true,
     auth: {
         user: "a72302492@gmail.com",
         pass: process.env.APP_PASSWORD,
@@ -52,35 +52,34 @@ export const createUser = async (req, res) => {
                     const check_email_or_user_name = await registerModel.find({ $or: [{ email: email }, { username: user_name }] })
                     if (check_email_or_user_name.length < 1) {
                         const password = generateStrongPassword();
-                       
-                        bcrypt.hash(password, 10, async function (err, hash) {
-                            if(err)
-                            {
-                                return responseData(res, "", 400, false, "Something went wrong");   
-                            }
-                            else{
 
-                            
-                        const newUser = new registerModel({
-                            username: user_name,
-                            email: email,
-                            role: role,
-                            status: true,
-                            userProfile: "",
-                            password: hash,
-                            data:{
-                                projectData:[],
-                                quotationData:[],
-                                notificationData:[],
-                                leadData:[]
+                        bcrypt.hash(password, 10, async function (err, hash) {
+                            if (err) {
+                                return responseData(res, "", 400, false, "Something went wrong");
                             }
-                        })
-                        newUser.save();
-                            const mailOptions = {
-                                from: "a72302492@gmail.com",
-                                to: email,
-                                subject: "Login Credentials",
-                                html: `<!DOCTYPE html>
+                            else {
+
+
+                                const newUser = new registerModel({
+                                    username: user_name,
+                                    email: email,
+                                    role: role,
+                                    status: true,
+                                    userProfile: "",
+                                    password: hash,
+                                    data: {
+                                        projectData: [],
+                                        quotationData: [],
+                                        notificationData: [],
+                                        leadData: []
+                                    }
+                                })
+                                newUser.save();
+                                const mailOptions = {
+                                    from: "a72302492@gmail.com",
+                                    to: email,
+                                    subject: "Login Credentials",
+                                    html: `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -111,25 +110,25 @@ export const createUser = async (req, res) => {
 </body>
 </html>
 `,
-                            };
-                            transporter.sendMail(mailOptions, (error, info) => {
-                                if (error) {
-                                    responseData(res, "", 400, false, "Failed to send email");
-                                } else {
-                                    responseData(
-                                        res,
-                                        `User Created And send credential successfully!`,
-                                        200,
-                                        true,
-                                        ""
-                                    );
-                                }
-                            });
-                        }
+                                };
+                                transporter.sendMail(mailOptions, (error, info) => {
+                                    if (error) {
+                                        responseData(res, "", 400, false, "Failed to send email");
+                                    } else {
+                                        responseData(
+                                            res,
+                                            `User Created And send credential successfully!`,
+                                            200,
+                                            true,
+                                            ""
+                                        );
+                                    }
+                                });
+                            }
                         })
-                       
+
                     }
-                    if(check_email_or_user_name.length >0) {
+                    if (check_email_or_user_name.length > 0) {
 
                         responseData(res, "", 400, false, "User Already Exist");
                     }
@@ -151,59 +150,54 @@ export const createUser = async (req, res) => {
 }
 
 
-export const getUser = async(req, res) =>{
-try{
-    const users = await registerModel.find({status:true})
-    if(users)
-    {
-        const filteredUsers = users.reduce((acc, user) => {
-            if (user) {
-                acc.push({ username: user.username, role: user.role, email:user.email,  UserId:user._id });
-            }
-            return acc;
-        }, []);
+export const getUser = async (req, res) => {
+    try {
+        const users = await registerModel.find({ status: true })
+        if (users) {
+            const filteredUsers = users.reduce((acc, user) => {
+                if (user) {
+                    acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
+                }
+                return acc;
+            }, []);
 
-       
-        return responseData(res, "all user found", 200, true, "", filteredUsers);
+
+            return responseData(res, "all user found", 200, true, "", filteredUsers);
+
+        }
+        else {
+            return responseData(res, "", 404, false, "No User Found");
+        }
+
 
     }
-    else{
-        return responseData(res, "", 404, false, "No User Found");
+    catch (err) {
+        return responseData(res, "", 500, false, err.message);
     }
 
-
-}
-catch(err)
-{
-    return responseData(res, "", 500, false, err.message);
 }
 
-}
-
-export const deleteUser = async(req, res) =>{
-    try{
+export const deleteUser = async (req, res) => {
+    try {
         const user_id = req.query.userId;
-        if(!user_id)
-        {
+        if (!user_id) {
             return responseData(res, "", 400, false, "User Id is required");
         }
-        else{
-            const user = await registerModel.findOne({_id: user_id, status:true})
-            if(!user)
-            {
+        else {
+            const user = await registerModel.findOne({ _id: user_id, status: true })
+            if (!user) {
                 return responseData(res, "", 404, false, "User Not Found");
             }
-            else{
-                const deletedUser = await registerModel.findOneAndUpdate({_id: user_id}, {status:false}, {new: true})
-                const deleteUserFormLongin = await loginModel.deleteMany({ userID:user_id})
+            else {
+                const deletedUser = await registerModel.findOneAndUpdate({ _id: user_id }, { status: false }, { new: true })
+                const deleteUserFormLongin = await loginModel.deleteMany({ userID: user_id })
                 return responseData(res, "User Deleted Successfully", 200, true, "");
             }
         }
-        
-        
+
+
     }
-    catch(err)
-    {
+    catch (err) {
         return responseData(res, "", 500, false, err.message);
     }
 }
