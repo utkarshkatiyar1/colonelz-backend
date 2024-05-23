@@ -134,7 +134,7 @@ if(!lead_id)
   try {
 
     const find_user = await registerModel.findOne({ _id: userId });
-    if (find_user.role === 'Senior Architect') {
+    if (find_user.role === 'Senior Architect' || find_user.role ==='ADMIN') {
 
       const contract_pdf = req.files.file;
       

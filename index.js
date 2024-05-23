@@ -45,7 +45,7 @@ mongoose.connection.on("disconnected", () => {
 
 const httpServer = createServer(app);
 
-app.use(cors({ origin: 'https://colonelzfront.test.initz.run' }));
+app.use(cors());
 
 
 app.use(requestIp.mw());
