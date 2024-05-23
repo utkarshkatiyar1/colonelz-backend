@@ -74,7 +74,7 @@ export const createUser = async (req, res) => {
                                         leadData: []
                                     }
                                 })
-                                newUser.save();
+                                
                                 const mailOptions = {
                                     from: "a72302492@gmail.com",
                                     to: email,
@@ -115,6 +115,7 @@ export const createUser = async (req, res) => {
                                     if (error) {
                                         responseData(res, "", 400, false, "Failed to send email");
                                     } else {
+                                        newUser.save();
                                         responseData(
                                             res,
                                             `User Created And send credential successfully!`,
