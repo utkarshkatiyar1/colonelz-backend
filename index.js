@@ -45,12 +45,9 @@ mongoose.connection.on("disconnected", () => {
 
 const httpServer = createServer(app);
 
+app.use(cors({ origin: 'https://colonelzfront.test.initz.run' }));
 
 
-// global middlewares
-app.use(
-  cors()
-);
 app.use(requestIp.mw());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

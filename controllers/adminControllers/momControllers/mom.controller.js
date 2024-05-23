@@ -63,8 +63,11 @@ const saveFileUploadData = async (
           "files.folder_name": existingFileUploadData.folder_name,
         },
         {
+          $set: {
+            "files.$.updated_date": existingFileUploadData.updated_Date,
+          },
           $push: {
-            "files.update_date": existingFileUploadData.updated_date,
+           
             "files.$.files": { $each: existingFileUploadData.files },
           },
         },
