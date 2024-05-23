@@ -200,7 +200,7 @@ if(!lead_id)
       });
     }
     else {
-      return responseData(res, "", 400, false, "You are not a Senior Architect");
+      return responseData(res, "", 400, false, "You are not a Senior Architect or Admin");
     }
   }
   catch (err) {
