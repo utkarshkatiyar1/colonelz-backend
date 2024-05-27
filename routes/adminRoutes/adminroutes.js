@@ -78,7 +78,7 @@ router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
 router.route("/create/lead").post(verifyJWT, checkAvailableUserIsAdmin, createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
-router.route("/getsingle/lead").get(verifyJWT, checkAvailableUserIsAdmin, getSingleLead);
+router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
 router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
 router.route("/create/lead/project").post(verifyJWT, checkAvailableUserIsAdmin, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isAdmin, AddMemberInLead);
