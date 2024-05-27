@@ -107,8 +107,8 @@ app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
 
-httpServer.listen(8000, () => {
-  connect();
-  checkSMTPConnection(smtpConfig);
+httpServer.listen(8000, async() => {
+ await connect();
+ await checkSMTPConnection(smtpConfig);
   console.log("Connected to backend");
 });
