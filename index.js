@@ -12,6 +12,7 @@ import fileUpload from "express-fileupload";
 import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
+import nodemailer from "nodemailer";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -43,6 +44,37 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
+
+
+async function checkSMTPConnection(config) {
+  let transporter = nodemailer.createTransport(config);
+
+  try {
+    // Verify the connection configuration
+    await transporter.verify();
+    console.log('Connection to SMTP server is successful!');
+  } catch (error) {
+    console.error('Error connecting to SMTP server:', error);
+  }
+}
+
+// Check the SMTP connection
+
+
+
+const smtpConfig = {
+  host: "smtp.gmail.com",  // Replace with your SMTP server's address
+  port: 587,          // Replace with the correct port
+  secure: false,      // true for 465, false for other ports
+  auth: {
+    user: "a72302492@gmail.com",
+    pass: process.env.APP_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+};
+
 const httpServer = createServer(app);
 
 app.use(cors());
@@ -60,8 +92,7 @@ const limiter = rateLimit({
   handler: (_, __, ___, options) => {
     throw new ApiError(
       options.statusCode || 500,
-      `There are too many requests. You are only allowed ${
-        options.max
+      `There are too many requests. You are only allowed ${options.max
       } requests per ${options.windowMs / 60000} minutes`
     );
   },
@@ -78,5 +109,6 @@ app.use("/v1/api/users", usersRouter);
 
 httpServer.listen(8000, () => {
   connect();
+  checkSMTPConnection(smtpConfig);
   console.log("Connected to backend");
 });
