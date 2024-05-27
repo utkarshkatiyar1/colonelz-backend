@@ -76,11 +76,11 @@ router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAll
 router.route("/getsingle/project").get(verifyJWT, getSingleProject);
 router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT, isAdmin, createLead);
-router.route("/getall/lead").get(verifyJWT, isAdmin, getAllLead);
-router.route("/getsingle/lead").get(verifyJWT, isAdmin, getSingleLead);
-router.route("/update/lead").put(verifyJWT, isAdmin, updateLead);
-router.route("/create/lead/project").post(verifyJWT, isAdmin, leadToProject);
+router.route("/create/lead").post(verifyJWT, checkAvailableUserIsAdmin, createLead);
+router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
+router.route("/getsingle/lead").get(verifyJWT, checkAvailableUserIsAdmin, getSingleLead);
+router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
+router.route("/create/lead/project").post(verifyJWT, checkAvailableUserIsAdmin, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isAdmin, AddMemberInLead);
 
 router.route("/create/mom").post(verifyJWT, createmom);
