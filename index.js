@@ -13,6 +13,7 @@ import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
+import { HttpsProxyAgent } from "https-proxy-agent";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -29,6 +30,8 @@ dotenv.config({
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const proxy = 'https://colonelzadmin.test.initz.run/' || 'http://localhost:8000';
+const agent = new HttpsProxyAgent(proxy);
 
 mongoose.set("strictQuery", true);
 const connect = async () => {
@@ -76,7 +79,8 @@ const smtpConfig = {
   connectionTimeout: 20000,   // 20 seconds
   greetingTimeout: 20000,     // 20 seconds
   socketTimeout: 20000,       // 20 seconds
-  debug: true
+  debug: true,
+  agent: agent,
 };
 
 const httpServer = createServer(app);
