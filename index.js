@@ -66,8 +66,8 @@ async function checkSMTPConnection(config) {
 
 
 const smtpConfig = {
-  host: "smtp.gmail.com",  // Replace with your SMTP server's address
-  port: 587,          // Replace with the correct port
+  host: "smtp.gmail.com",  
+  port: 587,          
   secure: false,  
   requireTLS: true,
   logger: true,   
@@ -75,12 +75,12 @@ const smtpConfig = {
     user: "a72302492@gmail.com",
     pass: process.env.APP_PASSWORD,
   },
-  tls: {
-    rejectUnauthorized: false // Set to true if you want to validate the server certificate
-  },
-  connectionTimeout: 20000,   // 20 seconds
-  greetingTimeout: 20000,     // 20 seconds
-  socketTimeout: 20000,       // 20 seconds
+  // tls: {
+  //   rejectUnauthorized: false // Set to true if you want to validate the server certificate
+  // },
+  // connectionTimeout: 20000,   // 20 seconds
+  // greetingTimeout: 20000,     // 20 seconds
+  // socketTimeout: 20000,       // 20 seconds
   debug: true,
   // agent: agent,
 };
