@@ -71,8 +71,12 @@ const smtpConfig = {
     pass: process.env.APP_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false // Set to true if you want to validate the server certificate
+  },
+  connectionTimeout: 20000,   // 20 seconds
+  greetingTimeout: 20000,     // 20 seconds
+  socketTimeout: 20000,       // 20 seconds
+  debug: true
 };
 
 const httpServer = createServer(app);
