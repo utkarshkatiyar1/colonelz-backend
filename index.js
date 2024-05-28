@@ -13,7 +13,7 @@ import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
-import { HttpsProxyAgent } from "https-proxy-agent";
+// import { HttpsProxyAgent } from "https-proxy-agent";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -30,8 +30,8 @@ dotenv.config({
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-const proxy = 'https://colonelzadmin.test.initz.run/' || 'http://localhost:8000';
-const agent = new HttpsProxyAgent(proxy);
+// const proxy = 'https://colonelzadmin.test.initz.run/' || 'http://localhost:8000';
+// const agent = new HttpsProxyAgent(proxy);
 
 mongoose.set("strictQuery", true);
 const connect = async () => {
@@ -68,7 +68,9 @@ async function checkSMTPConnection(config) {
 const smtpConfig = {
   host: "smtp.gmail.com",  // Replace with your SMTP server's address
   port: 587,          // Replace with the correct port
-  secure: false,      // true for 465, false for other ports
+  secure: false,  
+  requireTLS: true,
+  logger: true,   
   auth: {
     user: "a72302492@gmail.com",
     pass: process.env.APP_PASSWORD,
@@ -80,7 +82,7 @@ const smtpConfig = {
   greetingTimeout: 20000,     // 20 seconds
   socketTimeout: 20000,       // 20 seconds
   debug: true,
-  agent: agent,
+  // agent: agent,
 };
 
 const httpServer = createServer(app);
