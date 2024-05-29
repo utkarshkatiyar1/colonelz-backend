@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import leadModel from "../../../models/adminModels/leadModel.js"
 function generateSixDigitNumber() {
   const min = 100000;
   const max = 999999;
@@ -135,7 +136,18 @@ if(!lead_id)
 
     const find_user = await registerModel.findOne({ _id: userId });
     if (find_user.role === 'Senior Architect' || find_user.role ==='ADMIN') {
+      
+      const  lead = await leadModel.findOne({lead_id:lead_id})
+      if(!lead)
+        {
+        return responseData(res, "", 400, false, "Lead Not Found");
+        }
 
+const check_lead = await fileuploadModel.findOne({lead_id:lead_id})
+if (!check_lead)
+  {
+  return responseData(res, "", 400, false, "This Lead Converted Into Project");
+  }
       const contract_pdf = req.files.file;
       
       const filePath = path.join('contract', contract_pdf.name);
@@ -191,11 +203,11 @@ if(!lead_id)
 
           } else {
             console.log(response)
-            responseData(res, "contract create failed", 400, false, "", "");
+            responseData(res, "", 400, false, "contract create failed", "");
           }
         } catch (error) {
           console.error("Error uploading image:", error);
-          responseData(res, "contract create failed", 500, false, "", "");
+          responseData(res, "", 500, false, "contract create failed", "");
         }
       });
     }
