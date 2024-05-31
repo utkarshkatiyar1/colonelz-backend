@@ -93,6 +93,7 @@ export const deleteFile = async (req, res) => {
                 }
                 if (!project_id) {
                     name = data.lead_name;
+                   
                     await Archive.create({
                         lead_id,
                         lead_name: type === "template" ? "" : name,
@@ -100,6 +101,19 @@ export const deleteFile = async (req, res) => {
                         project_id,
                         folder_name,
                         sub_folder_name_second: type === "template" ? folder_name : undefined,
+                        files: [file],
+                        type
+                    });
+                }
+                if (!lead_id && !project_id) {
+                    await Archive.create({
+                        lead_id,
+                        lead_name: type === "template" ? "" : "",
+                        project_name: type === "template" ? "" : "",
+                        project_id,
+                        folder_name: type === "template" ? data.files[0].folder_name : folder_name,
+                        sub_folder_name_first: type === "template" ? data.files[0].sub_folder_name_first : undefined,
+                        sub_folder_name_second: type === "template" ? data.files[0].sub_folder_name_second: undefined,
                         files: [file],
                         type
                     });
@@ -181,7 +195,8 @@ export const deleteFolder = async (req, res) => {
                     lead_name: type === "template" ? "" : "",
                     project_name: type === "template" ? "" : name,
                     project_id,
-                    folder_name,
+                    folder_name: type === "template" ? folder.folder_name: folder_name ,
+                    sub_folder_name_first: type ==="template" ? folder.sub_folder_name_first : undefined,
                     sub_folder_name_second: type === "template" ? folder_name : undefined,
                     files: [folder],
                     type
@@ -200,6 +215,21 @@ export const deleteFolder = async (req, res) => {
                     type
                 });
             }
+            if (!lead_id && !project_id)
+                {
+                name = data.project_name;
+                await Archive.create({
+                    lead_id,
+                    lead_name: type === "template" ? "" : "",
+                    project_name: type === "template" ? "" : name,
+                    project_id,
+                    folder_name: type === "template" ? folder.folder_name : folder_name,
+                    sub_folder_name_first: type === "template" ? folder.sub_folder_name_first : undefined,
+                    sub_folder_name_second: type === "template" ? folder_name : undefined,
+                    files: [folder],
+                    type
+                });
+                }
             count++;
         }
 

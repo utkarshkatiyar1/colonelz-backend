@@ -6,6 +6,7 @@ const archiveSchema = new mongoose.Schema({
     lead_name: { type: String },
     project_name: { type: String },
     folder_name: { type: String },
+    sub_folder_name_first: { type: String },
     sub_folder_name_second: { type: String },
     files: [],
     type: { type: String },

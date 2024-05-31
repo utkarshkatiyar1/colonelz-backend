@@ -63,7 +63,7 @@ export const archive = async (req, res) => {
 
     }
     catch (err) {
-        console.log(error);
+        console.log(err);
         responseData(res, "", 500, false, "Something went wrong", []);
     }
 
@@ -78,7 +78,7 @@ async function deleteFolder(bucket, folder) {
         };
 
         const listedObjects = await s3.listObjectsV2(listParams).promise();
-console.log(listedObjects)
+
         if (listedObjects.Contents.length === 0) {
             console.log('Folder is already empty or does not exist.');
             return;
@@ -122,45 +122,88 @@ export const deletearchive = async (req, res) => {
         if (!user_id) {
             responseData(res, "", 400, false, "user id is required", []);
         }
-        // else if (!file_id) {
-        //     responseData(res, "", 400, false, "file id is required", []);
-        // }
+        else if(!type || !delete_type)
+            {
+                responseData(res, "", 400, false, "type and delete_type is required", []);
+            }
         else {
             const check_user = await registerModel.findOne({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
             if (check_user.role === "ADMIN") {
-                let count = 0;
-
                 let data;
-                let file;
-
                 if (type === "template") {
-
-
-                    const filesData = await archiveModel.findOne(
+                    const folder_name = req.body.folder_name
+                    const sub_folder_name_first = req.body.sub_folder_name_first;
+                    const sub_folder_name_second = req.body.sub_folder_name_second;
+                    
+                    if(delete_type === 'folder')
                         {
-                            "files.sub_folder_name_second": folder_name,
-                            "files.files.fileId": file_id
-                        },
+                        const filesData = await archiveModel.findOne(
+                            {
+                                $and: [
+                                    { folder_name: folder_name },
+                                    { sub_folder_name_first: sub_folder_name_first },
+                                    { sub_folder_name_second: sub_folder_name_second }
+                                ],
+                               
+                            },
 
-                    );
+                        );
+                        
+                        deleteFolder(process.env.S3_BUCKET_NAME, `template/${filesData.folder_name}/${filesData.sub_folder_name_first}/${filesData.sub_folder_name_second}`);
+                        data = await archiveModel.findOneAndDelete(
+                            {
+                                $and: [
+                                    { folder_name: folder_name },
+                                    { sub_folder_name_first: sub_folder_name_first },
+                                    { sub_folder_name_second: sub_folder_name_second }
+                                ],
+                               
+                            },
 
-                    file = filesData.files.find(fileGroup => fileGroup.files.some(file => file.fileId === file_id)).files.find(file => file.fileId === file_id);
+                        );
 
-                    data = await fileuploadModel.findOneAndUpdate(
-                        {
-                            "files.sub_folder_name_second": folder_name,
-                            "files.files.fileId": file_id
-                        },
-                        {
-                            $pull: {
-                                "files.$.files": { fileId: file_id }
+                        }
+                        else if( delete_type ==='file')
+                            {
+                        const filesData = await archiveModel.findOne(
+                            {
+                                $and: [
+                                    { folder_name: folder_name },
+                                    { sub_folder_name_first: sub_folder_name_first },
+                                    { sub_folder_name_second: sub_folder_name_second }
+                                ],
+                                "files.fileId": file_id
+                            },
+
+                        );
+
+                        const objectKey = getObjectKeyFromUrl(filesData.files[0].fileUrl);
+                      
+
+                        await s3.deleteObject({ Bucket: process.env.S3_BUCKET_NAME, Key: objectKey }).promise();
+
+                        data = await archiveModel.findOneAndDelete(
+                            {
+                                $and: [
+                                    { folder_name: folder_name },
+                                    { sub_folder_name_first: sub_folder_name_first },
+                                    {sub_folder_name_second:sub_folder_name_second}
+                                ],
+                                "files.fileId": file_id
+                            },
+                          
+                        );
+                                
                             }
-                        },
-                        { new: true }
-                    );
+                            else{
+                                responseData(res, "", 400, false, "delete type is required", []);
+                            }
+
+
+                  
 
                 } else {
                     if (delete_type === 'folder') {
@@ -236,7 +279,7 @@ export const deletearchive = async (req, res) => {
 
 
                 if (data) {
-                    responseData(res, "File deleted successfully", 200, true, "",);
+                    responseData(res, "File Or Folder Deleted Successfully", 200, true, "",);
                 }
             }
         }
