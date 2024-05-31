@@ -42,6 +42,8 @@ export const archive = async (req, res) => {
                     for (let i = 0; i < archive.length; i++) {
                         response.push({
                             lead_id: archive[i].lead_id,
+                            lead_name:archive[i].lead_name,
+                            project_name:archive[i].project_name,
                             project_id: archive[i].project_id,
                             folder_name: archive[i].folder_name,
                             files: archive[i].files,
