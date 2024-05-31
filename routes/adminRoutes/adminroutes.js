@@ -45,7 +45,7 @@ import { checkAvailableUserIsAdmin, isAdmin } from "../../middlewares/auth.middl
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { contractStatus, getContractData, shareContract } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js";
 import { AddMemberInLead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
-import { archive } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
+import { archive, deletearchive } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 // router.use(checkAvailableUserIsAdmin)
 
 
@@ -102,7 +102,8 @@ router.route("/get/notification").get(verifyJWT, checkAvailableUserIsAdmin, getN
 router.route("/update/notification").put(verifyJWT, updateNotification);
 
 
-router.route("/get/archive").get(verifyJWT, archive)
+router.route("/get/archive").get(verifyJWT, archive);
+router.route("/delete/archive").delete(verifyJWT, deletearchive);
 
 
 

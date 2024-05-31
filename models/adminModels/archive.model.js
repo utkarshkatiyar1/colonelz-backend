@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const archiveSchema = new mongoose.Schema({
     lead_id: { type: String },
     project_id: { type: String },
+    lead_name: { type: String },
+    project_name: { type: String },
     folder_name: { type: String },
     sub_folder_name_second: { type: String },
     files: [],

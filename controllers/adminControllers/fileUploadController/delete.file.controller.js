@@ -54,6 +54,7 @@ export const deleteFile = async (req, res) => {
                     },
 
                 );
+                console.log(filesData)
                 file = filesData.files.find(fileGroup => fileGroup.files.some(file => file.fileId === fileIds[i])).files.find(file => file.fileId === fileIds[i]);
 
 
@@ -76,15 +77,35 @@ export const deleteFile = async (req, res) => {
             }
 
             if (data) {
+                let name;
+                if (!lead_id) {
+                    name = data.project_name;
+                    await Archive.create({
+                        lead_id,
+                        lead_name: type === "template" ? "" : "",
+                        project_name: type === "template" ? "" : name,
+                        project_id,
+                        folder_name,
+                        sub_folder_name_second: type === "template" ? folder_name : undefined,
+                        files: [file],
+                        type
+                    });
+                }
+                if (!project_id) {
+                    name = data.lead_name;
+                    await Archive.create({
+                        lead_id,
+                        lead_name: type === "template" ? "" : name,
+                        project_name: type === "template" ? "" : "",
+                        project_id,
+                        folder_name,
+                        sub_folder_name_second: type === "template" ? folder_name : undefined,
+                        files: [file],
+                        type
+                    });
+                }
 
-                await Archive.create({
-                    lead_id,
-                    project_id,
-                    folder_name,
-                    sub_folder_name_second: type === "template" ? folder_name : undefined,
-                    files: [file],
-                    type
-                });
+
                 count++;
             }
         }
@@ -136,9 +157,8 @@ export const deleteFolder = async (req, res) => {
                     "files.folder_name": folder_name,
                 },
             );
-           
+
             folder = folderData.files.find(fileGroup => fileGroup.folder_name === folder_name)
-            console.log(folder)
             data = await fileuploadModel.findOneAndUpdate(
                 {
                     $or: [
@@ -153,14 +173,33 @@ export const deleteFolder = async (req, res) => {
         }
 
         if (data) {
-            await Archive.create({
-                lead_id,
-                project_id,
-                folder_name,
-                sub_folder_name_second: type === "template" ? folder_name : undefined,
-                files: folder,
-                type
-            });
+            let name;
+            if (!lead_id) {
+                name = data.project_name;
+                await Archive.create({
+                    lead_id,
+                    lead_name: type === "template" ? "" : "",
+                    project_name: type === "template" ? "" : name,
+                    project_id,
+                    folder_name,
+                    sub_folder_name_second: type === "template" ? folder_name : undefined,
+                    files: [folder],
+                    type
+                });
+            }
+            if (!project_id) {
+                name = data.lead_name;
+                await Archive.create({
+                    lead_id,
+                    lead_name: type === "template" ? "" : name,
+                    project_name: type === "template" ? "" : "",
+                    project_id,
+                    folder_name,
+                    sub_folder_name_second: type === "template" ? folder_name : undefined,
+                    files: [folder],
+                    type
+                });
+            }
             count++;
         }
 

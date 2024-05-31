@@ -20,7 +20,7 @@ function generateSixDigitNumber() {
 
 const uploadFile = async (file, fileName, folder_name) => {
     return s3.upload({
-        Bucket: `collegemanage/template/${folder_name}`,
+        Bucket: `collegemanage/template/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
         Key: fileName,
         Body: file.data,
         ContentType: file.mimetype,
@@ -133,7 +133,7 @@ export const templateFileUpload = async (req, res) => {
             const fileName = file.name;
             const fileSizeInBytes = file.size;
             fileSize.push(fileSizeInBytes / 1024)
-            fileUploadPromises.push(uploadFile(file, fileName, folder_name));
+            fileUploadPromises.push(uploadFile(file, fileName, folder_name, sub_folder_name_first, sub_folder_name_second));
         }
 
         const responses = await Promise.all(fileUploadPromises);

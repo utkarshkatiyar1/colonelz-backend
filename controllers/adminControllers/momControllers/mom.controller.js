@@ -26,7 +26,7 @@ const s3 = new AWS.S3({
 const uploadFile = async (file, fileName, project_id, mom_id) => {
   return s3
     .upload({
-      Bucket: `collegemanage/${project_id}/${mom_id}`,
+      Bucket: `collegemanage/${project_id}/MOM/`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
