@@ -200,6 +200,7 @@ export const deleteFolder = async (req, res) => {
                     sub_folder_name_second: type === "template" ? folder_name : undefined,
                     files: [folder],
                     type
+                    
                 });
             }
             if (!project_id) {

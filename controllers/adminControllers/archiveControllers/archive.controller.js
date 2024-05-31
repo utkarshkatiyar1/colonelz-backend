@@ -46,6 +46,8 @@ export const archive = async (req, res) => {
                             project_name:archive[i].project_name,
                             project_id: archive[i].project_id,
                             folder_name: archive[i].folder_name,
+                            sub_folder_name_first:archive[i].sub_folder_name_first,
+                            sub_folder_name_second:archive[i].sub_folder_name_second,
                             files: archive[i].files,
                             type: archive[i].type,
                             created_at: archive[i].archivedAt,
@@ -288,4 +290,9 @@ export const deletearchive = async (req, res) => {
         console.log(err);
         responseData(res, "", 500, false, "Something went wrong", []);
     }
+}
+
+
+async function deletefileOrfolder(){
+
 }
