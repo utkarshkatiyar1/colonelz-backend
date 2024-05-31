@@ -124,7 +124,7 @@ export const deletearchive = async (req, res) => {
         if (!user_id) {
             responseData(res, "", 400, false, "user id is required", []);
         }
-        else if(!type || !delete_type)
+        else if(!delete_type)
             {
                 responseData(res, "", 400, false, "type and delete_type is required", []);
             }
