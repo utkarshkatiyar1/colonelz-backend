@@ -4,6 +4,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import archiveModel from "../../../models/adminModels/archive.model.js";
 import AWS from "aws-sdk";
+import cron from "node-cron";
 // Configure AWS SDK
 AWS.config.update({
     accessKeyId: process.env.ACCESS_KEY,
@@ -293,6 +294,22 @@ export const deletearchive = async (req, res) => {
 }
 
 
-async function deletefileOrfolder(){
+async function deleteOldFiles(){
+    try{
+        const find_data = await archiveModel.find({})
+        console.log(find_data)
+
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
 
 }
+// cron.schedule(
+//     // '*/30 * * * * *',
+//     '0 0 * * *',
+//      async () => {
+//     console.log('Running deleteOldFiles job');
+//     await deleteOldFiles();
+// });

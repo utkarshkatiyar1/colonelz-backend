@@ -10,6 +10,7 @@ const archiveSchema = new mongoose.Schema({
     sub_folder_name_second: { type: String },
     files: [],
     type: { type: String },
+    deleted_type: {type: String},
     archivedAt: { type: Date, default: Date.now },
 });
 

@@ -88,7 +88,8 @@ export const deleteFile = async (req, res) => {
                         folder_name,
                         sub_folder_name_second: type === "template" ? folder_name : undefined,
                         files: [file],
-                        type
+                        type,
+                        deleted_type:"file"
                     });
                 }
                 if (!project_id) {
@@ -102,7 +103,8 @@ export const deleteFile = async (req, res) => {
                         folder_name,
                         sub_folder_name_second: type === "template" ? folder_name : undefined,
                         files: [file],
-                        type
+                        type,
+                        deleted_type: "file"
                     });
                 }
                 if (!lead_id && !project_id) {
@@ -115,7 +117,8 @@ export const deleteFile = async (req, res) => {
                         sub_folder_name_first: type === "template" ? data.files[0].sub_folder_name_first : undefined,
                         sub_folder_name_second: type === "template" ? data.files[0].sub_folder_name_second: undefined,
                         files: [file],
-                        type
+                        type,
+                        deleted_type: "file"
                     });
                 }
 
@@ -199,7 +202,8 @@ export const deleteFolder = async (req, res) => {
                     sub_folder_name_first: type ==="template" ? folder.sub_folder_name_first : undefined,
                     sub_folder_name_second: type === "template" ? folder_name : undefined,
                     files: [folder],
-                    type
+                    type,
+                    deleted_type: "folder"
                     
                 });
             }
@@ -213,7 +217,8 @@ export const deleteFolder = async (req, res) => {
                     folder_name,
                     sub_folder_name_second: type === "template" ? folder_name : undefined,
                     files: [folder],
-                    type
+                    type,
+                    deleted_type: "folder"
                 });
             }
             if (!lead_id && !project_id)
@@ -228,7 +233,8 @@ export const deleteFolder = async (req, res) => {
                     sub_folder_name_first: type === "template" ? folder.sub_folder_name_first : undefined,
                     sub_folder_name_second: type === "template" ? folder_name : undefined,
                     files: [folder],
-                    type
+                    type,
+                    deleted_type: "folder"
                 });
                 }
             count++;

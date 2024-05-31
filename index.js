@@ -66,11 +66,11 @@ async function checkSMTPConnection(config) {
 
 
 const smtpConfig = {
-  host: "smtp.gmail.com",  
-  port: 587,          
-  secure: false,  
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   requireTLS: true,
-  logger: true,   
+  logger: true,
   auth: {
     user: "a72302492@gmail.com",
     pass: process.env.APP_PASSWORD,
@@ -117,8 +117,8 @@ app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
 
-httpServer.listen(8000, async() => {
- await connect();
- await checkSMTPConnection(smtpConfig);
+httpServer.listen(8000, async () => {
+  await connect();
+  await checkSMTPConnection(smtpConfig);
   console.log("Connected to backend");
 });
