@@ -498,11 +498,11 @@ export const shareQuotation = async (req, res) => {
 };
 
 function approvalLink(project_id, file_id, status) {
-    return `https://col-back.onrender.com/v1/api/users/approval/admin/${project_id}/${file_id}/${status}`;
+    return `https://col-phase2.test.initz.run/v1/api/users/approval/admin/${project_id}/${file_id}/${status}`;
 }
 
 function approvalLinkClient(project_id, file_id, status) {
-    return `https://col-back.onrender.com/v1/api/users/approval/client/${project_id}/${file_id}/${status}`;
+    return `https://col-phase2.test.initz.run/v1/api/users/approval/client/${project_id}/${file_id}/${status}`;
 }
 
 
