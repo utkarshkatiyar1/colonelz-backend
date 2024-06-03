@@ -463,7 +463,7 @@ const saveFileRestoreDataInLead = async (
                 },
                 {
                     $push: {
-                        "files": { $each: existingFileUploadData.files },
+                        "files.$.files": { $each: existingFileUploadData.files[0].files },
                     },
 
                 },
@@ -539,7 +539,7 @@ const saveFileRestoreDataInProject = async (
                },
                {
                    $push: {
-                       "files.$.files": { $each: existingFileUploadData.files },
+                       "files.$.files": { $each: existingFileUploadData.files[0].files },
                    },
 
                },
@@ -593,7 +593,7 @@ const saveFileRestoreDataInProject = async (
                 },
                 {
                     $push: {
-                        "files": { $each: existingFileUploadData.files },
+                        "files.$.files": { $each: existingFileUploadData.files },
                     },
 
                 },
@@ -706,7 +706,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             let updateQuery = {};
             updateQuery = {
                 $push: {
-                    "files": { $each: existingFileUploadData.files },
+                    "files.$.files": { $each: existingFileUploadData.files[0].files },
                 },
 
             };
