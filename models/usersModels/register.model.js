@@ -14,6 +14,10 @@ const signUp = new mongoose.Schema({
     type: Boolean,
     required: true,
   },
+  organization: {
+    type: String,
+    required: true,
+  },
 
   role: {
     type: String,

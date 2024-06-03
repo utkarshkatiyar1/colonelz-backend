@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
+import { onlyAlphabetsValidation } from "../../utils/validation.js";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -25,7 +26,6 @@ export const sendOtp = async (req, res) => {
   const user_name = req.body.username;
   const email = req.body.email;
   const password = req.body.password;
-  const confirm_password = req.body.confirmpassword;
   const role = req.body.role;
   if (!email) {
     responseData(res, "", 400, false, "Email is required");
@@ -158,8 +158,8 @@ export const registerUser = async (req, res) => {
   const user_name = req.body.username;
   const email = req.body.email;
   const password = req.body.password;
-  const confirm_password = req.body.confirmpassword;
-  const role = req.body.role;
+  const orgnisation = req.body.organization;
+  const role = 'ADMIN';
 
   if (user_name.length < 3) {
     responseData(res, "", 400, false, "User name must be 3 characters");
@@ -167,12 +167,9 @@ export const registerUser = async (req, res) => {
     responseData(res, "", 400, false, "Invalid email");
   } else if (password.length < 6) {
     responseData(res, "", 400, false, "Password must be 6 characters");
-  } else if (!confirm_password) {
-    responseData(res, "", 400, false, "Confirm password is required");
-  } else if (confirm_password !== password) {
-    responseData(res, "", 400, false, "Password does not match");
-  } else if (!role) {
-    responseData(res, "", 400, false, "Please select a role");
+  } 
+  else if(!onlyAlphabetsValidation(orgnisation)){
+    responseData(res, "", 400, false, "Invalid orgnisation");
   } else {
     try {
       const checkemail = await registerModel.find({ email: email });
@@ -199,6 +196,7 @@ export const registerUser = async (req, res) => {
                 username: user_name,
                 userProfile: "",
                 email: email,
+                organization:orgnisation,
                 password: hash,
                 status: true,
                 role: role,
@@ -229,14 +227,20 @@ export const registerUser = async (req, res) => {
                   logInDate: new Date(),
                 });
                 login.save();
+                const response = {
+                  token:token,
+                  username:result.username,
+                  id: result._id,
+                  role:result.role
+                }
 
                 responseData(
                   res,
-                  "Registration successful",
+                  "Registration successfull",
                   200,
                   true,
                   "",
-                  result
+                  response
                 );
               } else {
                 responseData(res, "", 400, false, "Registration failed");
