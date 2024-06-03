@@ -402,54 +402,111 @@ const saveFileRestoreDataInLead = async (
     try {
 
         // Use update query to push data
-        const updateResult = await fileuploadModel.updateOne(
-            {
-                lead_id: existingFileUploadData.lead_id,
-                "files.folder_name": existingFileUploadData.folder_name,
-            },
-            {
-                $push: {
-                    "files.$.files": { $each: existingFileUploadData.files },
+      if(existingFileUploadData.deleted_type === "file")
+        {
+          const updateResult = await fileuploadModel.updateOne(
+              {
+                  lead_id: existingFileUploadData.lead_id,
+                  "files.folder_name": existingFileUploadData.folder_name,
+              },
+              {
+                  $push: {
+                      "files.$.files": { $each: existingFileUploadData.files },
+                  },
+
+              },
+              {
+                  arrayFilters: [
+                      { "folder.folder_name": existingFileUploadData.folder_name },
+                  ],
+              }
+          );
+          console.log(updateResult)
+          if (updateResult.modifiedCount === 1) {
+              responseData(res, "File data updated successfully", 200, true);
+          } else {
+              // If the folder does not exist, create a new folder object
+
+              const updateNewFolderResult = await fileuploadModel.updateOne(
+                  { lead_id: existingFileUploadData.lead_id },
+                  {
+                      $push: {
+                          files: {
+                              folder_name: existingFileUploadData.folder_name,
+                              updated_date: existingFileUploadData.files[0].updated_date,
+                              files: existingFileUploadData.files,
+                          },
+                      },
+                  }
+              );
+
+              if (updateNewFolderResult.modifiedCount === 1) {
+                  responseData(res, "New folder created successfully", 200, true);
+              } else {
+                  console.log("Lead not found or file data already updated");
+                  responseData(
+                      res,
+                      "",
+                      404,
+                      false,
+                      "Lead not found or file data already updated"
+                  );
+              }
+          }
+          
+        }
+        if (existingFileUploadData.deleted_type === "folder") {
+            const updateResult = await fileuploadModel.updateOne(
+                {
+                    lead_id: existingFileUploadData.lead_id,
+                    "files.folder_name": existingFileUploadData.folder_name,
                 },
-
-            },
-            {
-                arrayFilters: [
-                    { "folder.folder_name": existingFileUploadData.folder_name },
-                ],
-            }
-        );
-        console.log(updateResult)
-        if (updateResult.modifiedCount === 1) {
-            responseData(res, "File data updated successfully", 200, true);
-        } else {
-            // If the folder does not exist, create a new folder object
-
-            const updateNewFolderResult = await fileuploadModel.updateOne(
-                { lead_id: existingFileUploadData.lead_id },
                 {
                     $push: {
-                        files: {
-                            folder_name: existingFileUploadData.folder_name,
-                            updated_date: existingFileUploadData.files[0].updated_date,
-                            files: existingFileUploadData.files,
-                        },
+                        "files": { $each: existingFileUploadData.files },
                     },
+
+                },
+                {
+                    arrayFilters: [
+                        { "folder.folder_name": existingFileUploadData.folder_name },
+                    ],
                 }
             );
 
-            if (updateNewFolderResult.modifiedCount === 1) {
-                responseData(res, "New folder created successfully", 200, true);
+
+            if (updateResult.modifiedCount === 1) {
+                responseData(res, "File data updated successfully", 200, true);
             } else {
-                console.log("Lead not found or file data already updated");
-                responseData(
-                    res,
-                    "",
-                    404,
-                    false,
-                    "Lead not found or file data already updated"
+                // If the folder does not exist, create a new folder object
+
+                const updateNewFolderResult = await fileuploadModel.updateOne(
+                    { lead_id: existingFileUploadData.lead_id },
+                    {
+                        $push: {
+                            files: {
+                                folder_name: existingFileUploadData.folder_name,
+                                updated_date: existingFileUploadData.files[0].updated_date,
+                                files: existingFileUploadData.files,
+                            },
+                        },
+                    }
                 );
+
+                if (updateNewFolderResult.modifiedCount === 1) {
+                    responseData(res, "New folder created successfully", 200, true);
+                } else {
+                    console.log("Lead not found or file data already updated");
+                    responseData(
+                        res,
+                        "",
+                        404,
+                        false,
+                        "Lead not found or file data already updated"
+                    );
+                }
             }
+
         }
 
     } catch (error) {
@@ -473,56 +530,113 @@ const saveFileRestoreDataInProject = async (
     try {
 
         // Use update query to push data
-        const updateResult = await fileuploadModel.updateOne(
+       if(existingFileUploadData.deleted_type === 'file')
+        {
+           const updateResult = await fileuploadModel.updateOne(
+               {
+                   project_id: existingFileUploadData.project_id,
+                   "files.folder_name": existingFileUploadData.folder_name,
+               },
+               {
+                   $push: {
+                       "files.$.files": { $each: existingFileUploadData.files },
+                   },
+
+               },
+               {
+                   arrayFilters: [
+                       { "folder.folder_name": existingFileUploadData.folder_name },
+                   ],
+               }
+           );
+           console.log(updateResult)
+           if (updateResult.modifiedCount === 1) {
+               responseData(res, "File data updated successfully", 200, true);
+           } else {
+               // If the folder does not exist, create a new folder object
+
+               const updateNewFolderResult = await fileuploadModel.updateOne(
+                   { project_id: existingFileUploadData.project_id },
+                   {
+                       $push: {
+                           files: {
+                               folder_name: existingFileUploadData.folder_name,
+                               updated_date: existingFileUploadData.files[0].date,
+                               files: existingFileUploadData.files,
+                           },
+                       },
+                   }
+               );
+               console.log(updateNewFolderResult)
+
+               if (updateNewFolderResult.modifiedCount === 1) {
+                   responseData(res, "New folder created successfully", 200, true);
+               } else {
+                   console.log("Project not found or file data already updated");
+                   responseData(
+                       res,
+                       "",
+                       404,
+                       false,
+                       "Project not found or file data already updated"
+                   );
+               }
+           }
+
+        }
+        if(existingFileUploadData.deleted_type ==="folder")
             {
-                project_id: existingFileUploadData.project_id,
-                "files.folder_name": existingFileUploadData.folder_name,
-            },
-            {
-                $push: {
-                    "files.$.files": { $each: existingFileUploadData.files },
+            const updateResult = await fileuploadModel.updateOne(
+                {
+                    project_id: existingFileUploadData.project_id,
+                    "files.folder_name": existingFileUploadData.folder_name,
                 },
-
-            },
-            {
-                arrayFilters: [
-                    { "folder.folder_name": existingFileUploadData.folder_name },
-                ],
-            }
-        );
-        console.log(updateResult)
-        if (updateResult.modifiedCount === 1) {
-            responseData(res, "File data updated successfully", 200, true);
-        } else {
-            // If the folder does not exist, create a new folder object
-
-            const updateNewFolderResult = await fileuploadModel.updateOne(
-                { project_id: existingFileUploadData.project_id },
                 {
                     $push: {
-                        files: {
-                            folder_name: existingFileUploadData.folder_name,
-                            updated_date: existingFileUploadData.files[0].date,
-                            files: existingFileUploadData.files,
-                        },
+                        "files": { $each: existingFileUploadData.files },
                     },
+
+                },
+                {
+                    arrayFilters: [
+                        { "folder.folder_name": existingFileUploadData.folder_name },
+                    ],
                 }
             );
-            console.log(updateNewFolderResult)
-
-            if (updateNewFolderResult.modifiedCount === 1) {
-                responseData(res, "New folder created successfully", 200, true);
+            console.log(updateResult)
+            if (updateResult.modifiedCount === 1) {
+                responseData(res, "File data updated successfully", 200, true);
             } else {
-                console.log("Project not found or file data already updated");
-                responseData(
-                    res,
-                    "",
-                    404,
-                    false,
-                    "Project not found or file data already updated"
+                // If the folder does not exist, create a new folder object
+
+                const updateNewFolderResult = await fileuploadModel.updateOne(
+                    { project_id: existingFileUploadData.project_id },
+                    {
+                        $push: {
+                            files: {
+                                folder_name: existingFileUploadData.folder_name,
+                                updated_date: existingFileUploadData.files[0].date,
+                                files: existingFileUploadData.files,
+                            },
+                        },
+                    }
                 );
+                console.log(updateNewFolderResult)
+
+                if (updateNewFolderResult.modifiedCount === 1) {
+                    responseData(res, "New folder created successfully", 200, true);
+                } else {
+                    console.log("Project not found or file data already updated");
+                    responseData(
+                        res,
+                        "",
+                        404,
+                        false,
+                        "Project not found or file data already updated"
+                    );
+                }
             }
-        }
+            }
 
     } catch (error) {
         console.error("Error saving file upload data:", error);
@@ -539,51 +653,102 @@ const saveFileRestoreDataInProject = async (
 const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
     try {
 
-        let updateQuery = {};
-        updateQuery = {
-            $push: {
-                "files.$.files": { $each: existingFileUploadData.files },
-            },
+       if(existingFileUploadData ==='file')
+        {
+           let updateQuery = {};
+           updateQuery = {
+               $push: {
+                   "files.$.files": { $each: existingFileUploadData.files },
+               },
 
-        };
-
-
-        const updateResult = await fileuploadModel.updateOne(
-            {
-                type: existingFileUploadData.type,
-                "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
-                "files.folder_name": existingFileUploadData.folder_name,
-                "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
-            },
-            updateQuery,
-            {
-                arrayFilters: [
-                    { "folder.sub_folder_name_second": existingFileUploadData.sub_folder_name_second, },
-                ],
-            }
-        );
-
-        if (updateResult.modifiedCount === 1) {
-            responseData(res, "File data updated successfully", 200, true);
-        } else {
-            const firstFile = await fileuploadModel.create({
-                type: existingFileUploadData.type,
-                files: [
-                    {
-                        folder_name: existingFileUploadData.folder_name,
-                        sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
-                        sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
-                        updated_date: existingFileUploadData.files[0].updated_date,
-                        folder_id: existingFileUploadData.folder_Id,
-                        files: existingFileUploadData.files,
-                    },
-                ],
-            });
-
-            responseData(res, "File data updated successfully", 200, true);
+           };
 
 
+           const updateResult = await fileuploadModel.updateOne(
+               {
+                   type: existingFileUploadData.type,
+                   "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
+                   "files.folder_name": existingFileUploadData.folder_name,
+                   "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
+               },
+               updateQuery,
+               {
+                   arrayFilters: [
+                       { "folder.sub_folder_name_second": existingFileUploadData.sub_folder_name_second, },
+                   ],
+               }
+           );
+
+           if (updateResult.modifiedCount === 1) {
+               responseData(res, "File data updated successfully", 200, true);
+           } else {
+               const firstFile = await fileuploadModel.create({
+                   type: existingFileUploadData.type,
+                   files: [
+                       {
+                           folder_name: existingFileUploadData.folder_name,
+                           sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
+                           sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
+                           updated_date: existingFileUploadData.files[0].updated_date,
+                           folder_id: existingFileUploadData.folder_Id,
+                           files: existingFileUploadData.files,
+                       },
+                   ],
+               });
+
+               responseData(res, "File data updated successfully", 200, true);
+
+
+           }
         }
+        if(existingFileUploadData.deleted_type === 'folder')
+            {
+            let updateQuery = {};
+            updateQuery = {
+                $push: {
+                    "files": { $each: existingFileUploadData.files },
+                },
+
+            };
+
+
+            const updateResult = await fileuploadModel.updateOne(
+                {
+                    type: existingFileUploadData.type,
+                    "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
+                    "files.folder_name": existingFileUploadData.folder_name,
+                    "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
+                },
+                updateQuery,
+                {
+                    arrayFilters: [
+                        { "folder.sub_folder_name_second": existingFileUploadData.sub_folder_name_second, },
+                    ],
+                }
+            );
+
+            if (updateResult.modifiedCount === 1) {
+                responseData(res, "File data updated successfully", 200, true);
+            } else {
+                const firstFile = await fileuploadModel.create({
+                    type: existingFileUploadData.type,
+                    files: [
+                        {
+                            folder_name: existingFileUploadData.folder_name,
+                            sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
+                            sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
+                            updated_date: existingFileUploadData.files[0].updated_date,
+                            folder_id: existingFileUploadData.folder_Id,
+                            files: existingFileUploadData.files,
+                        },
+                    ],
+                });
+
+                responseData(res, "File data updated successfully", 200, true);
+
+
+            }
+            }
 
     } catch (error) {
         console.error("Error saving file upload data:", error);
