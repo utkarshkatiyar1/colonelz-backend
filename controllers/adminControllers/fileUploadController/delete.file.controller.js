@@ -2,6 +2,7 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import Archive from "../../../models/adminModels/archive.model.js";
 import { responseData } from "../../../utils/respounse.js";
 
+
 export const deleteFile = async (req, res) => {
     const { lead_id, project_id, folder_name, file_id: fileIds, type } = req.body;
 
@@ -78,7 +79,7 @@ export const deleteFile = async (req, res) => {
 
             if (data) {
                 let name;
-                if (!lead_id) {
+                if (!lead_id && !type === 'template') {
                     name = data.project_name;
                     await Archive.create({
                         lead_id,
@@ -92,7 +93,7 @@ export const deleteFile = async (req, res) => {
                         deleted_type:"file"
                     });
                 }
-                if (!project_id) {
+                if (!project_id && !type === 'template') {
                     name = data.lead_name;
                    
                     await Archive.create({
@@ -152,19 +153,32 @@ export const deleteFolder = async (req, res) => {
         let folder;
 
         if (type === "template") {
+            const folder_name = req.body.folder_name;
+            const sub_folder_name_first = req.body.sub_folder_name_first;
+            const sub_folder_name_second = req.body.sub_folder_name_second;
             const folderData = await fileuploadModel.findOne(
-                { "files.sub_folder_name_second": folder_name },
+                {
+                    "files.folder_name": folder_name,
+                    "files.sub_folder_name_first": sub_folder_name_first,
+                     "files.sub_folder_name_second": sub_folder_name_second },
 
             );
-            folder = folderData.files.find(fileGroup => fileGroup.folder_name === folder_name || fileGroup.sub_folder_name_second === folder_name),
+           
+            folder = folderData.files.find(fileGroup => fileGroup.folder_name === folder_name && fileGroup.sub_folder_name_first === sub_folder_name_first &&  fileGroup.sub_folder_name_second === sub_folder_name_second),
 
 
-                data = await fileuploadModel.findOneAndUpdate(
-                    { "files.sub_folder_name_second": folder_name },
-                    { $pull: { "files": { sub_folder_name_second: folder_name } } },
-                    { new: true }
+                data = await fileuploadModel.findOneAndDelete(
+                    {
+                        "files.folder_name": folder_name,
+                        "files.sub_folder_name_first": sub_folder_name_first,
+                        "files.sub_folder_name_second": sub_folder_name_second
+},
+                    // { $pull: { "files": { sub_folder_name_second: sub_folder_name_second } } },
+                    // { new: true }
                 );
-        } else {
+
+        } 
+        else {
             const folderData = await fileuploadModel.findOne(
                 {
                     $or: [
@@ -191,7 +205,7 @@ export const deleteFolder = async (req, res) => {
 
         if (data) {
             let name;
-            if (!lead_id) {
+            if (!lead_id && !type==='template') {
                 name = data.project_name;
                 await Archive.create({
                     lead_id,
@@ -200,14 +214,14 @@ export const deleteFolder = async (req, res) => {
                     project_id,
                     folder_name: type === "template" ? folder.folder_name: folder_name ,
                     sub_folder_name_first: type ==="template" ? folder.sub_folder_name_first : undefined,
-                    sub_folder_name_second: type === "template" ? folder_name : undefined,
+                    sub_folder_name_second: type === "template" ? folder.sub_folder_name_second : undefined,
                     files: [folder],
                     type,
                     deleted_type: "folder"
                     
                 });
             }
-            if (!project_id) {
+            if (!project_id && !type === 'template') {
                 name = data.lead_name;
                 await Archive.create({
                     lead_id,
@@ -231,7 +245,7 @@ export const deleteFolder = async (req, res) => {
                     project_id,
                     folder_name: type === "template" ? folder.folder_name : folder_name,
                     sub_folder_name_first: type === "template" ? folder.sub_folder_name_first : undefined,
-                    sub_folder_name_second: type === "template" ? folder_name : undefined,
+                    sub_folder_name_second: type === "template" ? folder.sub_folder_name_second: undefined,
                     files: [folder],
                     type,
                     deleted_type: "folder"
