@@ -649,6 +649,7 @@ const saveFileRestoreDataInProject = async (
 
 const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
     try {
+        
 
         if (existingFileUploadData.deleted_type === 'file') {
             let updateQuery = {};
@@ -685,7 +686,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
                             folder_name: existingFileUploadData.folder_name,
                             sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
                             sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
-                            updated_date: existingFileUploadData.files[0].updated_date,
+                            updated_date: existingFileUploadData.files[0].date,
                             folder_id: existingFileUploadData.folder_Id,
                             files: existingFileUploadData.files,
                         },
@@ -734,7 +735,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
                             sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
                             updated_date: existingFileUploadData.files[0].updated_date,
                             folder_id: existingFileUploadData.folder_Id,
-                            files: existingFileUploadData.files,
+                            files: existingFileUploadData.files[0].files,
                         },
                     ],
                 });
@@ -759,6 +760,7 @@ export const restoreData = async (req, res) => {
         const type = req.body.type;
         const file_id = req.body.file_id;
         const folder_name = req.body.folder_name;
+        const restore_type = req.body.restore_type;
 
 
         if (!user_id) {
@@ -787,7 +789,7 @@ export const restoreData = async (req, res) => {
 
                 );
 
-                if (filesData.deleted_type === "file") {
+                if (restore_type === 'file') {
                     saveFileUploadDataInTemplate(res, filesData)
                     await archiveModel.findOneAndDelete(
                         {
@@ -803,7 +805,7 @@ export const restoreData = async (req, res) => {
 
 
                 }
-                if (filesData.deleted_type === 'folder') {
+                if (restore_type === 'folder') {
                     saveFileUploadDataInTemplate(res, filesData);
                     await archiveModel.findOneAndDelete(
                         {
