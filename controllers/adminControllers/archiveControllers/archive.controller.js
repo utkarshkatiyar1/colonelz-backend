@@ -537,7 +537,7 @@ const saveFileRestoreDataInProject = async (
                 },
                 {
                     $push: {
-                        "files.$.files": { $each: existingFileUploadData.files[0].files },
+                        "files.$.files": { $each: existingFileUploadData.files },
                     },
 
                 },
@@ -590,7 +590,7 @@ const saveFileRestoreDataInProject = async (
                 },
                 {
                     $push: {
-                        "files.$.files": { $each: existingFileUploadData.files },
+                        "files.$.files": { $each: existingFileUploadData.files[0].files },
                     },
 
                 },
@@ -649,7 +649,7 @@ const saveFileRestoreDataInProject = async (
 
 const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
     try {
-        
+
 
         if (existingFileUploadData.deleted_type === 'file') {
             let updateQuery = {};
@@ -834,9 +834,9 @@ export const restoreData = async (req, res) => {
 
                 );
 
-                if (filesData.deleted_type === 'file') {
+                if (restore_type === 'file') {
                     if (!filesData.project_id) {
-                        saveFileRestoreDataInLead(res, filesData);
+                        await saveFileRestoreDataInLead(res, filesData);
                         await archiveModel.findOneAndDelete(
                             {
                                 $or: [
@@ -849,7 +849,7 @@ export const restoreData = async (req, res) => {
                         );
                     }
                     if (!filesData.lead_id) {
-                        saveFileRestoreDataInProject(res, filesData)
+                        await saveFileRestoreDataInProject(res, filesData)
                         await archiveModel.findOneAndDelete(
                             {
                                 $or: [
@@ -864,9 +864,9 @@ export const restoreData = async (req, res) => {
 
 
                 }
-                if (filesData.deleted_type === 'folder') {
+                if (restore_type === 'folder') {
                     if (!filesData.project_id) {
-                        saveFileRestoreDataInLead(res, filesData)
+                        await saveFileRestoreDataInLead(res, filesData)
                         await archiveModel.findOneAndDelete(
                             {
                                 $or: [
@@ -878,7 +878,7 @@ export const restoreData = async (req, res) => {
                         );
                     }
                     if (!filesData.lead_id) {
-                        saveFileRestoreDataInProject(res, filesData)
+                        await saveFileRestoreDataInProject(res, filesData)
                         await archiveModel.findOneAndDelete(
                             {
                                 $or: [
