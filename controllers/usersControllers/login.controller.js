@@ -23,6 +23,9 @@ const insertLogInData = async (res, user, io) => {
   loginUserData
     .save()
     .then((_result) => {
+      // Emit login event
+      io.emit("login", user[0]._id);
+
       responseData(res, "login successfully", 200, true, "", {
         userID: user[0]._id,
         token,
@@ -60,11 +63,9 @@ export const login = async (req, res) => {
               if (GetlogToken.length < 5) {
                 insertLogInData(res, user, io);
               } else {
-                // Remove the oldest token
                 const firstObjGet = GetlogToken[0]._id;
                 await loginModel.deleteOne({ _id: firstObjGet });
 
-                // Notify the user about logout via socket
                 io.to(user[0]._id.toString()).emit("loggedOut", { message: "You have been logged out due to multiple logins." });
 
                 insertLogInData(res, user, io);

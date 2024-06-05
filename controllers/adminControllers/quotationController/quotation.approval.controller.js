@@ -502,7 +502,7 @@ function approvalLink(project_id, file_id, status) {
 }
 
 function approvalLinkClient(project_id, file_id, status) {
-    return `https://col-phase2.test.initz.run/v1/api/users/approval/client/${project_id}/${file_id}/${status}`;
+    return `http://localhost:5173/quotation?project_id=${project_id}&file_id=${file_id}`;
 }
 
 

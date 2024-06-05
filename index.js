@@ -14,16 +14,25 @@ import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
 import { Server } from "socket.io";
+// import { HttpsProxyAgent } from "https-proxy-agent";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
+app.use(bodyParser.json());
+app.use(express.json());
+app.use(fileUpload());
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.static("public")); // configure static file to save images locally
+app.use(cookieParser());
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: "*"
   },
+  methods: ["GET", "POST"]
 });
 
 dotenv.config({
@@ -46,55 +55,39 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
+const userSessions = {}; // Track active sessions per user
+
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  // Monitor connection status
-  socket.on("checkConnection", (callback) => {
-    if (socket.connected) {
-      callback({ connected: true });
-    } else {
-      callback({ connected: false });
+  socket.on("login", async (userId) => {
+    if (!userSessions[userId]) {
+      userSessions[userId] = [];
     }
+
+    // Limit to 5 active sessions
+    if (userSessions[userId].length >= 5) {
+      const oldestSession = userSessions[userId].shift();
+      io.to(oldestSession).emit("loggedOut", { message: "You have been logged out due to multiple logins." });
+    }
+
+    userSessions[userId].push(socket.id);
+    socket.userId = userId;
+    console.log(`User ${userId} logged in. Active sessions: ${userSessions[userId].length}`);
   });
 
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
+    if (socket.userId && userSessions[socket.userId]) {
+      userSessions[socket.userId] = userSessions[socket.userId].filter(id => id !== socket.id);
+      console.log(`User ${socket.userId} disconnected. Active sessions: ${userSessions[socket.userId].length}`);
+    }
   });
 });
-
-app.use(bodyParser.json());
-app.use(express.json());
-app.use(fileUpload());
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-app.use(express.static("public"));
-app.use(cookieParser());
-app.use(cors());
-app.use(requestIp.mw());
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000, // Limit each IP to 500 requests per `window` (here, per 15 minutes)
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req, res) => req.clientIp,
-  handler: (_, __, ___, options) => {
-    throw new Error(
-      `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`
-    );
-  },
-});
-
-app.use(limiter);
 
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
-
-app.use("/v1/api/admin", adminRoutes);
-app.use("/v1/api/users", usersRouter);
 
 async function checkSMTPConnection(config) {
   let transporter = nodemailer.createTransport(config);
@@ -119,6 +112,31 @@ const smtpConfig = {
   },
   debug: true,
 };
+
+app.use(cors());
+
+app.use(requestIp.mw());
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req, res) => {
+    return req.clientIp;
+  },
+  handler: (_, __, ___, options) => {
+    throw new ApiError(
+      options.statusCode || 500,
+      `There are too many requests. You are only allowed ${options.max
+      } requests per ${options.windowMs / 60000} minutes`
+    );
+  },
+});
+
+app.use(limiter);
+
+app.use("/v1/api/admin", adminRoutes);
+app.use("/v1/api/users", usersRouter);
 
 server.listen(8000, async () => {
   await connect();

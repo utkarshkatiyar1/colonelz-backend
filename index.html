@@ -14,7 +14,7 @@
       loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const formData = new FormData(loginForm);
-        const user_name = formData.get("username");
+        const username = formData.get("username");
         const password = formData.get("password");
 
         try {
@@ -23,11 +23,13 @@
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ user_name, password }),
+            body: JSON.stringify({ user_name: username, password: password }),
           });
           const data = await response.json();
           if (data.success) {
             messageContainer.innerText = "Login successful!";
+            // Redirect to dashboard
+            window.location.href = "/dashboard";
           } else {
             messageContainer.innerText = data.message;
           }
@@ -39,6 +41,7 @@
       // Listen for the loggedOut event from the server
       socket.on("loggedOut", (data) => {
         alert(data.message); // Show a popup or display a message to the user
+        window.location.href = "/login"; // Redirect to login page
       });
     });
   </script>
