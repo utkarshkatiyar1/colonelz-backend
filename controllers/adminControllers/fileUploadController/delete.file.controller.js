@@ -55,9 +55,8 @@ export const deleteFile = async (req, res) => {
                     },
 
                 );
-                console.log(filesData)
+               
                 file = filesData.files.find(fileGroup => fileGroup.files.some(file => file.fileId === fileIds[i])).files.find(file => file.fileId === fileIds[i]);
-
 
                 data = await fileuploadModel.findOneAndUpdate(
                     {
@@ -79,9 +78,9 @@ export const deleteFile = async (req, res) => {
 
             if (data) {
                 let name;
-                if (!lead_id && !type === 'template') {
+                if (!lead_id && !type) {
                     name = data.project_name;
-                    await Archive.create({
+                   const check =  await Archive.create({
                         lead_id,
                         lead_name: type === "template" ? "" : "",
                         project_name: type === "template" ? "" : name,
@@ -92,8 +91,9 @@ export const deleteFile = async (req, res) => {
                         type,
                         deleted_type:"file"
                     });
+                  
                 }
-                if (!project_id && !type === 'template') {
+                if (!project_id && !type) {
                     name = data.lead_name;
                    
                     await Archive.create({
