@@ -60,7 +60,7 @@ export const login = async (req, res) => {
             try {
               const GetlogToken = await loginModel.find({ userID: user[0]._id });
 
-              if (GetlogToken.length < 5) {
+              if (GetlogToken.length < 2) {
                 insertLogInData(res, user, io);
               } else {
                 const firstObjGet = GetlogToken[0]._id;
