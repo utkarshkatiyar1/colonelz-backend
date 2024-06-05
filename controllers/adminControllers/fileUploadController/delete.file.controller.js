@@ -205,7 +205,7 @@ export const deleteFolder = async (req, res) => {
 
         if (data) {
             let name;
-            if (!lead_id && !type==='template') {
+            if (!lead_id && !type) {
                 name = data.project_name;
                 await Archive.create({
                     lead_id,
@@ -221,7 +221,7 @@ export const deleteFolder = async (req, res) => {
                     
                 });
             }
-            if (!project_id && !type === 'template') {
+            if (!project_id && !type) {
                 name = data.lead_name;
                 await Archive.create({
                     lead_id,
