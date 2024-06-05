@@ -28,8 +28,8 @@ router.route("/getdata").get(getUserData)
 router.route("/profileurl").post(profileupload)
 
 // router.route("/").get(checkAvailableUserIsAdmin)
-router.route("/approval/admin/:project_id/:file_id/:status").get(updateStatus)
-router.route("/approval/client/:project_id/:file_id/:status").get(updateStatusClient)
+router.route("/approval/admin").post(updateStatus)
+router.route("/approval/client").post(updateStatusClient)
 router.route("/approval/contract/admin/:lead_id/:fileId/:status").get(updateStatusAdmin)
 
 export default router;

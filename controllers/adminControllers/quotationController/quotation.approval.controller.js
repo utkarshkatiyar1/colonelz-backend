@@ -508,9 +508,10 @@ function approvalLinkClient(project_id, file_id, status) {
 
 export const updateStatus = async (req, res) => {
     try {
-        const status = req.params.status;
-        const project_id = req.params.project_id;
-        const itemId = req.params.file_id;
+        const status = req.body.status;
+        const project_id = req.body.project_id;
+        const itemId = req.body.file_id;
+        const remark = req.body.remark;
         const check_status = await projectModel.findOne({
             project_id: project_id,
             "quotation.$.itemId": itemId
@@ -518,7 +519,7 @@ export const updateStatus = async (req, res) => {
         for (let i = 0; i < check_status.quotation.length; i++) {
             if (check_status.quotation[i].itemId == itemId) {
                 if (check_status.quotation[i].admin_status !== "pending") {
-                    res.send('you are already submit your response')
+                    return responseData(res, "", 400, false, "you are already submit your response");
                 }
                 else {
                     try {
@@ -562,7 +563,8 @@ export const updateStatus = async (req, res) => {
                             }
 
                         );
-                        res.send('Quotation approved successfully!');
+                        // res.send('Quotation approved successfully!');
+                        responseData(res, "Quotation approved successfully!", 200, true, "")
 
                     } if (status === 'rejected') {
                         await projectModel.findOneAndUpdate(
@@ -573,6 +575,8 @@ export const updateStatus = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].admin_status": status,
+                                    "quotation.$[elem].remark": remark,
+                                    
 
                                 }
                             },
@@ -581,7 +585,8 @@ export const updateStatus = async (req, res) => {
                                 new: true
                             }
                         );
-                        res.send('Quotation rejected successfully!');
+                      
+                        responseData(res, "Quotation rejected successfully!", 200, true, "")
                     }
                 }
             }
@@ -597,9 +602,10 @@ export const updateStatus = async (req, res) => {
 
 export const updateStatusClient = async (req, res) => {
     try {
-        const status = req.params.status;
-        const project_id = req.params.project_id;
-        const itemId = req.params.file_id;
+        const status = req.body.status;
+        const project_id = req.body.project_id;
+        const itemId = req.body.file_id;
+        const remark = req.body.remark;
 
         const check_status = await projectModel.findOne({
             project_id: project_id,
@@ -608,7 +614,7 @@ export const updateStatusClient = async (req, res) => {
         for (let i = 0; i < check_status.quotation.length; i++) {
             if (check_status.quotation[i].itemId == itemId) {
                 if (check_status.quotation[i].client_status !== "pending") {
-                    res.send(`you are already submit your response`)
+                    return responseData(res, "", 400, false, "you are already submit your response");
                 }
                 else {
                     if (status === 'approved') {
@@ -630,7 +636,8 @@ export const updateStatusClient = async (req, res) => {
                             }
 
                         );
-                        res.send('Quotation approved successfully!');
+                        res.send('');
+                        responseData(res, "Quotation approved successfully!", 200, true,"")
                     } if (status === 'rejected') {
                         await projectModel.findOneAndUpdate(
                             {
@@ -640,6 +647,7 @@ export const updateStatusClient = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].client_status": status,
+                                    "quotation.$[elem].client_remark":remark,
 
                                 }
                             },
@@ -649,7 +657,7 @@ export const updateStatusClient = async (req, res) => {
                             }
 
                         );
-                        res.send('Quotation rejected successfully!');
+                        responseData(res, "Quotation rejected Successfully", 200, true, "")
                     }
                 }
             }
