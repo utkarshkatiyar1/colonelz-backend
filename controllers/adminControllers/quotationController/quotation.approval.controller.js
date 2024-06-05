@@ -659,6 +659,27 @@ export const updateStatusClient = async (req, res) => {
                         );
                         responseData(res, "Quotation rejected Successfully", 200, true, "")
                     }
+                    if (status === 'amended') {
+                        await projectModel.findOneAndUpdate(
+                            {
+                                project_id: project_id,
+                                "quotation.$.itemId": itemId
+                            },
+                            {
+                                $set: {
+                                    "quotation.$[elem].client_status": status,
+                                    "quotation.$[elem].client_amend": remark,
+
+                                }
+                            },
+                            {
+                                arrayFilters: [{ "elem.itemId": itemId }],
+                                new: true
+                            }
+
+                        );
+                        responseData(res, "Response submitted successfully", 200, true, "")
+                    }
                 }
             }
         }
