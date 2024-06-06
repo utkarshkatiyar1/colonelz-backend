@@ -60,20 +60,21 @@ const userSessions = {}; // Track active sessions per user
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on("login", async (userId) => {
-    if (!userSessions[userId]) {
-      userSessions[userId] = [];
+  socket.on("login", async (userID) => {
+    console.log(userID)
+    if (!userSessions[userID]) {
+      userSessions[userID] = [];
     }
 
     // Limit to 5 active sessions
-    if (userSessions[userId].length >= 2) {
-      const oldestSession = userSessions[userId].shift();
-      io.to(oldestSession).emit("loggedOut", { message: "You have been logged out due to multiple logins." });
+    if (userSessions[userID].length >= 2) {
+      const oldestSession = userSessions[userID].shift();
+      io.to(oldestSession).emit("loggedOut", {userID});
     }
 
-    userSessions[userId].push(socket.id);
-    socket.userId = userId;
-    console.log(`User ${userId} logged in. Active sessions: ${userSessions[userId].length}`);
+    userSessions[userID].push(socket.id);
+    socket.userID = userID;
+    console.log(`User ${userID} logged in. Active sessions: ${userSessions[userID].length}`);
   });
 
   socket.on("disconnect", () => {

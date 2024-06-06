@@ -66,6 +66,7 @@ export const createUser = async (req, res) => {
                                     role: role,
                                     status: true,
                                     userProfile: "",
+                                    organization:"Colonelz",
                                     password: hash,
                                     data: {
                                         projectData: [],
@@ -115,6 +116,7 @@ export const createUser = async (req, res) => {
                                     if (error) {
                                         responseData(res, "", 400, false, "Failed to send email");
                                     } else {
+                                        
                                         newUser.save();
                                         responseData(
                                             res,
@@ -154,6 +156,7 @@ export const createUser = async (req, res) => {
 export const getUser = async (req, res) => {
     try {
         const users = await registerModel.find({ status: true })
+        console.log(users)
         if (users) {
             const filteredUsers = users.reduce((acc, user) => {
                 if (user) {

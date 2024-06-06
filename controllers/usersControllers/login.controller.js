@@ -41,6 +41,7 @@ export const login = async (req, res) => {
   const user_name = req.body.user_name;
   const password = req.body.password;
   const io = req.io;
+ 
 
   if (!user_name) {
     responseData(res, "", 400, false, "user_name is required");
@@ -67,7 +68,7 @@ export const login = async (req, res) => {
                 await loginModel.deleteOne({ _id: firstObjGet });
 
                 io.to(user[0]._id.toString()).emit("loggedOut", { message: "You have been logged out due to multiple logins." });
-
+                console.log(io.to(user[0]._id.toString()).emit)
                 insertLogInData(res, user, io);
               }
             } catch (error) {
