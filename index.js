@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
     }
 
     // Limit to 5 active sessions
-    if (userSessions[userId].length >= 5) {
+    if (userSessions[userId].length >= 2) {
       const oldestSession = userSessions[userId].shift();
       io.to(oldestSession).emit("loggedOut", { message: "You have been logged out due to multiple logins." });
     }
