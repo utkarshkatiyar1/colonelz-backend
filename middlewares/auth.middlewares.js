@@ -232,7 +232,7 @@ export const isAdmin = async(req,res,next) =>{
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" )
+    if (user.role === "ADMIN" || user.role ==="Senior Architect")
   {
     next(); // Proceed to the next 
   }

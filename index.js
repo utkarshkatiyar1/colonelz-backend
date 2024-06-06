@@ -55,35 +55,8 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
-const userSessions = {}; // Track active sessions per user
 
-io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
 
-  socket.on("login", async (userID) => {
-    console.log(userID)
-    if (!userSessions[userID]) {
-      userSessions[userID] = [];
-    }
-
-    // Limit to 5 active sessions
-    if (userSessions[userID].length >= 2) {
-      const oldestSession = userSessions[userID].shift();
-      io.to(oldestSession).emit("loggedOut", {userID});
-    }
-
-    userSessions[userID].push(socket.id);
-    socket.userID = userID;
-    console.log(`User ${userID} logged in. Active sessions: ${userSessions[userID].length}`);
-  });
-
-  socket.on("disconnect", () => {
-    if (socket.userId && userSessions[socket.userId]) {
-      userSessions[socket.userId] = userSessions[socket.userId].filter(id => id !== socket.id);
-      console.log(`User ${socket.userId} disconnected. Active sessions: ${userSessions[socket.userId].length}`);
-    }
-  });
-});
 
 app.use((req, res, next) => {
   req.io = io;

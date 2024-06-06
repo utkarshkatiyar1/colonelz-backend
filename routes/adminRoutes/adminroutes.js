@@ -65,11 +65,11 @@ router.route("/view/contract").post(verifyJWT, contractShare);
 router.route("/share/file").post(verifyJWT, shareFile);
 router.route("/template/fileupload").post(verifyJWT, templateFileUpload);
 router.route("/template/single/file").get(verifyJWT, getSingleTemplateFile);
-router.route("/delete/file").delete(verifyJWT, deleteFile);
+router.route("/delete/file").delete(verifyJWT, isAdmin, deleteFile);
 router.route("/share/contract").post(verifyJWT, shareContract);
 router.route("/contract/approval").post(verifyJWT, contractStatus);
 router.route("/get/contractdata").get(verifyJWT, getContractData);
-router.route("/delete/folder").delete(verifyJWT, deleteFolder);
+router.route("/delete/folder").delete(verifyJWT, isAdmin, deleteFolder);
 
 
 
@@ -102,9 +102,9 @@ router.route("/get/notification").get(verifyJWT, checkAvailableUserIsAdmin, getN
 router.route("/update/notification").put(verifyJWT, updateNotification);
 
 
-router.route("/get/archive").get(verifyJWT, archive);
-router.route("/delete/archive").delete(verifyJWT, deletearchive);
-router.route("/restore/file").post(verifyJWT, restoreData);
+router.route("/get/archive").get(verifyJWT, isAdmin, archive);
+router.route("/delete/archive").delete(verifyJWT, isAdmin, deletearchive);
+router.route("/restore/file").post(verifyJWT, isAdmin, restoreData);
 
 
 
