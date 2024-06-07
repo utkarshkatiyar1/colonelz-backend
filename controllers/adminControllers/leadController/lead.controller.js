@@ -84,11 +84,10 @@ export const createLead = async (req, res) => {
       if (check_email.length < 1) {
         const lead_id = generateSixDigitNumber();
         const check_user = await registerModel.findById(userId)
-
+        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role ==='Project Architect')
+          {
 
         let fileUrls = []
-
-
         const lead = new leadModel({
           name: name,
           lead_id: lead_id,
@@ -110,7 +109,7 @@ export const createLead = async (req, res) => {
             },
           ],
         });
-        const lead_data = await lead.save();
+      
         const fileUploadData = new fileuploadModel({
           lead_id: lead_id,
           lead_name: name,
@@ -133,7 +132,25 @@ export const createLead = async (req, res) => {
           ]
 
         })
-
+          if (check_user.role ==='Project Architect')
+            {
+            const add_project_in_user = await registerModel.findOneAndUpdate(
+              { _id: userId },
+              {
+                $push: {
+                  "data.$[outer].leadData": {
+                    lead_id: lead_id,
+                    role: check_user.role,
+                  }
+                }
+              },
+              {
+                arrayFilters: [{ "outer.leadData": { $exists: true } }]
+              }
+            );
+            }
+         
+  const lead_data = await lead.save();
         await fileUploadData.save()
         responseData(
           res,
@@ -143,6 +160,16 @@ export const createLead = async (req, res) => {
           "",
         );
       }
+      else{
+        responseData(
+          res,
+          "You have not access to create lead",
+          400,
+          false,
+          "",
+        );
+      }
+    }
 
     } catch (err) {
       console.log(err);

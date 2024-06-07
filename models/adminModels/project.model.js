@@ -9,7 +9,7 @@ const quotationSchema = new mongoose.Schema({
   files: [],
   remark: String,
   client_remark:String,
-  client_amend:String
+  
 });
 
 const projectSchema = new mongoose.Schema({

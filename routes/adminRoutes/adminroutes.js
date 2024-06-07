@@ -39,7 +39,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { createUser, deleteUser, getUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, isAdmin } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, isAdmin, isProcurement } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -77,7 +77,7 @@ router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAll
 router.route("/getsingle/project").get(verifyJWT, getSingleProject);
 router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT, checkAvailableUserIsAdmin, createLead);
+router.route("/create/lead").post(verifyJWT,createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
 router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
 router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
@@ -91,9 +91,9 @@ router.route("/getall/project/mom").get(verifyJWT, checkAvailableUserIsAdmin, ge
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
-router.route("/share/quotation").post(verifyJWT, shareQuotation);
-router.route("/get/quotationdata").get(verifyJWT, getQuotationData);
-router.route("/quotation/approval").post(verifyJWT, updateStatusAdmin);
+router.route("/share/quotation").post(verifyJWT, isProcurement, shareQuotation);
+router.route("/get/quotationdata").get(verifyJWT,isProcurement, getQuotationData);
+router.route("/quotation/approval").post(verifyJWT,isProcurement, updateStatusAdmin);
 
 
 

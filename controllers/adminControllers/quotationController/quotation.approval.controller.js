@@ -627,6 +627,7 @@ export const updateStatusClient = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].client_status": status,
+                                    "quotation.$[elem].client_remark": remark,
 
                                 }
                             },
@@ -668,7 +669,7 @@ export const updateStatusClient = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].client_status": status,
-                                    "quotation.$[elem].client_amend": remark,
+                                    "quotation.$[elem].client_remark": remark,
 
                                 }
                             },

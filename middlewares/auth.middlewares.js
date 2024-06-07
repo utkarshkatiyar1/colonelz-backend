@@ -232,7 +232,7 @@ export const isAdmin = async(req,res,next) =>{
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" || user.role ==="Senior Architect")
+    if (user.role === "ADMIN" || user.role ==="Senior Architect" )
   {
     next(); // Proceed to the next 
   }
@@ -245,6 +245,49 @@ export const isAdmin = async(req,res,next) =>{
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
   }
 }
+
+
+
+export const isProcurement = async (req, res, next) => {
+
+  try {
+    const token = req.cookies?.auth ||
+      req.header("Authorization")?.replace("Bearer", "").trim();
+    ;
+    if (!token) {
+      return responseData(
+        res,
+        "",
+        401,
+        false,
+        "Unauthorized: No token provided"
+      );
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+
+    const user = await registerModel.findById(decodedToken?.id);
+
+
+    if (!user) {
+      return responseData(res, "", 401, false, "Unauthorized: User not found");
+    }
+
+    if (user.role === "ADMIN" || user.role === "Executive Assistant" || user.role === "Senior Architect" ) {
+      next(); // Proceed to the next 
+    }
+    else {
+      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
+    }
+
+  } catch (err) {
+
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+}
+
+
 
 
 

@@ -13,8 +13,9 @@ import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
-import { Server } from "socket.io";
-// import { HttpsProxyAgent } from "https-proxy-agent";
+import session from "express-session";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,17 +28,15 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.static("public")); // configure static file to save images locally
 app.use(cookieParser());
 
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*"
-  },
-  methods: ["GET", "POST"]
-});
+// Session configuration
+app.use(session({
+  secret: process.env.EXPRESS_SESSION_SECRET || 'yourSecretKey',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Note: secure should be true in production with HTTPS
+}));
 
-dotenv.config({
-  path: "./.env",
-});
+const server = createServer(app);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -53,14 +52,6 @@ const connect = async () => {
 
 mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
-});
-
-
-
-
-app.use((req, res, next) => {
-  req.io = io;
-  next();
 });
 
 async function checkSMTPConnection(config) {
@@ -101,13 +92,22 @@ const limiter = rateLimit({
   handler: (_, __, ___, options) => {
     throw new ApiError(
       options.statusCode || 500,
-      `There are too many requests. You are only allowed ${options.max
-      } requests per ${options.windowMs / 60000} minutes`
+      `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`
     );
   },
 });
 
 app.use(limiter);
+// const isAuthenticated = (req, res, next) => {
+//   console.log(req.session)
+//   if (req.session.user) {
+   
+//     next();
+//   } else {
+
+//     res.status(401).send('Unauthorized');
+//   }
+// };
 
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);

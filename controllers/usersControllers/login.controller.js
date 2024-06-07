@@ -22,7 +22,6 @@ const insertLogInData = async (res, user, io) => {
   loginUserData
     .save()
     .then((_result) => {
-      io.emit("login", user[0]._id);
 
       responseData(res, "Login successfully", 200, true, "", {
         userID: user[0]._id,
@@ -56,31 +55,17 @@ export const login = async (req, res) => {
       responseData(res, "", 404, false, "Username or password does not match");
       return;
     }
+    console
 
     bcrypt.compare(password, user[0].password, async (_err, result) => {
+
       if (!result) {
         responseData(res, "", 401, false, "Username or password does not match");
         return;
       }
+      insertLogInData(res, user);
 
-      try {
-        const GetlogToken = await loginModel.find({ userID: user[0]._id });
-
-        if (GetlogToken.length < 2) {
-          insertLogInData(res, user, io);
-        } else {
-          const firstObjGet = GetlogToken[0]._id;
-          await loginModel.deleteOne({ _id: firstObjGet });
-
-          io.to(user[0]._id.toString()).emit("loggedOut", {
-            message: "You have been logged out due to multiple logins."
-          });
-
-          insertLogInData(res, user, io);
-        }
-      } catch (error) {
-        responseData(res, "", 500, false, "Unable to retrieve tokens");
-      }
+     
     });
   } catch (err) {
     responseData(res, "", 500, false, "Internal server error");
