@@ -63,6 +63,88 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
     {
       next();
     }
+    else if (user.role ==='Executive Assistant')
+      {
+      
+      try {
+        const data = await fileuploadModel.find({});
+        if (data.length > 0) {
+          let projectData = []
+          
+          await Promise.all(data.map(async (element) => {
+            if (element.project_id != null) {
+              const check_project = await projectModel.findOne({ project_id: element.project_id });
+              if (check_project) {
+                projectData.push({
+                  project_name: element.project_name,
+                  project_id: element.project_id,
+                  client_name: check_project.client[0].client_name,
+                  project_type: check_project.project_type,
+                  project_status: check_project.project_status,
+                  files: element.files
+                });
+              }
+            }
+
+          }))
+          let execution = [];
+          let design = [];
+          let completed = [];
+          let archive = [];
+          const projects = await projectModel.find({}).sort({ createdAt: -1 });
+          for (let i = 0; i < projects.length; i++) {
+            if (projects[i].project_status == "executing") {
+              execution.push(projects[i]);
+            }
+            if (projects[i].project_status == "designing") {
+              design.push(projects[i]);
+            }
+            if (projects[i].project_status == "completed") {
+              completed.push(projects[i]);
+              
+            }
+          }
+
+         
+
+          const response = {
+            total_Project: projects.length,
+            Execution_Phase: execution.length,
+            Design_Phase: design.length,
+            completed: completed.length,
+            archive: archive.length,
+            active_Project: projects.length - completed.length,
+            projects,
+            projectData: projectData,
+          
+          }
+          responseData(
+            res,
+            `Data Found Successfully !`,
+            200,
+            true,
+            "",
+            response
+          );
+        }
+        if (data.length < 1) {
+
+          responseData(
+            res,
+            "",
+            404,
+            false,
+            "Data Not Found! ",
+
+          );
+        }
+      } catch (err) {
+        res.send(err);
+        console.log(err);
+      }
+
+
+      }
     else if (user.role ==='Jr. Executive HR & Marketing')
     {
       try{
@@ -110,12 +192,6 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
         let completed = [];
         let archive = [];
         let MomData = [];
-
-
-       
-        
-
-
 
         for (const item of user.data[0].projectData) {
           let find_project = await projectModel.findOne({ project_id: item.project_id });
