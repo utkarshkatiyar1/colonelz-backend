@@ -122,7 +122,15 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           if (find_project) {
             let find_file = await fileuploadModel.findOne({ project_id: item.project_id });
             if (find_file) {
-              projectData.push(find_file);
+              // projectData.push(find_file);
+              projectData.push({
+                project_name: find_project.project_name,
+                project_id: find_project.project_id,
+                client_name: find_project_project.client[0].client_name,
+                project_type: find_project_project.project_type,
+                project_status: find_project.project_status,
+                files: find_file.files
+              });
             }
             if (find_project.mom.length !== 0) {
               // console.log(find_project.mom)
@@ -169,7 +177,17 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
             const find_files = await fileuploadModel.findOne({ lead_id: item.lead_id })
             if(find_files)
             {
-              leadData.push(find_files)
+              leadData.push({
+
+                lead_id: find_lead.lead_id,
+                lead_Name: find_lead.lead_name,
+                lead_email: find_lead.email,
+                lead_phone: find_lead.phone,
+                lead_status: find_lead.status,
+                lead_date: find_lead.date,
+                files: find_files.files
+
+              })
             }
             leads.push(find_lead)
 
