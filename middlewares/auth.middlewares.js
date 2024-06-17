@@ -236,7 +236,8 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
               project_start_date:find_project.project_start_date,
               project_budget:find_project.project_budget,
               project_description:find_project.project_description,
-              designer: find_project.designer
+              designer: find_project.designer,
+              client:find_project.client
 
             });
 

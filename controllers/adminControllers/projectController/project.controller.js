@@ -64,7 +64,7 @@ export const getAllProject = async (req, res) => {
         let archive = [];
         let projects = [];
         const project = await projectModel.find({}).sort({ createdAt: -1 });
-        console.log(projects)
+        
         for (let i = 0; i < project.length; i++) {
           if (project[i].project_status == "executing") {
             execution.push(project[i]);
@@ -92,7 +92,8 @@ export const getAllProject = async (req, res) => {
             project_budget: project[i].project_budget,
             client_name: project[i].client[0].client_name,
             project_type: project[i].project_type,
-            designer:project[i].designer
+            designer:project[i].designer,
+            client:project[i].client
 
           });
         }
