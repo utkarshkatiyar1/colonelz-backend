@@ -226,7 +226,19 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
               }
             }
-            projects.push(find_project);
+            projects.push({
+              project_name: find_project.project_name,
+              project_id: find_project.project_id,
+              client_name: find_project.client[0].client_name,
+              project_type: find_project.project_type,
+              project_status: find_project.project_status,
+              project_end_date:find_project.project_end_date,
+              project_start_date:find_project.project_start_date,
+              project_budget:find_project.project_budget,
+              project_description:find_project.project_description,
+              designer: find_project.designer
+
+            });
 
           }
 

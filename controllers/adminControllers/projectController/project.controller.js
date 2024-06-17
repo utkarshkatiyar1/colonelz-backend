@@ -62,22 +62,39 @@ export const getAllProject = async (req, res) => {
         let design = [];
         let completed = [];
         let archive = [];
-        const projects = await projectModel.find({}).sort({ createdAt: -1 });
-        for (let i = 0; i < projects.length; i++) {
-          if (projects[i].project_status == "executing") {
-            execution.push(projects[i]);
+        let projects = [];
+        const project = await projectModel.find({}).sort({ createdAt: -1 });
+        console.log(projects)
+        for (let i = 0; i < project.length; i++) {
+          if (project[i].project_status == "executing") {
+            execution.push(project[i]);
           }
-          if (projects[i].project_status == "designing") {
-            design.push(projects[i]);
+          if (project[i].project_status == "designing") {
+            design.push(project[i]);
           }
-          if (projects[i].project_status == "completed") {
-            completed.push(projects[i]);
-            const createdDate = projects[i].project_end_date;
+          if (project[i].project_status == "completed") {
+            completed.push(project[i]);
+            const createdDate = project[i].project_end_date;
             const isOlderThan6Months = isProjectOlderThan6Months(createdDate);
             if (isOlderThan6Months) {
               archive.push(isOlderThan6Months);
             }
           }
+          
+          projects.push({
+            project_id: project[i].project_id,
+            project_name: project[i].project_name,
+            project_status: project[i].project_status,
+            project_start_date: project[i].project_start_date,
+            project_end_date: project[i].project_end_date,
+            project_description: project[i].project_description,
+            project_image: project[i].project_image,
+            project_budget: project[i].project_budget,
+            client_name: project[i].client[0].client_name,
+            project_type: project[i].project_type,
+            designer:project[i].designer
+
+          });
         }
 
         const response = {

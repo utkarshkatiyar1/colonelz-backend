@@ -312,6 +312,7 @@ export const leadToProject = async (req, res) => {
       if (find_lead.length > 0) {
         const find_project = await projectModel.find({ lead_id: lead_id })
         if (find_project.length > 0) {
+          
           responseData(res, "", 400, false, "project already exist for this lead", []);
         }
         if (find_project.length < 1) {
