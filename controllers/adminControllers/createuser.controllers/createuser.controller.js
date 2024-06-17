@@ -99,7 +99,7 @@ export const createUser = async (req, res) => {
     
 
      <p>Please click on the following link to login:</p>
-    <p><a href="https://freeapi-app.vercel.app/sign-in">Login</a></p>
+    <p><a href="https://colonelzfront.test.initz.run/sign-in?redirectUrl=/app/crm/dashboard">Login</a></p>
 
     <p>Please use the above credentials to log in to our system.</p>
     

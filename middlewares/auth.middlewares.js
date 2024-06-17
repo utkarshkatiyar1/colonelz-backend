@@ -179,7 +179,8 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           console.error("Error executing notification cron job:", error);
         }
       });
-      
+     
+     
 
         let userData = [];
         let projects = [];
@@ -195,18 +196,21 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
         for (const item of user.data[0].projectData) {
           let find_project = await projectModel.findOne({ project_id: item.project_id });
+        
           if (find_project) {
             let find_file = await fileuploadModel.findOne({ project_id: item.project_id });
+           
             if (find_file) {
-              // projectData.push(find_file);
+            
               projectData.push({
                 project_name: find_project.project_name,
                 project_id: find_project.project_id,
-                client_name: find_project_project.client[0].client_name,
-                project_type: find_project_project.project_type,
+                client_name: find_project.client[0].client_name,
+                project_type: find_project.project_type,
                 project_status: find_project.project_status,
                 files: find_file.files
               });
+              console.log(projectData)
             }
             if (find_project.mom.length !== 0) {
               // console.log(find_project.mom)
@@ -227,6 +231,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           }
 
         }
+       
       for (let i = 0; i < projects.length; i++) {
         if (projects[i].project_status == "executing") {
           execution.push(projects[i]);
@@ -286,7 +291,8 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           leads,
 
         };
-        // console.log(userData)
+        
+        console.log(userData)
         
         responseData(res, "user data found", 200, true, "", response)
     
