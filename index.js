@@ -54,30 +54,23 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
-async function checkSMTPConnection(config) {
-  let transporter = nodemailer.createTransport(config);
 
-  try {
-    await transporter.verify();
-    console.log('Connection to SMTP server is successful!');
-  } catch (error) {
-    console.error('Error connecting to SMTP server:', error);
-  }
-}
-
-const smtpConfig = {
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  logger: true,
+const transporter = nodemailer.createTransport({
+  host: process.env.HOST,
+  port: process.env.EMAIL_PORT,
   auth: {
-    user: "a72302492@gmail.com",
-    pass: process.env.APP_PASSWORD,
+    user: process.env.USER_NAME,
+    pass: process.env.API_KEY,
   },
-  debug: true,
-};
-
+});
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log(success)
+    console.log("Server is ready to take our messages");
+  }
+});
 app.use(cors());
 
 app.use(requestIp.mw());
@@ -101,7 +94,7 @@ app.use(limiter);
 // const isAuthenticated = (req, res, next) => {
 //   console.log(req.session)
 //   if (req.session.user) {
-   
+
 //     next();
 //   } else {
 
@@ -114,6 +107,5 @@ app.use("/v1/api/users", usersRouter);
 
 server.listen(8000, async () => {
   await connect();
-  await checkSMTPConnection(smtpConfig);
   console.log("Connected to backend");
 });

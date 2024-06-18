@@ -11,12 +11,11 @@ import nodemailer from "nodemailer";
 import Jwt from "jsonwebtoken";
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  host: process.env.HOST,
+  port: process.env.EMAIL_PORT,
   auth: {
-    user: "a72302492@gmail.com",
-    pass: process.env.APP_PASSWORD,
+    user: process.env.USER_NAME,
+    pass: process.env.API_KEY,
   },
 });
 
@@ -62,7 +61,7 @@ export const sendotpforgetpassword = async (req, res) => {
         });
       });
       const mailOptions = {
-        from: "a72302492@gmail.com",
+        from: "info@colonelz.com",
         to: email,
         subject: "Email Verification",
         html: `<p>  Your verification code is :-  ${OTP}</p>`,

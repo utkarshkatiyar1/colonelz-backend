@@ -19,12 +19,11 @@ function generatedigitnumber() {
 }
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    host: process.env.HOST,
+    port: process.env.EMAIL_PORT,
     auth: {
-        user: "a72302492@gmail.com",
-        pass: process.env.APP_PASSWORD,
+        user: process.env.USER_NAME,
+        pass: process.env.API_KEY,
     },
 });
 
@@ -163,7 +162,7 @@ export const shareQuotation = async (req, res) => {
                 return responseData(res, "", 401, false, "File not found in the specified folder");
             }
             const mailOptions = {
-                from: "a72302492@gmail.com",
+                from: "info@colonelz.com",
                 to: client_email,
                 subject: "Quotation Approval Notification",
                 html: `<!DOCTYPE html>
@@ -221,8 +220,7 @@ export const shareQuotation = async (req, res) => {
             <p>Quotation File ID: <strong>${file_id}</strong></p>
             <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
              <p >
-                 <a href="${approvalLinkClient(project_id, file_id, 'approved')}">Approve</a> |
-            <a href="${approvalLinkClient(project_id, file_id, 'rejected')}">Reject</a>
+                 <a href="${approvalLinkClient(project_id, file_id, 'approved')}">Click Here For Action</a> 
             
                     </p>
             <p>Thank you!</p>
@@ -357,7 +355,7 @@ export const shareQuotation = async (req, res) => {
 
 
                 const mailOptions = {
-                    from: "a72302492@gmail.com",
+                    from: "info@colonelz.com",
                     to: user.email,
                     subject: "Quotation Approval Notification",
                     html: `
@@ -414,12 +412,7 @@ export const shareQuotation = async (req, res) => {
                 <p>Project Name: <strong>${findProject.project_name}</strong></p>
                 <p>Quotation File ID: <strong>${file_id}</strong></p>
                 <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
-                
-                <p > 
-                 <a href="${approvalLink(project_id, file_id, 'approved')}">Approve</a> |
-            <a href="${approvalLink(project_id, file_id, 'rejected')}">Reject</a>
             
-                    </p>
                 <p>Thank you!</p>
             </div>
         </body>
@@ -497,9 +490,6 @@ export const shareQuotation = async (req, res) => {
     }
 };
 
-function approvalLink(project_id, file_id, status) {
-    return `https://col-phase2.test.initz.run/v1/api/users/approval/admin/${project_id}/${file_id}/${status}`;
-}
 
 function approvalLinkClient(project_id, file_id, status) {
     return `https://colonelz.test.initz.run/quotation?project_id=${project_id}&file_id=${file_id}`;

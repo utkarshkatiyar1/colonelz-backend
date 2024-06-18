@@ -437,7 +437,7 @@ export const sendPdf = async (req, res) => {
 
           // Define the mail options
           const mailOptions = {
-            from: 'a72302492@gmail.com',
+            from: 'info@colonelz.com',
             to: check_project[0].client[0].client_email,
             subject: 'MOM Data',
             attachments: [
@@ -481,11 +481,10 @@ export const sendPdf = async (req, res) => {
 };
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  host: process.env.HOST,
+  port: process.env.EMAIL_PORT,
   auth: {
-    user: "a72302492@gmail.com",
-    pass: process.env.APP_PASSWORD,
+    user: process.env.USER_NAME,
+    pass: process.env.API_KEY,
   },
 });

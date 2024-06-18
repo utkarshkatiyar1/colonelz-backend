@@ -19,12 +19,11 @@ function generatedigitnumber() {
 }
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    host: process.env.HOST,
+    port: process.env.EMAIL_PORT,
     auth: {
-        user: "a72302492@gmail.com",
-        pass: process.env.APP_PASSWORD,
+        user: process.env.USER_NAME,
+        pass: process.env.API_KEY,
     },
 });
 
@@ -124,7 +123,7 @@ export const shareContract = async (req, res) => {
 
 
                             const mailOptions = {
-                                from: "a72302492@gmail.com",
+                                from: "info@colonelz.com",
                                 to: check_user.email,
                                 subject: "Contract Share Notification",
                                 html: `
@@ -289,7 +288,7 @@ export const shareContract = async (req, res) => {
 
 
                     const mailOptions = {
-                        from: "a72302492@gmail.com",
+                        from: "info@colonelz.com",
                         to: client_email,
                         subject: "Contract Share Notification",
                         html: `
@@ -542,7 +541,7 @@ export const contractStatus = async(req,res) =>{
                             }
 
                         );
-                        responseData(res, "COntract  approved Successfully", 200, true, "");
+                        responseData(res, "Contract  approved Successfully", 200, true, "");
 
                     }
                     if (status === 'rejected') {

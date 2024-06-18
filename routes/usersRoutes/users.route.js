@@ -30,6 +30,6 @@ router.route("/profileurl").post(profileupload)
 // router.route("/").get(checkAvailableUserIsAdmin)
 router.route("/approval/admin").post(updateStatus)
 router.route("/approval/client").post(updateStatusClient)
-router.route("/approval/contract/admin/:lead_id/:fileId/:status").get(updateStatusAdmin)
+
 
 export default router;

@@ -3,6 +3,7 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
 import nodemailer from "nodemailer";
 import { onlyEmailValidation } from "../../../utils/validation.js";
+import registerModel from "../../../models/usersModels/register.model.js";
 
 function validateEmailArray(emailArray) {
     for (let i = 0; i < emailArray.length; i++) {
@@ -15,12 +16,11 @@ function validateEmailArray(emailArray) {
 
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    host: process.env.HOST,
+    port: process.env.EMAIL_PORT,
     auth: {
-        user: "a72302492@gmail.com",
-        pass: process.env.APP_PASSWORD,
+        user: process.env.USER_NAME,
+        pass: process.env.API_KEY,
     },
 });
 
@@ -34,6 +34,7 @@ export const shareFile = async (req, res) => {
         const subject = req.body.subject;
         const body = req.body.body;
         const type = req.body.type;
+        const user_id = req.body.user_id;
 
         const isValid = validateEmailArray(email);
 
@@ -45,6 +46,12 @@ export const shareFile = async (req, res) => {
         } else {
             let findfiles;
             let attachments = [];
+
+            const check_user = await registerModel.findOne({_id:user_id})
+            if(!check_user)
+                {
+                    return responseData(res, "", 404, false, "User not found", null);
+                }
 
             if (type === 'template') {
                 findfiles = await fileuploadModel.findOne({
@@ -82,9 +89,9 @@ export const shareFile = async (req, res) => {
                 return responseData(res, "", 404, false, "Data Not Found", null);
             }
            
-          
+          console.log(check_user.email)
             const mailOptions = {
-                from: "a72302492@gmail.com",
+                from: check_user.email,
                 to: email,
                 subject: subject,
                 html: body,
@@ -96,6 +103,7 @@ export const shareFile = async (req, res) => {
                 if (error) {
                     responseData(res, "", 400, false, "Failed to send email");
                 } else {
+                    console.log(info)
                     responseData(
                         res,
                         `Email has been sent successfully`,
