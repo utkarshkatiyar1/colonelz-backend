@@ -9,8 +9,14 @@ import {
   onlyPhoneNumberValidation,
 } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import AWS from "aws-sdk";
 
 
+const s3 = new AWS.S3({
+  accessKeyId: process.env.ACCESS_KEY,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  region: "ap-south-1",
+});
 
 
 
@@ -24,6 +30,98 @@ function generateSixDigitNumber() {
 }
 
 
+
+const uploadFile = async (file, fileName, lead_id, folder_name) => {
+let response =  s3
+    .upload({
+      Bucket: `collegemanage/${lead_id}/${folder_name}`,
+      Key: fileName,
+      Body: file.data,
+      ContentType: file.mimetype,
+      // ACL: 'public-read'
+    })
+    .promise()
+  return response
+    .then((data) => {
+      return { status: true, data };
+    })
+    .catch((err) => {
+      return { status: false, err };
+    });
+};
+
+
+const saveFileUploadData = async (
+  res,
+  existingFileUploadData,
+
+) => {
+  try {
+
+    // Use update query to push data
+    const updateResult = await fileuploadModel.updateOne(
+      {
+        lead_id: existingFileUploadData.lead_id,
+        "files.folder_name": existingFileUploadData.folder_name,
+      },
+      {
+        $set: {
+          "files.$.updated_date": existingFileUploadData.updated_Date,
+        },
+        $push: {
+
+          "files.$.files": { $each: existingFileUploadData.files },
+        },
+      },
+      {
+        arrayFilters: [
+          { "folder.folder_name": existingFileUploadData.folder_name },
+        ],
+      }
+    );
+
+    if (updateResult.modifiedCount === 1) {
+      console.log("File Upload Data Updated Successfully");
+    } else {
+      // If the folder does not exist, create a new folder object
+      const updateNewFolderResult = await fileuploadModel.updateOne(
+        { lead_id: existingFileUploadData.lead_id },
+        {
+          $push: {
+            files: {
+              folder_name: existingFileUploadData.folder_name,
+              updated_date: existingFileUploadData.updated_date,
+              files: existingFileUploadData.files,
+            },
+          },
+        }
+      );
+
+      if (updateNewFolderResult.modifiedCount === 1) {
+        console.log("New Folder Created and File Upload Data Updated Successfully");
+      } else {
+        console.log("Lead not found or file data already updated");
+        responseData(
+          res,
+          "",
+          404,
+          false,
+          "Lead not found or file data already updated"
+        );
+      }
+    }
+
+  } catch (error) {
+    console.error("Error saving file upload data:", error);
+    responseData(
+      res,
+      "",
+      500,
+      false,
+      "Something went wrong. File data not updated"
+    );
+  }
+};
 
 
 export const createLead = async (req, res) => {
@@ -303,6 +401,7 @@ export const leadToProject = async (req, res) => {
   const project_start_date = req.body.project_start_date;
   const project_budget = req.body.project_budget;
   const designer = req.body.designer;
+  
 
   if (!lead_id) {
     responseData(res, "", 400, false, "lead_id is required", []);
@@ -316,48 +415,87 @@ export const leadToProject = async (req, res) => {
           responseData(res, "", 400, false, "project already exist for this lead", []);
         }
         if (find_project.length < 1) {
+          const file = req.files.contract;
+          const fileName = file.name;
+          const folder_name = `contract`;
+          const fileSizeInBytes = file.size;
+          let response  = await uploadFile(file, fileName, lead_id, folder_name)
+          
+          if (response.status) {
 
 
-          const project_ID = generateSixDigitNumber();
-          const projectID = `COL\P-${project_ID}`;
-          const project_data = await projectModel.create({
-            project_name: project_name,
-            project_type: project_type,
-            project_id: projectID,
-            client: {
-              client_name: client_name,
-              client_email: client_email,
-              client_contact: client_contact,
-            },
-
-            project_location: location,
-            description: description,
-            lead_id: lead_id,
-            project_budget: project_budget,
-            project_end_date: timeline_date,
-            timeline_date: timeline_date,
-            project_start_date: project_start_date,
-            project_status: project_status,
-            designer: designer,
-            visualizer: "",
-            supervisor: "",
-            leadmanager: "",
-          });
-          project_data.save();
-          const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
-          if (lead_find_in_fileupload.length > 0) {
-            const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
+            let fileUrls = [{
+              fileUrl: response.data.Location,
+              fileName:fileName,
+              fileId: `FL-${generateSixDigitNumber()}`,
+              fileSize: `${fileSizeInBytes/ 1024} KB`,
+              date: new Date()
+            }]
 
 
+            const existingFile = await fileuploadModel.findOne({
+              lead_id: lead_id,
+            });
+            
+            const lead_Name = existingFile.name;
+
+            if (existingFile) {
+              await saveFileUploadData(res, {
+                lead_id,
+                lead_Name,
+                folder_name,
+                updated_date: new Date(),
+                files: fileUrls,
+              });
+
+              const project_ID = generateSixDigitNumber();
+              const projectID = `COL\P-${project_ID}`;
+              const project_data = await projectModel.create({
+                project_name: project_name,
+                project_type: project_type,
+                project_id: projectID,
+                client: {
+                  client_name: client_name,
+                  client_email: client_email,
+                  client_contact: client_contact,
+                },
+
+                project_location: location,
+                description: description,
+                lead_id: lead_id,
+                project_budget: project_budget,
+                project_end_date: timeline_date,
+                timeline_date: timeline_date,
+                project_start_date: project_start_date,
+                project_status: project_status,
+                designer: designer,
+                visualizer: "",
+                supervisor: "",
+                leadmanager: "",
+              });
+              project_data.save();
+              const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
+              if (lead_find_in_fileupload.length > 0) {
+                const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
+
+
+              }
+              responseData(
+                res,
+                "project created successfully",
+                200,
+                true,
+                "",
+
+              );
+            }
+
+          } else {
+            console.log(response)
+            responseData(res, "", 400, false, "contract file upload failed", "");
           }
-          responseData(
-            res,
-            "project created successfully",
-            200,
-            true,
-            "",
 
-          );
+          
         }
       }
       if (find_lead.length < 1) {
