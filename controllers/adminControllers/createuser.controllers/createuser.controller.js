@@ -63,7 +63,7 @@ export const createUser = async (req, res) => {
                                     role: role,
                                     status: true,
                                     userProfile: "",
-                                    organization: "Colonelz",
+                                    organization: user.organization,
                                     password: hash,
                                     data: {
                                         projectData: [],
@@ -90,6 +90,7 @@ export const createUser = async (req, res) => {
                                         <p>Your login credentials for our system are as follows:</p>
                                         <p><strong>Username:  </strong>${user_name}</p>
                                         <p><strong>Password:  </strong>${password}</p>
+                                         <p><strong>Organisation Name:  </strong>${user.organization}</p>
                                         <p>Please click on the following link to login:</p>
                                         <p><a href="https://colonelzfront.test.initz.run/sign-in?redirectUrl=/app/crm/dashboard">Login</a></p>
                                         <p>Please use the above credentials to log in to our system.</p>
@@ -143,7 +144,7 @@ export const getUser = async (req, res) => {
                const  check_user = await registerModel.findById(userId);
                 if(check_user.role ==='ADMIN' || check_user.role ==='ORGADMIN')
                     {
-                    const users = await registerModel.find({ status: true })
+                    const users = await registerModel.find({ $and: [{ status: true },{organization:check_user.organization}]})
                    
                     if (users) {
                         const filteredUsers = users.reduce((acc, user) => {
