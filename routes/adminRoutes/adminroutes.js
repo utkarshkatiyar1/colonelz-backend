@@ -39,7 +39,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { createUser, deleteUser, getUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, isAdmin, isProcurement } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, isAdmin, isOrgAndAdmin, isProcurement } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -50,9 +50,9 @@ import { archive, deletearchive, restoreData } from "../../controllers/adminCont
 
 
 router.route("/create/user").post(verifyJWT, isAdmin, createUser);
-router.route("/add/member").post(verifyJWT, isAdmin, addMember);
-router.route("/get/alluser").get(verifyJWT, getUser);
-router.route("/delete/user").delete(verifyJWT, isAdmin, deleteUser);
+router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
+router.route("/get/alluser").get(verifyJWT,isOrgAndAdmin, getUser);
+router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
@@ -82,7 +82,7 @@ router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLea
 router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
 router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
 router.route("/create/lead/project").post(verifyJWT, checkAvailableUserIsAdmin, leadToProject);
-router.route("/add/member/lead").post(verifyJWT, isAdmin, AddMemberInLead);
+router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
 
 router.route("/create/mom").post(verifyJWT, createmom);
 router.route("/getall/mom").get(verifyJWT, getAllMom);

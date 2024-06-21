@@ -359,6 +359,44 @@ export const isAdmin = async(req,res,next) =>{
   }
 }
 
+export const isOrgAndAdmin = async (req, res, next) => {
+
+  try {
+    const token = req.cookies?.auth ||
+      req.header("Authorization")?.replace("Bearer", "").trim();
+    ;
+    if (!token) {
+      return responseData(
+        res,
+        "",
+        401,
+        false,
+        "Unauthorized: No token provided"
+      );
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+
+    const user = await registerModel.findById(decodedToken?.id);
+
+
+    if (!user) {
+      return responseData(res, "", 401, false, "Unauthorized: User not found");
+    }
+
+    if (user.role === "ADMIN" || user.role === 'ORGADMIN') {
+      next(); // Proceed to the next 
+    }
+    else {
+      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
+    }
+
+  } catch (err) {
+
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+}
 
 
 export const isProcurement = async (req, res, next) => {

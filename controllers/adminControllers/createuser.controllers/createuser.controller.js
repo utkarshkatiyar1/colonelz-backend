@@ -134,25 +134,38 @@ export const createUser = async (req, res) => {
 
 export const getUser = async (req, res) => {
     try {
-        const users = await registerModel.find({ status: true })
-        console.log(users)
-        if (users) {
-            const filteredUsers = users.reduce((acc, user) => {
-                if (user) {
-                    acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
-                }
-                return acc;
-            }, []);
+        const userId = req.query.id;
+        if(!userId)
+            {
+                return responseData(res,"",400,false,"User Id is required");
+            }
+            else{
+                check_user = await registerModel.findById(userId);
+                if(check_user.role ==='ADMIN' || check_user.role ==='ORGADMIN')
+                    {
+                    const users = await registerModel.find({ status: true })
+                    console.log(users)
+                    if (users) {
+                        const filteredUsers = users.reduce((acc, user) => {
+                            if (user) {
+                                acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
+                            }
+                            return acc;
+                        }, []);
 
 
-            return responseData(res, "all user found", 200, true, "", filteredUsers);
+                        return responseData(res, "all user found", 200, true, "", filteredUsers);
 
-        }
-        else {
-            return responseData(res, "", 404, false, "No User Found");
-        }
-
-
+                    }
+                    else {
+                        return responseData(res, "", 404, false, "No User Found");
+                    }
+                    }  
+                    else{
+                        return responseData(res,"",400,false,"You are not allowed to perform this action");
+                    }    
+            }
+     
     }
     catch (err) {
         return responseData(res, "", 500, false, err.message);
