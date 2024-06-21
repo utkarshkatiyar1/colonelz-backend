@@ -140,11 +140,11 @@ export const getUser = async (req, res) => {
                 return responseData(res,"",400,false,"User Id is required");
             }
             else{
-                check_user = await registerModel.findById(userId);
+               const  check_user = await registerModel.findById(userId);
                 if(check_user.role ==='ADMIN' || check_user.role ==='ORGADMIN')
                     {
                     const users = await registerModel.find({ status: true })
-                    console.log(users)
+                   
                     if (users) {
                         const filteredUsers = users.reduce((acc, user) => {
                             if (user) {
