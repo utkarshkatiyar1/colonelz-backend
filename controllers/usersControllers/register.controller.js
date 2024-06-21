@@ -245,7 +245,7 @@ export const registerUser = async (req, res) => {
   } else if (password.length < 6) {
     responseData(res, "", 400, false, "Password must be 6 characters");
   }
-  else if (!onlyAlphabetsValidation(orgnisation)) {
+  else if (!onlyOrgValidation(orgnisation)) {
     responseData(res, "", 400, false, "Invalid orgnisation");
   } else {
     try {
