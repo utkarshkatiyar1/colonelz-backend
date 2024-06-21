@@ -203,6 +203,7 @@ export const updateProjectDetails = async (req, res) => {
               project_budget: project_budget,
               project_status: project_status,
               timeline_date: timeline_date,
+              project_end_date:timeline_date,
               description: description,
               designer: designer
             },
