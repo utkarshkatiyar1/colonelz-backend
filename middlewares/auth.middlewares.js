@@ -59,7 +59,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
 
     const user = await registerModel.findById(decodedToken?.id);
-    if (user.role === 'ADMIN' || user.role ==='Senior Architect')
+    if (user.role === 'ADMIN' || user.role === 'Senior Architect' || user.role ==='ORGADMIN')
     {
       next();
     }
@@ -345,7 +345,7 @@ export const isAdmin = async(req,res,next) =>{
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" || user.role ==="Senior Architect" )
+    if (user.role === "ADMIN" || user.role === "Senior Architect" || user.role ==='ORGADMIN' )
   {
     next(); // Proceed to the next 
   }
@@ -387,7 +387,7 @@ export const isProcurement = async (req, res, next) => {
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" || user.role === "Executive Assistant" || user.role === "Senior Architect" ) {
+    if (user.role === "ADMIN" || user.role === "Executive Assistant" || user.role === "Senior Architect" || user.role ==='ORGADMIN' ) {
       next(); // Proceed to the next 
     }
     else {

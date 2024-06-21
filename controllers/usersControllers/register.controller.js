@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
-import { onlyAlphabetsValidation } from "../../utils/validation.js";
+import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -21,17 +21,95 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
+export const checkEmail = async (req, res) => {
+  try {
+    const email = req.query.email;
+    const username = req.query.username;
+  
+    if (!username) {
+      responseData(res, "", 400, false, "Username cannot be empty", []);
+    }
+    else if (!onlyAlphabetsValidation(username)) {
+      responseData(res, "", 400, false, "Invalid username", []);
+    }
+    else if (!email) {
+      responseData(res, "", 400, false, "Please enter a valid email address");
+    }
+    else if (!validator.isEmail(email)) {
+      responseData(res, "", 400, false, " Invalid email!");
+    }
+    else {
+      const checkInfo = await registerModel.findOne({
+        $or: [
+          { email: email },
+          { username: username }
+        ]
+      });
+      if (checkInfo.status) {
+        if (checkInfo.email === email) {
+          responseData(
+            res,
+            "",
+            400,
+            false,
+            "This email   Already registered",
+            []
+          );
+        }
+        else if (checkInfo.username === username) {
+          responseData(
+            res,
+            "",
+            400,
+            false,
+            "This  username Already registered",
+            []
+          );
+        }
+        else {
+          responseData(res, "Email is valid", 200, true, "", []);
+        }
+
+      }
+      else {
+        responseData(res, "", 200, true, "Email is valid", []);
+      }
+    }
+  }
+  catch (err) {
+    console.log(err);
+    responseData(
+      res,
+      "",
+      500,
+      false,
+      "Something went wrong",
+      []
+    );
+    console.log(err);
+  }
+
+}
+
 export const sendOtp = async (req, res) => {
   const user_name = req.body.username;
   const email = req.body.email;
   const password = req.body.password;
+  const orgnisation = req.body.organization;
   const role = req.body.role;
   if (!email) {
     responseData(res, "", 400, false, "Email is required");
   }
   if (!validator.isEmail(email)) {
     responseData(res, "", 400, false, " Invalid email!");
-  } else {
+  } else if (!onlyOrgValidation(orgnisation)) {
+    responseData(res, "", 400, false, "Invalid orgnisation");
+  }
+  else if (!onlyAlphabetsValidation(user_name)) {
+    responseData(res, "", 400, false, "Invalid username", []);
+  }
+  else {
     try {
       const checkInfo = await registerModel.find({
         $and: [{ email: email }, { username: user_name }],
@@ -158,7 +236,7 @@ export const registerUser = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const orgnisation = req.body.organization;
-  const role = 'ADMIN';
+  const role = 'ORGADMIN';
 
   if (user_name.length < 3) {
     responseData(res, "", 400, false, "User name must be 3 characters");
@@ -166,8 +244,8 @@ export const registerUser = async (req, res) => {
     responseData(res, "", 400, false, "Invalid email");
   } else if (password.length < 6) {
     responseData(res, "", 400, false, "Password must be 6 characters");
-  } 
-  else if(!onlyAlphabetsValidation(orgnisation)){
+  }
+  else if (!onlyAlphabetsValidation(orgnisation)) {
     responseData(res, "", 400, false, "Invalid orgnisation");
   } else {
     try {
@@ -195,7 +273,7 @@ export const registerUser = async (req, res) => {
                 username: user_name,
                 userProfile: "",
                 email: email,
-                organization:orgnisation,
+                organization: orgnisation,
                 password: hash,
                 status: true,
                 role: role,
@@ -227,10 +305,10 @@ export const registerUser = async (req, res) => {
                 });
                 login.save();
                 const response = {
-                  token:token,
-                  username:result.username,
+                  token: token,
+                  username: result.username,
                   id: result._id,
-                  role:result.role
+                  role: result.role
                 }
 
                 responseData(
