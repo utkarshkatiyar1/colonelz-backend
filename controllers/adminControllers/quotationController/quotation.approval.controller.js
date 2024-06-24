@@ -630,6 +630,9 @@ export const updateStatusClient = async (req, res) => {
                         res.send('');
                         responseData(res, "Quotation approved successfully!", 200, true,"")
                     } if (status === 'rejected') {
+                        if (!remark) {
+                            return responseData(res, "", 400, false, "Please enter the remark");
+                        }
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
@@ -651,6 +654,10 @@ export const updateStatusClient = async (req, res) => {
                         responseData(res, "Quotation rejected Successfully", 200, true, "")
                     }
                     if (status === 'amended') {
+                        if(!remark)
+                            {
+                                return responseData(res, "", 400, false, "Please enter the remark");
+                            }
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
