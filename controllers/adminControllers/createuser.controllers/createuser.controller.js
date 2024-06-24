@@ -43,10 +43,10 @@ export const createUser = async (req, res) => {
                 return responseData(res, "", 404, false, "User not found");
             } else {
                 if (user.role === 'ADMIN' || user.role === 'ORGADMIN') {
-                    if(user.role ==='ADMIN' && role ==='ADMIN')
-                        {
-                            return responseData(res, "", 400, false, "You are not allowed to create admin");
-                        }
+                    // if(user.role ==='ADMIN' && role ==='ADMIN')
+                    //     {
+                    //         return responseData(res, "", 400, false, "You are not allowed to create admin");
+                    //     }
                     const check_email_or_user_name = await registerModel.find({ $or: [{ email: email }, { username: user_name }] });
                     if (check_email_or_user_name.length < 1) {
 

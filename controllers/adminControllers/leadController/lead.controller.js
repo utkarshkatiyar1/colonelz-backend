@@ -293,11 +293,38 @@ export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
 
   try {
-    const leads = await leadModel.find({ lead_id: lead_id });
-    if (leads.length < 1) {
+    const lead = await leadModel.find({ lead_id: lead_id });
+    if (lead.length < 1) {
       responseData(res, "", 404, false, "Data not found", []);
     }
-    if (leads.length > 0) {
+    if (lead.length > 0) {
+      let leads=[];
+      let project = false;
+      const check_project = await projectModel.findOne({lead_id:lead_id})
+      if(check_project)
+        {
+        project= true;
+        }
+
+      for(let i=0;i<lead.length;i++){
+        leads.push({
+          name:lead[i].name,
+          lead_id:lead[i].lead_id,
+          lead_manager:lead[i].lead_manager,
+          email:lead[i].email,
+          phone:lead[i].phone,
+          location:lead[i].location,
+          status:lead[i].status,
+          source:lead[i].source,
+          date:lead[i].date,
+          updated_date:lead[i].updated_date,
+          notes:lead[i].notes,
+          contract:  lead[i].contract,
+          createdAt:lead[i].createdAt,
+          project:project
+        })
+      }
+    
       responseData(res, "Lead Data", 200, true, "", leads);
     }
   } catch (error) {

@@ -40,8 +40,25 @@ export const archive = async (req, res) => {
                 }
                 if (archive.length > 0) {
                     let response = []
+                   
+                    let deleted_name;
 
                     for (let i = 0; i < archive.length; i++) {
+                        
+                            if (archive[i].deleted_type === 'file') {
+                                deleted_name = archive[i].files[0].fileName
+                            }
+                            else if (archive[i].deleted_type === 'folder') {
+                                if(archive[i].type)
+                                    {
+                                    deleted_name = archive[i].sub_folder_name_second
+                                    }
+                                    else{
+                                        deleted_name = archive[i].folder_name
+                                    }
+                                
+                            }    
+
                         response.push({
                             lead_id: archive[i].lead_id,
                             lead_name: archive[i].lead_name,
@@ -51,6 +68,7 @@ export const archive = async (req, res) => {
                             sub_folder_name_first: archive[i].sub_folder_name_first,
                             sub_folder_name_second: archive[i].sub_folder_name_second,
                             files: archive[i].files,
+                            deleted_name: deleted_name,
                             type: archive[i].type,
                             created_at: archive[i].archivedAt,
 
