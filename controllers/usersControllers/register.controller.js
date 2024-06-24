@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import Randomstring from "randomstring";
 import jwt from "jsonwebtoken";
 import { responseData } from "../../utils/respounse.js";
-import registerModel from "../../models/usersModels/register.model.js";
+import registerModel from "../../models/usersModels/tenant.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
 import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
 dotenv.config();
