@@ -51,11 +51,12 @@ export const login = async (req, res) => {
   try {
     const user = await registerModel.find({ username: user_name, status: true });
 
+
     if (user.length < 1) {
       responseData(res, "", 404, false, "Username or password does not match");
       return;
     }
-    console
+
 
     bcrypt.compare(password, user[0].password, async (_err, result) => {
 
@@ -63,9 +64,10 @@ export const login = async (req, res) => {
         responseData(res, "", 401, false, "Username or password does not match");
         return;
       }
+
       insertLogInData(res, user);
 
-     
+
     });
   } catch (err) {
     responseData(res, "", 500, false, "Internal server error");
