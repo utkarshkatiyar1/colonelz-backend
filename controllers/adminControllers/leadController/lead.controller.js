@@ -300,7 +300,15 @@ export const getSingleLead = async (req, res) => {
       let project = false;
       const check_project = await projectModel.findOne({ lead_id: lead_id })
       if (check_project) {
-        project = true;
+        const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
+        if(check_lead_in_file)
+          {
+            project = false;
+          }
+          else{
+          project = true;
+          }
+       
       }
 
       for (let i = 0; i < lead.length; i++) {
@@ -509,7 +517,6 @@ export const leadToProject = async (req, res) => {
                   const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
                   if (lead_find_in_fileupload.length > 0) {
                     const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
-
 
                   }
                   responseData(
