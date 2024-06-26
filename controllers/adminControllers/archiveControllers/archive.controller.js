@@ -6,6 +6,7 @@ import archiveModel from "../../../models/adminModels/archive.model.js";
 import AWS from "aws-sdk";
 import cron from "node-cron";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
+import moment from "moment-timezone";
 // Configure AWS SDK
 AWS.config.update({
     accessKeyId: process.env.ACCESS_KEY,
@@ -310,9 +311,13 @@ export const deletearchive = async (req, res) => {
 
 async function deleteOldFiles() {
     try {
-        const find_data = await archiveModel.find({})
+        const thirtyDaysAgo = moment().subtract(30, 'days').toDate();
+
+        const find_data = await archiveModel.find({
+            archivedAt: { $lt: thirtyDaysAgo } // Filtering documents older than 30 days
+        });
         let data;
-        console.log(find_data)
+        console.log(find_data);
         for (let i = 0; i < find_data.length; i++) {
             if (find_data[i].type === 'template') {
                 if (find_data[i].deleted_type === 'file') {
@@ -405,7 +410,7 @@ async function deleteOldFiles() {
 }
 cron.schedule(
 
-    '0 0 1 * *',
+    '0 0 * * *',
     async () => {
         console.log('Running deleteOldFiles job');
         await deleteOldFiles();
