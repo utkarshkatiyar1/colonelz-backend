@@ -106,7 +106,7 @@ export const createUser = async (req, res) => {
                                         console.log(error);
                                         responseData(res, "", 400, false, "Failed to send email");
                                     } else {
-                                        // newUser.save();
+                                        newUser.save();
                                         responseData(
                                             res,
                                             "User Created And send credential successfully!",

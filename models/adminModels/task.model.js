@@ -15,8 +15,8 @@ const SubtaskSchema = new mongoose.Schema({
 });
 
 const TaskSchema = new mongoose.Schema({
-    project_id: { type: String, required: true }, 
-    task_id:{ type: String, required: true },
+    project_id: { type: String, required: true },
+    task_id: { type: String, required: true },
     task_name: { type: String, required: true },
     task_assignee: { type: String, required: true },
     task_status: { type: String, required: true },

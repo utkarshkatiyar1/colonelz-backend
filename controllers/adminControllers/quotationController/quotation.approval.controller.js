@@ -492,7 +492,7 @@ export const shareQuotation = async (req, res) => {
 
 
 function approvalLinkClient(project_id, file_id, status) {
-    return `https://colonelz.test.initz.run/quotation?project_id=${project_id}&file_id=${file_id}`;
+    return `https://colonelz-crm.stg.initz.run/quotation?project_id=${project_id}&file_id=${file_id}`;
 }
 
 
