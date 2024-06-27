@@ -9,8 +9,14 @@ import {
   onlyPhoneNumberValidation,
 } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import AWS from "aws-sdk";
 
 
+const s3 = new AWS.S3({
+  accessKeyId: process.env.ACCESS_KEY,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  region: "ap-south-1",
+});
 
 
 
@@ -24,6 +30,98 @@ function generateSixDigitNumber() {
 }
 
 
+
+const uploadFile = async (file, fileName, lead_id, folder_name) => {
+  let response = s3
+    .upload({
+      Bucket: `collegemanage/${lead_id}/${folder_name}`,
+      Key: fileName,
+      Body: file.data,
+      ContentType: file.mimetype,
+      // ACL: 'public-read'
+    })
+    .promise()
+  return response
+    .then((data) => {
+      return { status: true, data };
+    })
+    .catch((err) => {
+      return { status: false, err };
+    });
+};
+
+
+const saveFileUploadData = async (
+  res,
+  existingFileUploadData,
+
+) => {
+  try {
+
+    // Use update query to push data
+    const updateResult = await fileuploadModel.updateOne(
+      {
+        lead_id: existingFileUploadData.lead_id,
+        "files.folder_name": existingFileUploadData.folder_name,
+      },
+      {
+        $set: {
+          "files.$.updated_date": existingFileUploadData.updated_Date,
+        },
+        $push: {
+
+          "files.$.files": { $each: existingFileUploadData.files },
+        },
+      },
+      {
+        arrayFilters: [
+          { "folder.folder_name": existingFileUploadData.folder_name },
+        ],
+      }
+    );
+
+    if (updateResult.modifiedCount === 1) {
+      console.log("File Upload Data Updated Successfully");
+    } else {
+      // If the folder does not exist, create a new folder object
+      const updateNewFolderResult = await fileuploadModel.updateOne(
+        { lead_id: existingFileUploadData.lead_id },
+        {
+          $push: {
+            files: {
+              folder_name: existingFileUploadData.folder_name,
+              updated_date: existingFileUploadData.updated_date,
+              files: existingFileUploadData.files,
+            },
+          },
+        }
+      );
+
+      if (updateNewFolderResult.modifiedCount === 1) {
+        console.log("New Folder Created and File Upload Data Updated Successfully");
+      } else {
+        console.log("Lead not found or file data already updated");
+        responseData(
+          res,
+          "",
+          404,
+          false,
+          "Lead not found or file data already updated"
+        );
+      }
+    }
+
+  } catch (error) {
+    console.error("Error saving file upload data:", error);
+    responseData(
+      res,
+      "",
+      500,
+      false,
+      "Something went wrong. File data not updated"
+    );
+  }
+};
 
 
 export const createLead = async (req, res) => {
@@ -84,64 +182,89 @@ export const createLead = async (req, res) => {
       if (check_email.length < 1) {
         const lead_id = generateSixDigitNumber();
         const check_user = await registerModel.findById(userId)
+        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
 
+          let fileUrls = []
+          const lead = new leadModel({
+            name: name,
+            lead_id: lead_id,
+            lead_manager: lead_manager,
+            email: email,
+            phone: phone,
+            location: location,
+            status: status,
+            source: source,
+            updated_date: date,
+            files: fileUrls,
+            date: date,
+            notes: [
+              {
+                content: content,
+                createdBy: check_user.username,
+                date: date,
+                status: status,
+              },
+            ],
+          });
 
-        let fileUrls = []
+          const fileUploadData = new fileuploadModel({
+            lead_id: lead_id,
+            lead_name: name,
 
-
-        const lead = new leadModel({
-          name: name,
-          lead_id: lead_id,
-          lead_manager: lead_manager,
-          email: email,
-          phone: phone,
-          location: location,
-          status: status,
-          source: source,
-          updated_date: date,
-          files: fileUrls,
-          date: date,
-          notes: [
-            {
-              content: content,
-              createdBy: check_user.username,
-              date: date,
-              status: status,
+            files: [{
+              folder_name: "client brief",
+              updated_date: date,
+              files: fileUrls
             },
-          ],
-        });
-        const lead_data = await lead.save();
-        const fileUploadData = new fileuploadModel({
-          lead_id: lead_id,
-          lead_name: name,
+            {
+              folder_name: "drawing",
+              updated_date: date,
+              files: fileUrls
+            },
+            {
+              folder_name: "review",
+              updated_date: date,
+              files: fileUrls
+            },
+            ]
 
-          files: [{
-            folder_name: "client brief",
-            updated_date: date,
-            files: fileUrls
-          },
-          {
-            folder_name: "drawing",
-            updated_date: date,
-            files: fileUrls
-          },
-          {
-            folder_name: "review",
-            updated_date: date,
-            files: fileUrls
-          },
-          ]
+          })
+          if (check_user.role === 'Project Architect') {
+            const add_project_in_user = await registerModel.findOneAndUpdate(
+              { _id: userId },
+              {
+                $push: {
+                  "data.$[outer].leadData": {
+                    lead_id: lead_id,
+                    role: check_user.role,
+                  }
+                }
+              },
+              {
+                arrayFilters: [{ "outer.leadData": { $exists: true } }]
+              }
+            );
+          }
 
-        })
-
-        await fileUploadData.save()
-        responseData(
-          res,
-          "lead created successfully.",
-          200,
-          true,
-          "",
-        );
+          const lead_data = await lead.save();
+          await fileUploadData.save()
+          responseData(
+            res,
+            "lead created successfully.",
+            200,
+            true,
+            "",
+          );
+        }
+        else {
+          responseData(
+            res,
+            "You have not access to create lead",
+            400,
+            false,
+            "",
+          );
+        }
       }
 
     } catch (err) {
@@ -168,11 +291,45 @@ export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
 
   try {
-    const leads = await leadModel.find({ lead_id: lead_id });
-    if (leads.length < 1) {
+    const lead = await leadModel.find({ lead_id: lead_id });
+    if (lead.length < 1) {
       responseData(res, "", 404, false, "Data not found", []);
     }
-    if (leads.length > 0) {
+    if (lead.length > 0) {
+      let leads = [];
+      let project = false;
+      const check_project = await projectModel.findOne({ lead_id: lead_id })
+      if (check_project) {
+        const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
+        if(check_lead_in_file)
+          {
+            project = false;
+          }
+          else{
+          project = true;
+          }
+       
+      }
+
+      for (let i = 0; i < lead.length; i++) {
+        leads.push({
+          name: lead[i].name,
+          lead_id: lead[i].lead_id,
+          lead_manager: lead[i].lead_manager,
+          email: lead[i].email,
+          phone: lead[i].phone,
+          location: lead[i].location,
+          status: lead[i].status,
+          source: lead[i].source,
+          date: lead[i].date,
+          updated_date: lead[i].updated_date,
+          notes: lead[i].notes,
+          contract: lead[i].contract,
+          createdAt: lead[i].createdAt,
+          project: project
+        })
+      }
+
       responseData(res, "Lead Data", 200, true, "", leads);
     }
   } catch (error) {
@@ -211,7 +368,7 @@ export const updateLead = async (req, res) => {
     try {
 
 
-const formatedDate = formatDate(update);
+      const formatedDate = formatDate(update);
       const find_lead = await leadModel.find({ lead_id: lead_id });
       if (find_lead.length > 0) {
         const check_user = await registerModel.findById(userId);
@@ -277,59 +434,196 @@ export const leadToProject = async (req, res) => {
   const project_budget = req.body.project_budget;
   const designer = req.body.designer;
 
+
   if (!lead_id) {
     responseData(res, "", 400, false, "lead_id is required", []);
   } else {
     try {
       const find_lead = await leadModel.find({ lead_id: lead_id });
       if (find_lead.length > 0) {
-        const find_project = await projectModel.find({ lead_id: lead_id })
+        const find_project = await projectModel.find({ lead_id:lead_id})
+
         if (find_project.length > 0) {
-          responseData(res, "", 400, false, "project already exist for this lead", []);
+          const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
+          if(!check_lead_in_file)
+            {
+            responseData(res, "", 400, false, "project already exist for this lead. Activate lead to create another project", []);
+            }
+            else{
+            
+
+              const file = req.files.contract;
+              if (!file) {
+                responseData(res, "", 400, false, "contract file is required", []);
+              }
+              const fileName = file.name;
+              const folder_name = `contract`;
+              const fileSizeInBytes = file.size;
+              let response = await uploadFile(file, fileName, lead_id, folder_name)
+
+              if (response.status) {
+
+
+                let fileUrls = [{
+                  fileUrl: response.data.Location,
+                  fileName: fileName,
+                  fileId: `FL-${generateSixDigitNumber()}`,
+                  fileSize: `${fileSizeInBytes / 1024} KB`,
+                  date: new Date()
+                }]
+
+
+                const existingFile = await fileuploadModel.findOne({
+                  lead_id: lead_id,
+                });
+
+                const lead_Name = existingFile.name;
+
+                if (existingFile) {
+                  await saveFileUploadData(res, {
+                    lead_id,
+                    lead_Name,
+                    folder_name,
+                    updated_date: new Date(),
+                    files: fileUrls,
+                  });
+
+                  const project_ID = generateSixDigitNumber();
+                  const projectID = `COL\P-${project_ID}`;
+                  const project_data = await projectModel.create({
+                    project_name: project_name,
+                    project_type: project_type,
+                    project_id: projectID,
+                    client: {
+                      client_name: client_name,
+                      client_email: client_email,
+                      client_contact: client_contact,
+                    },
+
+                    project_location: location,
+                    description: description,
+                    lead_id: lead_id,
+                    project_budget: project_budget,
+                    project_end_date: timeline_date,
+                    timeline_date: timeline_date,
+                    project_start_date: project_start_date,
+                    project_status: project_status,
+                    designer: designer,
+                    visualizer: "",
+                    supervisor: "",
+                    leadmanager: "",
+                  });
+                  project_data.save();
+                  const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
+                  if (lead_find_in_fileupload.length > 0) {
+                    const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
+
+                  }
+                  responseData(
+                    res,
+                    "project created successfully",
+                    200,
+                    true,
+                    "",
+
+                  );
+                }
+
+              } else {
+                console.log(response)
+                responseData(res, "", 400, false, "contract file upload failed", "");
+              }
+
+            }
+            
         }
         if (find_project.length < 1) {
 
-
-          const project_ID = generateSixDigitNumber();
-          const projectID = `COL\P-${project_ID}`;
-          const project_data = await projectModel.create({
-            project_name: project_name,
-            project_type: project_type,
-            project_id: projectID,
-            client: {
-              client_name: client_name,
-              client_email: client_email,
-              client_contact: client_contact,
-            },
-
-            project_location: location,
-            description: description,
-            lead_id: lead_id,
-            project_budget: project_budget,
-            project_end_date: timeline_date,
-            timeline_date: timeline_date,
-            project_start_date: project_start_date,
-            project_status: project_status,
-            designer: designer,
-            visualizer: "",
-            supervisor: "",
-            leadmanager: "",
-          });
-          project_data.save();
-          const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
-          if (lead_find_in_fileupload.length > 0) {
-            const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
-
-
+          const file = req.files.contract;
+        if(!file)
+          {
+            responseData(res, "", 400, false, "contract file is required", []);
           }
-          responseData(
-            res,
-            "project created successfully",
-            200,
-            true,
-            "",
+          const fileName = file.name;
+          const folder_name = `contract`;
+          const fileSizeInBytes = file.size;
+          let response = await uploadFile(file, fileName, lead_id, folder_name)
 
-          );
+          if (response.status) {
+
+
+            let fileUrls = [{
+              fileUrl: response.data.Location,
+              fileName: fileName,
+              fileId: `FL-${generateSixDigitNumber()}`,
+              fileSize: `${fileSizeInBytes / 1024} KB`,
+              date: new Date()
+            }]
+
+
+            const existingFile = await fileuploadModel.findOne({
+              lead_id: lead_id,
+            });
+
+            const lead_Name = existingFile.name;
+
+            if (existingFile) {
+              await saveFileUploadData(res, {
+                lead_id,
+                lead_Name,
+                folder_name,
+                updated_date: new Date(),
+                files: fileUrls,
+              });
+
+              const project_ID = generateSixDigitNumber();
+              const projectID = `COL\P-${project_ID}`;
+              const project_data = await projectModel.create({
+                project_name: project_name,
+                project_type: project_type,
+                project_id: projectID,
+                client: {
+                  client_name: client_name,
+                  client_email: client_email,
+                  client_contact: client_contact,
+                },
+
+                project_location: location,
+                description: description,
+                lead_id: lead_id,
+                project_budget: project_budget,
+                project_end_date: timeline_date,
+                timeline_date: timeline_date,
+                project_start_date: project_start_date,
+                project_status: project_status,
+                designer: designer,
+                visualizer: "",
+                supervisor: "",
+                leadmanager: "",
+              });
+              project_data.save();
+              const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
+              if (lead_find_in_fileupload.length > 0) {
+                const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
+
+
+              }
+              responseData(
+                res,
+                "project created successfully",
+                200,
+                true,
+                "",
+
+              );
+            }
+
+          } else {
+            console.log(response)
+            responseData(res, "", 400, false, "contract file upload failed", "");
+          }
+
+
         }
       }
       if (find_lead.length < 1) {
@@ -341,5 +635,118 @@ export const leadToProject = async (req, res) => {
     }
   }
 };
+
+
+export const leadToMultipleProject = async (req, res) => {
+  try {
+    const lead_id = req.body.lead_id;
+    const type = req.body.type;
+    const user_id = req.body.user_id;
+
+
+    if (!lead_id) {
+      responseData(res, "", 400, false, "lead id is required", []);
+    }
+    else if (!type) {
+      responseData(res, "", 400, false, "type is required", []);
+    }
+    else if (!user_id) {
+      responseData(res, "", 400, false, "user id is required", []);
+    }
+    else {
+      if(type){
+        const check_user = await registerModel.findById(user_id)
+        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
+          const check_lead = await leadModel.findOne({ lead_id: lead_id })
+          if (!check_lead) {
+            responseData(res, "", 404, false, "lead not found", []);
+          }
+          const check_lead_in_file = await fileuploadModel.findOne({ $and:[{lead_id:lead_id},{project_id:null}] })
+          if (check_lead_in_file) {
+            responseData(res, "", 400, false, "lead already activate", []);
+          }
+          else {
+            let fileUrls = []
+
+            const fileUploadData = new fileuploadModel({
+              lead_id: lead_id,
+              lead_name: check_lead.name,
+
+              files: [{
+                folder_name: "client brief",
+                updated_date: new Date(),
+                files: fileUrls
+              },
+              {
+                folder_name: "drawing",
+                updated_date: new Date(),
+                files: fileUrls
+              },
+              {
+                folder_name: "review",
+                updated_date: new Date(),
+                files: fileUrls
+              },
+              ]
+
+            })
+            if (check_user.role === 'Project Architect') {
+              const add_project_in_user = await registerModel.findOneAndUpdate(
+                { _id: user_id },
+                {
+                  $push: {
+                    "data.$[outer].leadData": {
+                      lead_id: lead_id,
+                      role: check_user.role,
+                    }
+                  }
+                },
+                {
+                  arrayFilters: [{ "outer.leadData": { $exists: true } }]
+                }
+              );
+            }
+
+
+            await fileUploadData.save()
+            responseData(
+              res,
+              "lead activated successfully for another project.",
+              200,
+              true,
+              "",
+            );
+          }
+
+
+        }
+        else {
+          responseData(
+            res,
+            "You have not access to activate lead  for another project",
+            400,
+            false,
+            "",
+          );
+        }
+      }
+      else{
+        responseData(
+          res,
+          "lead already activate",
+          400,
+          false,
+          "",
+        );
+      }
+    }
+  }
+  catch (err) {
+    console.log(err);
+    res.send(err);
+
+  }
+
+}
 
 

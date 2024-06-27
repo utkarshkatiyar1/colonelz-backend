@@ -59,10 +59,92 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
 
     const user = await registerModel.findById(decodedToken?.id);
-    if (user.role === 'ADMIN' || user.role ==='Senior Architect')
+    if (user.role === 'ADMIN' || user.role === 'Senior Architect' || user.role ==='ORGADMIN')
     {
       next();
     }
+    else if (user.role ==='Executive Assistant')
+      {
+      
+      try {
+        const data = await fileuploadModel.find({});
+        if (data.length > 0) {
+          let projectData = []
+          
+          await Promise.all(data.map(async (element) => {
+            if (element.project_id != null) {
+              const check_project = await projectModel.findOne({ project_id: element.project_id });
+              if (check_project) {
+                projectData.push({
+                  project_name: element.project_name,
+                  project_id: element.project_id,
+                  client_name: check_project.client[0].client_name,
+                  project_type: check_project.project_type,
+                  project_status: check_project.project_status,
+                  files: element.files
+                });
+              }
+            }
+
+          }))
+          let execution = [];
+          let design = [];
+          let completed = [];
+          let archive = [];
+          const projects = await projectModel.find({}).sort({ createdAt: -1 });
+          for (let i = 0; i < projects.length; i++) {
+            if (projects[i].project_status == "executing") {
+              execution.push(projects[i]);
+            }
+            if (projects[i].project_status == "designing") {
+              design.push(projects[i]);
+            }
+            if (projects[i].project_status == "completed") {
+              completed.push(projects[i]);
+              
+            }
+          }
+
+         
+
+          const response = {
+            total_Project: projects.length,
+            Execution_Phase: execution.length,
+            Design_Phase: design.length,
+            completed: completed.length,
+            archive: archive.length,
+            active_Project: projects.length - completed.length,
+            projects,
+            projectData: projectData,
+          
+          }
+          responseData(
+            res,
+            `Data Found Successfully !`,
+            200,
+            true,
+            "",
+            response
+          );
+        }
+        if (data.length < 1) {
+
+          responseData(
+            res,
+            "",
+            404,
+            false,
+            "Data Not Found! ",
+
+          );
+        }
+      } catch (err) {
+        res.send(err);
+        console.log(err);
+      }
+
+
+      }
     else if (user.role ==='Jr. Executive HR & Marketing')
     {
       try{
@@ -97,7 +179,8 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           console.error("Error executing notification cron job:", error);
         }
       });
-      
+     
+     
 
         let userData = [];
         let projects = [];
@@ -111,18 +194,23 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
         let archive = [];
         let MomData = [];
 
-
-       
-        
-
-
-
         for (const item of user.data[0].projectData) {
           let find_project = await projectModel.findOne({ project_id: item.project_id });
+        
           if (find_project) {
             let find_file = await fileuploadModel.findOne({ project_id: item.project_id });
+           
             if (find_file) {
-              projectData.push(find_file);
+            
+              projectData.push({
+                project_name: find_project.project_name,
+                project_id: find_project.project_id,
+                client_name: find_project.client[0].client_name,
+                project_type: find_project.project_type,
+                project_status: find_project.project_status,
+                files: find_file.files
+              });
+              console.log(projectData)
             }
             if (find_project.mom.length !== 0) {
               // console.log(find_project.mom)
@@ -138,11 +226,25 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
               }
             }
-            projects.push(find_project);
+            projects.push({
+              project_name: find_project.project_name,
+              project_id: find_project.project_id,
+              client_name: find_project.client[0].client_name,
+              project_type: find_project.project_type,
+              project_status: find_project.project_status,
+              project_end_date:find_project.project_end_date,
+              project_start_date:find_project.project_start_date,
+              project_budget:find_project.project_budget,
+              project_description:find_project.project_description,
+              designer: find_project.designer,
+              client:find_project.client
+
+            });
 
           }
 
         }
+       
       for (let i = 0; i < projects.length; i++) {
         if (projects[i].project_status == "executing") {
           execution.push(projects[i]);
@@ -169,7 +271,17 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
             const find_files = await fileuploadModel.findOne({ lead_id: item.lead_id })
             if(find_files)
             {
-              leadData.push(find_files)
+              leadData.push({
+
+                lead_id: find_lead.lead_id,
+                lead_Name: find_lead.lead_name,
+                lead_email: find_lead.email,
+                lead_phone: find_lead.phone,
+                lead_status: find_lead.status,
+                lead_date: find_lead.date,
+                files: find_files.files
+
+              })
             }
             leads.push(find_lead)
 
@@ -192,7 +304,8 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           leads,
 
         };
-        // console.log(userData)
+        
+        console.log(userData)
         
         responseData(res, "user data found", 200, true, "", response)
     
@@ -232,7 +345,7 @@ export const isAdmin = async(req,res,next) =>{
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" )
+    if (user.role === "ADMIN" || user.role === "Senior Architect" || user.role ==='ORGADMIN' )
   {
     next(); // Proceed to the next 
   }
@@ -245,6 +358,87 @@ export const isAdmin = async(req,res,next) =>{
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
   }
 }
+
+export const isOrgAndAdmin = async (req, res, next) => {
+
+  try {
+    const token = req.cookies?.auth ||
+      req.header("Authorization")?.replace("Bearer", "").trim();
+    ;
+    if (!token) {
+      return responseData(
+        res,
+        "",
+        401,
+        false,
+        "Unauthorized: No token provided"
+      );
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+
+    const user = await registerModel.findById(decodedToken?.id);
+
+
+    if (!user) {
+      return responseData(res, "", 401, false, "Unauthorized: User not found");
+    }
+
+    if (user.role === "ADMIN" || user.role === 'ORGADMIN') {
+      next(); // Proceed to the next 
+    }
+    else {
+      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
+    }
+
+  } catch (err) {
+
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+}
+
+
+export const isProcurement = async (req, res, next) => {
+
+  try {
+    const token = req.cookies?.auth ||
+      req.header("Authorization")?.replace("Bearer", "").trim();
+    ;
+    if (!token) {
+      return responseData(
+        res,
+        "",
+        401,
+        false,
+        "Unauthorized: No token provided"
+      );
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+
+    const user = await registerModel.findById(decodedToken?.id);
+
+
+    if (!user) {
+      return responseData(res, "", 401, false, "Unauthorized: User not found");
+    }
+
+    if (user.role === "ADMIN" || user.role === "Executive Assistant" || user.role === "Senior Architect" || user.role ==='ORGADMIN' ) {
+      next(); // Proceed to the next 
+    }
+    else {
+      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
+    }
+
+  } catch (err) {
+
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+}
+
+
 
 
 

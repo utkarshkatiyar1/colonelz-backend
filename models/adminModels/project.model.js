@@ -8,7 +8,8 @@ const quotationSchema = new mongoose.Schema({
   file_name: String,
   files: [],
   remark: String,
-  client_remark:String
+  client_remark:String,
+  
 });
 
 const projectSchema = new mongoose.Schema({

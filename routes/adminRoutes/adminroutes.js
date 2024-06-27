@@ -17,6 +17,7 @@ import {
   createLead,
   getAllLead,
   getSingleLead,
+  leadToMultipleProject,
   leadToProject,
   updateLead,
 } from "../../controllers/adminControllers/leadController/lead.controller.js";
@@ -39,19 +40,20 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { createUser, deleteUser, getUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, isAdmin } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, isAdmin, isOrgAndAdmin, isProcurement } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { contractStatus, getContractData, shareContract } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js";
 import { AddMemberInLead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
+import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 // router.use(checkAvailableUserIsAdmin)
 
 
 router.route("/create/user").post(verifyJWT, isAdmin, createUser);
-router.route("/add/member").post(verifyJWT, isAdmin, addMember);
-router.route("/get/alluser").get(verifyJWT, getUser);
-router.route("/delete/user").delete(verifyJWT, isAdmin, deleteUser);
+router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
+router.route("/get/alluser").get(verifyJWT,isOrgAndAdmin, getUser);
+router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
@@ -64,11 +66,11 @@ router.route("/view/contract").post(verifyJWT, contractShare);
 router.route("/share/file").post(verifyJWT, shareFile);
 router.route("/template/fileupload").post(verifyJWT, templateFileUpload);
 router.route("/template/single/file").get(verifyJWT, getSingleTemplateFile);
-router.route("/delete/file").delete(verifyJWT, deleteFile);
+router.route("/delete/file").delete(verifyJWT, isAdmin, deleteFile);
 router.route("/share/contract").post(verifyJWT, shareContract);
 router.route("/contract/approval").post(verifyJWT, contractStatus);
 router.route("/get/contractdata").get(verifyJWT, getContractData);
-router.route("/delete/folder").delete(verifyJWT, deleteFolder);
+router.route("/delete/folder").delete(verifyJWT, isAdmin, deleteFolder);
 
 
 
@@ -76,12 +78,13 @@ router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAll
 router.route("/getsingle/project").get(verifyJWT, getSingleProject);
 router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT, checkAvailableUserIsAdmin, createLead);
+router.route("/create/lead").post(verifyJWT,createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
 router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
 router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
 router.route("/create/lead/project").post(verifyJWT, checkAvailableUserIsAdmin, leadToProject);
-router.route("/add/member/lead").post(verifyJWT, isAdmin, AddMemberInLead);
+router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
+router.route("/lead/multiple/project").post(verifyJWT, leadToMultipleProject);
 
 router.route("/create/mom").post(verifyJWT, createmom);
 router.route("/getall/mom").get(verifyJWT, getAllMom);
@@ -90,9 +93,9 @@ router.route("/getall/project/mom").get(verifyJWT, checkAvailableUserIsAdmin, ge
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
-router.route("/share/quotation").post(verifyJWT, shareQuotation);
-router.route("/get/quotationdata").get(verifyJWT, getQuotationData);
-router.route("/quotation/approval").post(verifyJWT, updateStatusAdmin);
+router.route("/share/quotation").post(verifyJWT, isProcurement, shareQuotation);
+router.route("/get/quotationdata").get(verifyJWT,isProcurement, getQuotationData);
+router.route("/quotation/approval").post(verifyJWT,isProcurement, updateStatusAdmin);
 
 
 
@@ -101,6 +104,9 @@ router.route("/get/notification").get(verifyJWT, checkAvailableUserIsAdmin, getN
 router.route("/update/notification").put(verifyJWT, updateNotification);
 
 
+router.route("/get/archive").get(verifyJWT, isAdmin, archive);
+router.route("/delete/archive").delete(verifyJWT, isAdmin, deletearchive);
+router.route("/restore/file").post(verifyJWT, isAdmin, restoreData);
 
 
 

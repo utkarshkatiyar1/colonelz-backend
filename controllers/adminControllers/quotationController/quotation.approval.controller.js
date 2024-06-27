@@ -19,12 +19,11 @@ function generatedigitnumber() {
 }
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    host: process.env.HOST,
+    port: process.env.EMAIL_PORT,
     auth: {
-        user: "a72302492@gmail.com",
-        pass: process.env.APP_PASSWORD,
+        user: process.env.USER_NAME,
+        pass: process.env.API_KEY,
     },
 });
 
@@ -163,7 +162,7 @@ export const shareQuotation = async (req, res) => {
                 return responseData(res, "", 401, false, "File not found in the specified folder");
             }
             const mailOptions = {
-                from: "a72302492@gmail.com",
+                from: "info@colonelz.com",
                 to: client_email,
                 subject: "Quotation Approval Notification",
                 html: `<!DOCTYPE html>
@@ -221,8 +220,7 @@ export const shareQuotation = async (req, res) => {
             <p>Quotation File ID: <strong>${file_id}</strong></p>
             <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
              <p >
-                 <a href="${approvalLinkClient(project_id, file_id, 'approved')}">Approve</a> |
-            <a href="${approvalLinkClient(project_id, file_id, 'rejected')}">Reject</a>
+                 <a href="${approvalLinkClient(project_id, file_id, 'approved')}">Click Here For Action</a> 
             
                     </p>
             <p>Thank you!</p>
@@ -357,7 +355,7 @@ export const shareQuotation = async (req, res) => {
 
 
                 const mailOptions = {
-                    from: "a72302492@gmail.com",
+                    from: "info@colonelz.com",
                     to: user.email,
                     subject: "Quotation Approval Notification",
                     html: `
@@ -414,12 +412,7 @@ export const shareQuotation = async (req, res) => {
                 <p>Project Name: <strong>${findProject.project_name}</strong></p>
                 <p>Quotation File ID: <strong>${file_id}</strong></p>
                 <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
-                
-                <p > 
-                 <a href="${approvalLink(project_id, file_id, 'approved')}">Approve</a> |
-            <a href="${approvalLink(project_id, file_id, 'rejected')}">Reject</a>
             
-                    </p>
                 <p>Thank you!</p>
             </div>
         </body>
@@ -497,20 +490,18 @@ export const shareQuotation = async (req, res) => {
     }
 };
 
-function approvalLink(project_id, file_id, status) {
-    return `https://col-back.onrender.com/v1/api/users/approval/admin/${project_id}/${file_id}/${status}`;
-}
 
 function approvalLinkClient(project_id, file_id, status) {
-    return `https://col-back.onrender.com/v1/api/users/approval/client/${project_id}/${file_id}/${status}`;
+    return `https://colonelz.test.initz.run/quotation?project_id=${project_id}&file_id=${file_id}`;
 }
 
 
 export const updateStatus = async (req, res) => {
     try {
-        const status = req.params.status;
-        const project_id = req.params.project_id;
-        const itemId = req.params.file_id;
+        const status = req.body.status;
+        const project_id = req.body.project_id;
+        const itemId = req.body.file_id;
+        const remark = req.body.remark;
         const check_status = await projectModel.findOne({
             project_id: project_id,
             "quotation.$.itemId": itemId
@@ -518,7 +509,7 @@ export const updateStatus = async (req, res) => {
         for (let i = 0; i < check_status.quotation.length; i++) {
             if (check_status.quotation[i].itemId == itemId) {
                 if (check_status.quotation[i].admin_status !== "pending") {
-                    res.send('you are already submit your response')
+                    return responseData(res, "", 400, false, "you are already submit your response");
                 }
                 else {
                     try {
@@ -562,7 +553,8 @@ export const updateStatus = async (req, res) => {
                             }
 
                         );
-                        res.send('Quotation approved successfully!');
+                        // res.send('Quotation approved successfully!');
+                        responseData(res, "Quotation approved successfully!", 200, true, "")
 
                     } if (status === 'rejected') {
                         await projectModel.findOneAndUpdate(
@@ -573,6 +565,8 @@ export const updateStatus = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].admin_status": status,
+                                    "quotation.$[elem].remark": remark,
+                                    
 
                                 }
                             },
@@ -581,7 +575,8 @@ export const updateStatus = async (req, res) => {
                                 new: true
                             }
                         );
-                        res.send('Quotation rejected successfully!');
+                      
+                        responseData(res, "Quotation rejected successfully!", 200, true, "")
                     }
                 }
             }
@@ -597,9 +592,10 @@ export const updateStatus = async (req, res) => {
 
 export const updateStatusClient = async (req, res) => {
     try {
-        const status = req.params.status;
-        const project_id = req.params.project_id;
-        const itemId = req.params.file_id;
+        const status = req.body.status;
+        const project_id = req.body.project_id;
+        const itemId = req.body.file_id;
+        const remark = req.body.remark;
 
         const check_status = await projectModel.findOne({
             project_id: project_id,
@@ -608,7 +604,7 @@ export const updateStatusClient = async (req, res) => {
         for (let i = 0; i < check_status.quotation.length; i++) {
             if (check_status.quotation[i].itemId == itemId) {
                 if (check_status.quotation[i].client_status !== "pending") {
-                    res.send(`you are already submit your response`)
+                    return responseData(res, "", 400, false, "you are already submit your response");
                 }
                 else {
                     if (status === 'approved') {
@@ -621,6 +617,7 @@ export const updateStatusClient = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].client_status": status,
+                                    "quotation.$[elem].client_remark": remark,
 
                                 }
                             },
@@ -630,8 +627,12 @@ export const updateStatusClient = async (req, res) => {
                             }
 
                         );
-                        res.send('Quotation approved successfully!');
+                        res.send('');
+                        responseData(res, "Quotation approved successfully!", 200, true,"")
                     } if (status === 'rejected') {
+                        if (!remark) {
+                            return responseData(res, "", 400, false, "Please enter the remark");
+                        }
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
@@ -640,6 +641,7 @@ export const updateStatusClient = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].client_status": status,
+                                    "quotation.$[elem].client_remark":remark,
 
                                 }
                             },
@@ -649,7 +651,32 @@ export const updateStatusClient = async (req, res) => {
                             }
 
                         );
-                        res.send('Quotation rejected successfully!');
+                        responseData(res, "Quotation rejected Successfully", 200, true, "")
+                    }
+                    if (status === 'amended') {
+                        if(!remark)
+                            {
+                                return responseData(res, "", 400, false, "Please enter the remark");
+                            }
+                        await projectModel.findOneAndUpdate(
+                            {
+                                project_id: project_id,
+                                "quotation.$.itemId": itemId
+                            },
+                            {
+                                $set: {
+                                    "quotation.$[elem].client_status": status,
+                                    "quotation.$[elem].client_remark": remark,
+
+                                }
+                            },
+                            {
+                                arrayFilters: [{ "elem.itemId": itemId }],
+                                new: true
+                            }
+
+                        );
+                        responseData(res, "Response submitted successfully", 200, true, "")
                     }
                 }
             }

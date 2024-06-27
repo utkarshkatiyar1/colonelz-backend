@@ -13,7 +13,10 @@ import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
-// import { HttpsProxyAgent } from "https-proxy-agent";
+import session from "express-session";
+
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -25,13 +28,17 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.static("public")); // configure static file to save images locally
 app.use(cookieParser());
 
-dotenv.config({
-  path: "./.env",
-});
+// Session configuration
+app.use(session({
+  secret: process.env.EXPRESS_SESSION_SECRET || 'yourSecretKey',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Note: secure should be true in production with HTTPS
+}));
+
+const server = createServer(app);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-// const proxy = 'https://colonelzadmin.test.initz.run/' || 'http://localhost:8000';
-// const agent = new HttpsProxyAgent(proxy);
 
 mongoose.set("strictQuery", true);
 const connect = async () => {
@@ -48,77 +55,57 @@ mongoose.connection.on("disconnected", () => {
 });
 
 
-
-async function checkSMTPConnection(config) {
-  let transporter = nodemailer.createTransport(config);
-
-  try {
-    // Verify the connection configuration
-    await transporter.verify();
-    console.log('Connection to SMTP server is successful!');
-  } catch (error) {
-    console.error('Error connecting to SMTP server:', error);
-  }
-}
-
-// Check the SMTP connection
-
-
-
-const smtpConfig = {
-  host: "smtp.gmail.com",  
-  port: 587,          
-  secure: false,  
-  requireTLS: true,
-  logger: true,   
+const transporter = nodemailer.createTransport({
+  host: process.env.HOST,
+  port: process.env.EMAIL_PORT,
   auth: {
-    user: "a72302492@gmail.com",
-    pass: process.env.APP_PASSWORD,
+    user: process.env.USER_NAME,
+    pass: process.env.API_KEY,
   },
-  // tls: {
-  //   rejectUnauthorized: false // Set to true if you want to validate the server certificate
-  // },
-  // connectionTimeout: 20000,   // 20 seconds
-  // greetingTimeout: 20000,     // 20 seconds
-  // socketTimeout: 20000,       // 20 seconds
-  debug: true,
-  // agent: agent,
-};
-
-const httpServer = createServer(app);
-
+});
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log(success)
+    console.log("Server is ready to take our messages");
+  }
+});
 app.use(cors());
-
 
 app.use(requestIp.mw());
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000, // Limit each IP to 500 requests per `window` (here, per 15 minutes)
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  windowMs: 15 * 60 * 1000,
+  max: 5000,
+  standardHeaders: true,
+  legacyHeaders: false,
   keyGenerator: (req, res) => {
-    return req.clientIp; // IP address from requestIp.mw(), as opposed to req.ip
+    return req.clientIp;
   },
   handler: (_, __, ___, options) => {
     throw new ApiError(
       options.statusCode || 500,
-      `There are too many requests. You are only allowed ${options.max
-      } requests per ${options.windowMs / 60000} minutes`
+      `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`
     );
   },
 });
 
-// Apply the rate limiting middleware to all requests
 app.use(limiter);
+// const isAuthenticated = (req, res, next) => {
+//   console.log(req.session)
+//   if (req.session.user) {
 
+//     next();
+//   } else {
 
-//*********/ write all routes here *********
+//     res.status(401).send('Unauthorized');
+//   }
+// };
+
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
-
-httpServer.listen(8000, async() => {
- await connect();
- await checkSMTPConnection(smtpConfig);
+server.listen(8000, async () => {
+  await connect();
   console.log("Connected to backend");
 });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, sendOtp, verifyOtp } from "../../controllers/usersControllers/register.controller.js";
+import { checkEmail, registerUser, sendOtp, verifyOtp } from "../../controllers/usersControllers/register.controller.js";
 import {  checkAvailableUserIsAdmin, verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { login } from "../../controllers/usersControllers/login.controller.js";
 import { logout } from "../../controllers/usersControllers/logout.controller.js";
@@ -11,6 +11,8 @@ import { updateStatusAdmin } from "../../controllers/adminControllers/fileUpload
 import { resetPassword } from "../../controllers/usersControllers/reset.password.controller.js";
 const router = Router();
 
+
+router.route("/check/email").get(checkEmail)
 router.route("/send/otp").post(sendOtp);
 router.route("/verify/otp").post(verifyOtp);
 router.route("/register").post(registerUser);
@@ -28,8 +30,8 @@ router.route("/getdata").get(getUserData)
 router.route("/profileurl").post(profileupload)
 
 // router.route("/").get(checkAvailableUserIsAdmin)
-router.route("/approval/admin/:project_id/:file_id/:status").get(updateStatus)
-router.route("/approval/client/:project_id/:file_id/:status").get(updateStatusClient)
-router.route("/approval/contract/admin/:lead_id/:fileId/:status").get(updateStatusAdmin)
+router.route("/approval/admin").post(updateStatus)
+router.route("/approval/client").post(updateStatusClient)
+
 
 export default router;
