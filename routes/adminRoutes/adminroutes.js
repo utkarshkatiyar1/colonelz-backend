@@ -47,6 +47,7 @@ import { verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { contractStatus, getContractData, shareContract } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js";
 import { AddMemberInLead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
+import { createTask, getAllTasks, getSingleTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 // router.use(checkAvailableUserIsAdmin)
 
 
@@ -107,6 +108,11 @@ router.route("/update/notification").put(verifyJWT, updateNotification);
 router.route("/get/archive").get(verifyJWT, isAdmin, archive);
 router.route("/delete/archive").delete(verifyJWT, isAdmin, deletearchive);
 router.route("/restore/file").post(verifyJWT, isAdmin, restoreData);
+
+
+router.route("/create/task").post(verifyJWT, createTask);
+router.route("/get/all/task").get(verifyJWT, getAllTasks);
+router.route("/get/single/task").get(verifyJWT, getSingleTask);
 
 
 
