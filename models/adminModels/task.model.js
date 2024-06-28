@@ -2,16 +2,17 @@ import mongoose from "mongoose";
 
 
 const SubtaskSchema = new mongoose.Schema({
+    sub_task_id: { type: String, required: true },
     sub_task_name: { type: String, required: true },
     sub_task_assignee: { type: String, required: true },
     sub_task_status: { type: String, required: true },
-    sub_task_startDate: { type: Date, required: true },
-    sub_task_endDate: { type: Date, required: true },
+    sub_task_start_date: { type: String, required: true },
+    sub_task_end_date: { type: String, required: true },
     sub_task_priority: { type: String, required: true },
     sub_task_description: { type: String, required: true },
     sub_task_createdBy: { type: String, required: true },
     sub_task_createdOn: { type: Date },
-    reporter: { type: String, required: true }
+    sub_reporter: { type: String, required: true }
 });
 
 const TaskSchema = new mongoose.Schema({

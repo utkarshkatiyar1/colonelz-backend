@@ -48,6 +48,7 @@ import { contractStatus, getContractData, shareContract } from "../../controller
 import { AddMemberInLead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, getAllTasks, getSingleTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
+import { createSubTask, getAllSubTask, getSingleSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 // router.use(checkAvailableUserIsAdmin)
 
 
@@ -113,6 +114,11 @@ router.route("/restore/file").post(verifyJWT, isAdmin, restoreData);
 router.route("/create/task").post(verifyJWT, createTask);
 router.route("/get/all/task").get(verifyJWT, getAllTasks);
 router.route("/get/single/task").get(verifyJWT, getSingleTask);
+
+
+router.route("/create/subtask").post(verifyJWT, createSubTask);
+router.route("/get/all/subtask").get(verifyJWT, getAllSubTask);
+router.route("/get/single/subtask").get(verifyJWT, getSingleSubTask);
 
 
 

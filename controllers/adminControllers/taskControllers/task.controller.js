@@ -52,7 +52,7 @@ export const createTask = async (req, res) => {
         })
 
         await task.save();
-        responseData(res, "", 200, true, "Task created successfully", [])
+        responseData(res, "Task created successfully", 200, true, "", [])
 
     }
     catch (err) {
@@ -77,8 +77,15 @@ export const getAllTasks = async (req, res) => {
             responseData(res, "", 404, false, "Project not found", [])
         }
         const tasks = await taskModel.find({ project_id: project_id })
+        if (tasks.length < 1) {
+            responseData(res, "", 404, false, "Tasks not found", [])
 
-        responseData(res, "", 200, true, "Tasks found successfully", tasks)
+        }
+        if (tasks.length > 0) {
+            responseData(res, "Tasks found successfully", 200, true, "", tasks)
+        }
+
+
     }
     catch (err) {
         console.log(err)
@@ -109,7 +116,7 @@ export const getSingleTask = async (req, res) => {
             responseData(res, "", 404, false, "Task not found", [])
         }
 
-        responseData(res, "", 200, true, "Task found successfully", check_task)
+        responseData(res, "Task found successfully", 200, true, "", check_task)
 
 
     }
@@ -118,3 +125,5 @@ export const getSingleTask = async (req, res) => {
         console.log(err);
     }
 }
+
+
