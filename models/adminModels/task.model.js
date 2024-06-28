@@ -12,7 +12,8 @@ const SubtaskSchema = new mongoose.Schema({
     sub_task_description: { type: String, required: true },
     sub_task_createdBy: { type: String, required: true },
     sub_task_createdOn: { type: Date },
-    sub_reporter: { type: String, required: true }
+    sub_task_reporter: { type: String, required: true },
+    sub_task_updatedBy: []
 });
 
 const TaskSchema = new mongoose.Schema({
@@ -28,7 +29,9 @@ const TaskSchema = new mongoose.Schema({
     task_createdBy: { type: String, required: true },
     task_createdOn: { type: Date, required: true },
     reporter: { type: String, required: true },
+    task_updatedBy: [],
     subtasks: [SubtaskSchema]
+
 });
 
 export default mongoose.model("task", TaskSchema, "task");
