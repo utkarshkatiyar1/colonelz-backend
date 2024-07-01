@@ -50,8 +50,9 @@ export const createUser = async (req, res) => {
                     const check_email_or_user_name = await registerModel.find({ $or: [{ email: email }, { username: user_name }] });
                     if (check_email_or_user_name.length < 1) {
 
-                        
+
                         const password = generateStrongPassword();
+                     
 
                         bcrypt.hash(password, 10, async function (err, hash) {
                             if (err) {
@@ -136,37 +137,35 @@ export const createUser = async (req, res) => {
 export const getUser = async (req, res) => {
     try {
         const userId = req.query.id;
-        if(!userId)
-            {
-                return responseData(res,"",400,false,"User Id is required");
+        if (!userId) {
+            return responseData(res, "", 400, false, "User Id is required");
+        }
+        else {
+            const check_user = await registerModel.findById(userId);
+            if (check_user.role === 'ADMIN' || check_user.role === 'ORGADMIN') {
+                const users = await registerModel.find({ $and: [{ status: true }, { organization: check_user.organization }] })
+
+                if (users) {
+                    const filteredUsers = users.reduce((acc, user) => {
+                        if (user) {
+                            acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
+                        }
+                        return acc;
+                    }, []);
+
+
+                    return responseData(res, "all user found", 200, true, "", filteredUsers);
+
+                }
+                else {
+                    return responseData(res, "", 404, false, "No User Found");
+                }
             }
-            else{
-               const  check_user = await registerModel.findById(userId);
-                if(check_user.role ==='ADMIN' || check_user.role ==='ORGADMIN')
-                    {
-                    const users = await registerModel.find({ $and: [{ status: true },{organization:check_user.organization}]})
-                   
-                    if (users) {
-                        const filteredUsers = users.reduce((acc, user) => {
-                            if (user) {
-                                acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
-                            }
-                            return acc;
-                        }, []);
-
-
-                        return responseData(res, "all user found", 200, true, "", filteredUsers);
-
-                    }
-                    else {
-                        return responseData(res, "", 404, false, "No User Found");
-                    }
-                    }  
-                    else{
-                        return responseData(res,"",400,false,"You are not allowed to perform this action");
-                    }    
+            else {
+                return responseData(res, "", 400, false, "You are not allowed to perform this action");
             }
-     
+        }
+
     }
     catch (err) {
         return responseData(res, "", 500, false, err.message);
