@@ -138,7 +138,7 @@ export const getAllTasks = async (req, res) => {
                                 task_priority: tasks[i].task_priority,
                                 task_createdOn: tasks[i].task_createdOn,
                                 reporter: tasks[i].reporter,
-                                assignee: tasks[i].task_assignee,
+                                task_assignee: tasks[i].task_assignee,
                                 task_createdBy: tasks[i].task_createdBy,
                                 number_of_subtasks: tasks[i].subtasks.length
 
