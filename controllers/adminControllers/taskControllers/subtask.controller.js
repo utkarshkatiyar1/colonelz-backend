@@ -158,6 +158,7 @@ export const getAllSubTask = async (req, res) => {
                         let response = []
                         for (let i = 0; i < check_task.subtasks.length; i++) {
                             response.push({
+                                task_id:task_id,
                                 sub_task_id: check_task.subtasks[i].sub_task_id,
                                 sub_task_name: check_task.subtasks[i].sub_task_name,
                                 sub_task_description: check_task.subtasks[i].sub_task_description,
