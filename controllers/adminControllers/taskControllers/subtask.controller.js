@@ -20,8 +20,10 @@ export const createSubTask = async (req, res) => {
         const task_id = req.body.task_id;
         const sub_task_name = req.body.sub_task_name;
         const sub_task_description = req.body.sub_task_description;
-        const sub_task_start_date = req.body.sub_task_start_date;
-        const sub_task_end_date = req.body.sub_task_end_date;
+        const actual_sub_task_start_date = req.body.actual_sub_task_start_date;
+        const estimated_sub_task_start_date = req.body.estimated_sub_task_start_date;
+        const estimated_sub_task_end_date = req.body.estimated_sub_task_end_date;
+        const actual_sub_task_end_date = req.body.actual_sub_task_end_date;
         const sub_task_status = req.body.sub_task_status;
         const sub_task_priority = req.body.sub_task_priority;
         const sub_task_assignee = req.body.sub_task_assignee;
@@ -33,10 +35,9 @@ export const createSubTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-        else if(!task_id)
-            {
+        else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
-            }
+        }
         else if (!onlyAlphabetsValidation(sub_task_name) && sub_task_name.length > 3) {
             responseData(res, "", 404, false, "Sub task Name should be alphabets", [])
         }
@@ -44,10 +45,10 @@ export const createSubTask = async (req, res) => {
             responseData(res, "", 404, false, "Sub task priority required", [])
 
         }
-        else if (!sub_task_start_date) {
+        else if (!estimated_sub_task_start_date && !actual_sub_task_start_date) {
             responseData(res, "", 404, false, "Sub task start date  required", [])
         }
-        else if (!sub_task_end_date) {
+        else if (!estimated_sub_task_end_date && !actual_sub_task_end_date) {
             responseData(res, "", 404, false, " Sub task end date required", [])
         }
         else if (!sub_task_status) {
@@ -59,8 +60,7 @@ export const createSubTask = async (req, res) => {
         else if (!sub_task_reporter) {
             responseData(res, "", 404, false, " Sub task reporter required", [])
         }
-        else
-        {
+        else {
             const check_user = await registerModel.findOne({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -86,8 +86,10 @@ export const createSubTask = async (req, res) => {
                                         sub_task_id: `STK-${generateSixDigitNumber()}`,
                                         sub_task_name: sub_task_name,
                                         sub_task_description: sub_task_description,
-                                        sub_task_start_date: sub_task_start_date,
-                                        sub_task_end_date: sub_task_end_date,
+                                        estimated_sub_task_end_date: estimated_sub_task_end_date,
+                                        estimated_sub_task_start_date: estimated_sub_task_start_date,
+                                        actual_sub_task_end_date:actual_sub_task_end_date,
+                                        actual_sub_task_start_date:actual_sub_task_start_date,
                                         sub_task_status: sub_task_status,
                                         sub_task_priority: sub_task_priority,
                                         sub_task_assignee: sub_task_assignee,
@@ -134,11 +136,11 @@ export const getAllSubTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-       
+
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
-        else{
+        else {
 
             const check_user = await registerModel.findOne({ _id: user_id })
             if (!check_user) {
@@ -156,13 +158,19 @@ export const getAllSubTask = async (req, res) => {
                     }
                     else {
                         let response = []
+                        let count =0;
                         for (let i = 0; i < check_task.subtasks.length; i++) {
+                       
+
                             response.push({
+                                task_id: task_id,
                                 sub_task_id: check_task.subtasks[i].sub_task_id,
                                 sub_task_name: check_task.subtasks[i].sub_task_name,
                                 sub_task_description: check_task.subtasks[i].sub_task_description,
-                                sub_task_start_date: check_task.subtasks[i].sub_task_start_date,
-                                sub_task_end_date: check_task.subtasks[i].sub_task_end_date,
+                                actual_sub_task_start_date: check_task.subtasks[i].actual_sub_task_start_date,
+                                actual_sub_task_end_date: check_task.subtasks[i].actual_sub_task_end_date,
+                                estimated_sub_task_end_date: check_task.subtasks[i].estimated_sub_task_end_date,
+                                estimated_sub_task_start_date: check_task.subtasks[i].estimated_sub_task_start_date,
                                 sub_task_status: check_task.subtasks[i].sub_task_status,
                                 sub_task_priority: check_task.subtasks[i].sub_task_priority,
                                 sub_task_assignee: check_task.subtasks[i].sub_task_assignee,
@@ -197,14 +205,14 @@ export const getSingleSubTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-       
+
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
         else if (!sub_task_id) {
             responseData(res, "", 404, false, "Sub-task Id required", [])
         }
-        else{
+        else {
             const check_user = await registerModel.findOne({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -250,8 +258,10 @@ export const updateSubTask = async (req, res) => {
         const sub_task_id = req.body.sub_task_id;
         const sub_task_name = req.body.sub_task_name;
         const sub_task_description = req.body.sub_task_description;
-        const sub_task_start_date = req.body.sub_task_start_date;
-        const sub_task_end_date = req.body.sub_task_end_date;
+        const actual_sub_task_start_date = req.body.actual_sub_task_start_date;
+        const estimated_sub_task_start_date = req.body.estimated_sub_task_start_date;
+        const estimated_sub_task_end_date = req.body.estimated_sub_task_end_date;
+        const actual_sub_task_end_date = req.body.actual_sub_task_end_date;
         const sub_task_status = req.body.sub_task_status;
         const sub_task_priority = req.body.sub_task_priority;
         const sub_task_assignee = req.body.sub_task_assignee;
@@ -276,10 +286,10 @@ export const updateSubTask = async (req, res) => {
             responseData(res, "", 404, false, "Sub task priority required", [])
 
         }
-        else if (!sub_task_start_date) {
+        else if (!estimated_sub_task_start_date && !actual_sub_task_start_date) {
             responseData(res, "", 404, false, "Sub task start date  required", [])
         }
-        else if (!sub_task_end_date) {
+        else if (!estimated_sub_task_end_date && !actual_sub_task_end_date) {
             responseData(res, "", 404, false, " Sub task end date required", [])
         }
         else if (!sub_task_status) {
@@ -292,7 +302,7 @@ export const updateSubTask = async (req, res) => {
             responseData(res, "", 404, false, " Sub task reporter required", [])
         }
 
-        else{
+        else {
             const check_user = await registerModel.findOne({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -316,8 +326,10 @@ export const updateSubTask = async (req, res) => {
                                 $set: {
                                     "subtasks.$.sub_task_name": sub_task_name,
                                     "subtasks.$.sub_task_description": sub_task_description,
-                                    "subtasks.$.sub_task_start_date": sub_task_start_date,
-                                    "subtasks.$.sub_task_end_date": sub_task_end_date,
+                                   "subtasks.$.estimated_sub_task_start_date":estimated_sub_task_start_date,
+                                   "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
+                                    "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
+                                    "subtasks.$.actual_sub_task_end_date": actual_sub_task_end_date,
                                     "subtasks.$.sub_task_status": sub_task_status,
                                     "subtasks.$.sub_task_priority": sub_task_priority,
                                     "subtasks.$.sub_task_assignee": sub_task_assignee,
@@ -347,7 +359,7 @@ export const updateSubTask = async (req, res) => {
 
         }
 
-        
+
     }
     catch (err) {
         console.log(err);
@@ -368,15 +380,14 @@ export const deleteSubTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-      
+
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
         else if (!sub_task_id) {
             responseData(res, "", 404, false, "Sub-task Id required", [])
         }
-        else
-        {
+        else {
             const check_user = await registerModel.findOne({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -412,7 +423,7 @@ export const deleteSubTask = async (req, res) => {
             }
         }
 
-       
+
     }
     catch (err) {
         console.log(err);

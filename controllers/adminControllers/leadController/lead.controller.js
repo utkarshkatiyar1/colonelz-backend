@@ -301,14 +301,13 @@ export const getSingleLead = async (req, res) => {
       const check_project = await projectModel.findOne({ lead_id: lead_id })
       if (check_project) {
         const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
-        if(check_lead_in_file)
-          {
-            project = false;
-          }
-          else{
+        if (check_lead_in_file) {
+          project = false;
+        }
+        else {
           project = true;
-          }
-       
+        }
+
       }
 
       for (let i = 0; i < lead.length; i++) {
@@ -441,107 +440,105 @@ export const leadToProject = async (req, res) => {
     try {
       const find_lead = await leadModel.find({ lead_id: lead_id });
       if (find_lead.length > 0) {
-        const find_project = await projectModel.find({ lead_id:lead_id})
+        const find_project = await projectModel.find({ lead_id: lead_id })
 
         if (find_project.length > 0) {
           const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
-          if(!check_lead_in_file)
-            {
+          if (!check_lead_in_file) {
             responseData(res, "", 400, false, "project already exist for this lead. Activate lead to create another project", []);
+          }
+          else {
+
+
+            const file = req.files.contract;
+            if (!file) {
+              responseData(res, "", 400, false, "contract file is required", []);
             }
-            else{
-            
+            const fileName = file.name;
+            const folder_name = `contract`;
+            const fileSizeInBytes = file.size;
+            let response = await uploadFile(file, fileName, lead_id, folder_name)
 
-              const file = req.files.contract;
-              if (!file) {
-                responseData(res, "", 400, false, "contract file is required", []);
-              }
-              const fileName = file.name;
-              const folder_name = `contract`;
-              const fileSizeInBytes = file.size;
-              let response = await uploadFile(file, fileName, lead_id, folder_name)
-
-              if (response.status) {
+            if (response.status) {
 
 
-                let fileUrls = [{
-                  fileUrl: response.data.Location,
-                  fileName: fileName,
-                  fileId: `FL-${generateSixDigitNumber()}`,
-                  fileSize: `${fileSizeInBytes / 1024} KB`,
-                  date: new Date()
-                }]
+              let fileUrls = [{
+                fileUrl: response.data.Location,
+                fileName: fileName,
+                fileId: `FL-${generateSixDigitNumber()}`,
+                fileSize: `${fileSizeInBytes / 1024} KB`,
+                date: new Date()
+              }]
 
 
-                const existingFile = await fileuploadModel.findOne({
-                  lead_id: lead_id,
+              const existingFile = await fileuploadModel.findOne({
+                lead_id: lead_id,
+              });
+
+              const lead_Name = existingFile.name;
+
+              if (existingFile) {
+                await saveFileUploadData(res, {
+                  lead_id,
+                  lead_Name,
+                  folder_name,
+                  updated_date: new Date(),
+                  files: fileUrls,
                 });
 
-                const lead_Name = existingFile.name;
+                const project_ID = generateSixDigitNumber();
+                const projectID = `COL\P-${project_ID}`;
+                const project_data = await projectModel.create({
+                  project_name: project_name,
+                  project_type: project_type,
+                  project_id: projectID,
+                  client: {
+                    client_name: client_name,
+                    client_email: client_email,
+                    client_contact: client_contact,
+                  },
 
-                if (existingFile) {
-                  await saveFileUploadData(res, {
-                    lead_id,
-                    lead_Name,
-                    folder_name,
-                    updated_date: new Date(),
-                    files: fileUrls,
-                  });
+                  project_location: location,
+                  description: description,
+                  lead_id: lead_id,
+                  project_budget: project_budget,
+                  project_end_date: timeline_date,
+                  timeline_date: timeline_date,
+                  project_start_date: project_start_date,
+                  project_status: project_status,
+                  designer: designer,
+                  visualizer: "",
+                  supervisor: "",
+                  leadmanager: "",
+                });
+                project_data.save();
+                const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
+                if (lead_find_in_fileupload.length > 0) {
+                  const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
 
-                  const project_ID = generateSixDigitNumber();
-                  const projectID = `COL\P-${project_ID}`;
-                  const project_data = await projectModel.create({
-                    project_name: project_name,
-                    project_type: project_type,
-                    project_id: projectID,
-                    client: {
-                      client_name: client_name,
-                      client_email: client_email,
-                      client_contact: client_contact,
-                    },
-
-                    project_location: location,
-                    description: description,
-                    lead_id: lead_id,
-                    project_budget: project_budget,
-                    project_end_date: timeline_date,
-                    timeline_date: timeline_date,
-                    project_start_date: project_start_date,
-                    project_status: project_status,
-                    designer: designer,
-                    visualizer: "",
-                    supervisor: "",
-                    leadmanager: "",
-                  });
-                  project_data.save();
-                  const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
-                  if (lead_find_in_fileupload.length > 0) {
-                    const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
-
-                  }
-                  responseData(
-                    res,
-                    "project created successfully",
-                    200,
-                    true,
-                    "",
-
-                  );
                 }
+                responseData(
+                  res,
+                  "project created successfully",
+                  200,
+                  true,
+                  "",
 
-              } else {
-                console.log(response)
-                responseData(res, "", 400, false, "contract file upload failed", "");
+                );
               }
 
+            } else {
+              console.log(response)
+              responseData(res, "", 400, false, "contract file upload failed", "");
             }
-            
+
+          }
+
         }
         if (find_project.length < 1) {
 
           const file = req.files.contract;
-        if(!file)
-          {
+          if (!file) {
             responseData(res, "", 400, false, "contract file is required", []);
           }
           const fileName = file.name;
@@ -654,83 +651,89 @@ export const leadToMultipleProject = async (req, res) => {
       responseData(res, "", 400, false, "user id is required", []);
     }
     else {
-      if(type){
+      if (type) {
         const check_user = await registerModel.findById(user_id)
-        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
-          const check_lead = await leadModel.findOne({ lead_id: lead_id })
-          if (!check_lead) {
-            responseData(res, "", 404, false, "lead not found", []);
-          }
-          const check_lead_in_file = await fileuploadModel.findOne({ $and:[{lead_id:lead_id},{project_id:null}] })
-          if (check_lead_in_file) {
-            responseData(res, "", 400, false, "lead already activate", []);
-          }
-          else {
-            let fileUrls = []
+        if (!check_user) {
+          responseData(res, "", 400, false, " Invalid user Id", []);
+        }
+        else {
+          if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
+            const check_lead = await leadModel.findOne({ lead_id: lead_id })
+            if (!check_lead) {
+              responseData(res, "", 404, false, "lead not found", []);
+            }
+            const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
+            if (check_lead_in_file) {
+              responseData(res, "", 400, false, "lead already activate", []);
+            }
+            else {
+              let fileUrls = []
 
-            const fileUploadData = new fileuploadModel({
-              lead_id: lead_id,
-              lead_name: check_lead.name,
+              const fileUploadData = new fileuploadModel({
+                lead_id: lead_id,
+                lead_name: check_lead.name,
 
-              files: [{
-                folder_name: "client brief",
-                updated_date: new Date(),
-                files: fileUrls
-              },
-              {
-                folder_name: "drawing",
-                updated_date: new Date(),
-                files: fileUrls
-              },
-              {
-                folder_name: "review",
-                updated_date: new Date(),
-                files: fileUrls
-              },
-              ]
-
-            })
-            if (check_user.role === 'Project Architect') {
-              const add_project_in_user = await registerModel.findOneAndUpdate(
-                { _id: user_id },
-                {
-                  $push: {
-                    "data.$[outer].leadData": {
-                      lead_id: lead_id,
-                      role: check_user.role,
-                    }
-                  }
+                files: [{
+                  folder_name: "client brief",
+                  updated_date: new Date(),
+                  files: fileUrls
                 },
                 {
-                  arrayFilters: [{ "outer.leadData": { $exists: true } }]
-                }
+                  folder_name: "drawing",
+                  updated_date: new Date(),
+                  files: fileUrls
+                },
+                {
+                  folder_name: "review",
+                  updated_date: new Date(),
+                  files: fileUrls
+                },
+                ]
+
+              })
+              if (check_user.role === 'Project Architect') {
+                const add_project_in_user = await registerModel.findOneAndUpdate(
+                  { _id: user_id },
+                  {
+                    $push: {
+                      "data.$[outer].leadData": {
+                        lead_id: lead_id,
+                        role: check_user.role,
+                      }
+                    }
+                  },
+                  {
+                    arrayFilters: [{ "outer.leadData": { $exists: true } }]
+                  }
+                );
+              }
+
+
+              await fileUploadData.save()
+              responseData(
+                res,
+                "lead activated successfully for another project.",
+                200,
+                true,
+                "",
               );
             }
 
 
-            await fileUploadData.save()
+          }
+          else {
             responseData(
               res,
-              "lead activated successfully for another project.",
-              200,
-              true,
+              "You have not access to activate lead  for another project",
+              400,
+              false,
               "",
             );
           }
-
-
         }
-        else {
-          responseData(
-            res,
-            "You have not access to activate lead  for another project",
-            400,
-            false,
-            "",
-          );
-        }
+
       }
-      else{
+      else {
         responseData(
           res,
           "lead already activate",
