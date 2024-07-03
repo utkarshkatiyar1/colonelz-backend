@@ -138,11 +138,11 @@ export const getAllTasks = async (req, res) => {
                             for(let j =0;j<tasks[i].subtasks.length;j++)
                                 {
                                     
-                                if (tasks[i].subtasks[j].sub_task_status === 'completed'  )
+                                if (tasks[i].subtasks[j].sub_task_status === 'Completed'  )
                                     {
                                         count++;
                                     }
-                                if (tasks[i].subtasks[j].sub_task_status === 'cancelled')
+                                if (tasks[i].subtasks[j].sub_task_status === 'Cancelled')
                                     {
                                              total_length--;
                                     }
@@ -165,7 +165,7 @@ export const getAllTasks = async (req, res) => {
                                 task_assignee: tasks[i].task_assignee,
                                 task_createdBy: tasks[i].task_createdBy,
                                 number_of_subtasks: tasks[i].subtasks.length,
-                                completed_subtasks: percentage,
+                                percentage: percentage,
 
 
                             })
@@ -215,10 +215,10 @@ export const getSingleTask = async (req, res) => {
                         let total_length = check_task.subtasks.length;
                         for (let j = 0; j < check_task.subtasks.length; j++) {
 
-                            if (check_task.subtasks[j].sub_task_status === 'completed') {
+                            if (check_task.subtasks[j].sub_task_status === 'Completed') {
                                 count++;
                             }
-                            if (check_task.subtasks[j].sub_task_status === 'cancelled') {
+                            if (check_task.subtasks[j].sub_task_status === 'Cancelled') {
                                 total_length--;
                             }
                         }
@@ -240,7 +240,7 @@ export const getSingleTask = async (req, res) => {
                             task_assignee: check_task.task_assignee,
                             task_createdBy: check_task.task_createdBy,
                             number_of_subtasks: check_task.subtasks.length,
-                            completed_subtasks: percentage,
+                            percentage: percentage,
 
 
                         })
