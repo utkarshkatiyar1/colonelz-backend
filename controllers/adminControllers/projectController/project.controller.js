@@ -9,6 +9,7 @@ import {
   onlyPhoneNumberValidation,
 } from "../../../utils/validation.js";
 import notificationModel from "../../../models/adminModels/notification.model.js";
+import taskModel from "../../../models/adminModels/task.model.js";
 dotenv.config();
 
 const s3 = new AWS.S3({
@@ -64,7 +65,7 @@ export const getAllProject = async (req, res) => {
         let archive = [];
         let projects = [];
         const project = await projectModel.find({}).sort({ createdAt: -1 });
-        
+
         for (let i = 0; i < project.length; i++) {
           if (project[i].project_status == "executing") {
             execution.push(project[i]);
@@ -80,7 +81,7 @@ export const getAllProject = async (req, res) => {
               archive.push(isOlderThan6Months);
             }
           }
-          
+
           projects.push({
             project_id: project[i].project_id,
             project_name: project[i].project_name,
@@ -92,8 +93,8 @@ export const getAllProject = async (req, res) => {
             project_budget: project[i].project_budget,
             client_name: project[i].client[0].client_name,
             project_type: project[i].project_type,
-            designer:project[i].designer,
-            client:project[i].client
+            designer: project[i].designer,
+            client: project[i].client
 
           });
         }
@@ -146,7 +147,77 @@ export const getSingleProject = async (req, res) => {
           project_id: project_ID,
         });
         if (find_project.length > 0) {
-          responseData(res, "project found", 200, true, "", find_project);
+          let response = []
+          const check_task = await taskModel.find({ project_id: project_ID })
+          if (check_task.length < 1) {
+            response.push({
+              project_id: project_ID,
+              project_name: find_project[0].project_name,
+              project_type: find_project[0].project_type,
+              project_status: find_project[0].project_status,
+              timeline_date: find_project[0].timeline_date,
+              project_budget: find_project[0].project_budget,
+              description: find_project[0].description,
+              designer: find_project[0].designer,
+              task: [],
+              client: find_project[0].client,
+              lead_id: find_project[0].lead_id,
+              mom: find_project[0].mom,
+              quotation: find_project[0].quotation,
+              visualizer: find_project[0].visualizer,
+              leadmanager: find_project[0].leadmanager,
+              project_start_date: find_project[0].project_start_date,
+              project_end_date: find_project[0].project_end_date,
+              project_location: find_project[0].project_location,
+              project_updated_by: find_project[0].project_updated_by,
+              percentage:0
+            })
+          }
+          if (check_task.length > 0) {
+            let count =0;
+            let total_task_length = check_task.length;
+            let percentage;
+
+            for (let i = 0; i < check_task.length; i++) {
+              if(check_task[i].task_status === 'Completed')
+                {
+                  count = count + 1;
+
+                }
+                if(check_task.task_status ==='Cancelled')
+                  {
+                    total_task_length--;
+                  }
+            }
+            percentage = (count / total_task_length)*100;
+           
+            response.push({
+              project_id: project_ID,
+              project_name: find_project[0].project_name,
+              project_type: find_project[0].project_type,
+              project_status: find_project[0].project_status,
+              timeline_date: find_project[0].timeline_date,
+              project_budget: find_project[0].project_budget,
+              description: find_project[0].description,
+              designer: find_project[0].designer,
+              task: check_task,
+              client: find_project[0].client,
+              lead_id: find_project[0].lead_id,
+              mom: find_project[0].mom,
+              quotation: find_project[0].quotation,
+              visualizer: find_project[0].visualizer,
+              leadmanager: find_project[0].leadmanager,
+              project_start_date: find_project[0].project_start_date,
+              project_end_date: find_project[0].project_end_date,
+              project_location: find_project[0].project_location,
+              project_updated_by: find_project[0].project_updated_by,
+              percentage:percentage
+            })
+
+            }
+         
+
+          responseData(res, "project found", 200, true, "", response);
         }
         if (find_project < 1) {
           responseData(res, "", 404, false, "project not found", []);
@@ -203,7 +274,7 @@ export const updateProjectDetails = async (req, res) => {
               project_budget: project_budget,
               project_status: project_status,
               timeline_date: timeline_date,
-              project_end_date:timeline_date,
+              project_end_date: timeline_date,
               description: description,
               designer: designer
             },
@@ -211,6 +282,7 @@ export const updateProjectDetails = async (req, res) => {
             $push: {
               project_updated_by: {
                 user_name: find_user[0].username,
+                role:find_user[0].role,
                 project_budget: project_budget,
                 project_status: project_status,
                 timeline_date: timeline_date,

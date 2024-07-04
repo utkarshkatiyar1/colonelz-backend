@@ -345,6 +345,7 @@ export const updateTask = async (req, res) => {
                                 $push: {
                                     task_updatedBy: {
                                         task_updatedBy: check_user.username,
+                                        role:check_user.role,
                                         task_updatedOn: new Date()
                                     }
 
