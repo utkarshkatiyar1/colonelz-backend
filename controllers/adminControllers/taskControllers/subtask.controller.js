@@ -73,7 +73,7 @@ export const createSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -82,7 +82,7 @@ export const createSubTask = async (req, res) => {
                     }
                     else {
                         if (check_task) {
-                            const update_task = await taskModel.findOneAndUpdate({ task_id: task_id },
+                            const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id:project_id },
                                 {
                                     $push: {
                                         subtasks: {
@@ -107,6 +107,18 @@ export const createSubTask = async (req, res) => {
                                 { new: true, useFindAndModify: false }
                             )
                             if (update_task) {
+                                await projectModel.findOneAndUpdate({ project_id: project_id },
+                                    {
+                                        $push: {
+                                            project_updated_by: {
+                                                username: check_user.username,
+                                                role: check_user.role,
+                                                message: `New Subtask ${sub_task_name} in task ${check_task.task_name} has been created.`,
+                                                updated_date: new Date()
+                                            }
+                                        }
+                                    }
+                                )
                                 responseData(res, "Sub Task added successfully", 200, true, "", [])
                             }
                             else {
@@ -320,7 +332,7 @@ export const updateSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -332,6 +344,7 @@ export const updateSubTask = async (req, res) => {
                         else {
                             const update_subtask = await taskModel.findOneAndUpdate({
                                 task_id: task_id,
+                                project_id:project_id,
                                 "subtasks.sub_task_id": sub_task_id
                             },
                                 {
@@ -358,6 +371,18 @@ export const updateSubTask = async (req, res) => {
                                 { new: true, useFindAndModify: false }
                             )
                             if (update_subtask) {
+                                await projectModel.findOneAndUpdate({ project_id: project_id },
+                                    {
+                                        $push: {
+                                            project_updated_by: {
+                                                username: check_user.username,
+                                                role: check_user.role,
+                                                message: `Subtask ${sub_task_name} in task ${check_task.task_name} has been updated.`,
+                                                updated_date: new Date()
+                                            }
+                                        }
+                                    }
+                                )
                                 responseData(res, "Sub Task Updated Successfully", 200, true, "", [])
                             }
                             else {
@@ -413,18 +438,36 @@ export const deleteSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
+                        const check_subtask = check_task.subtasks.find((subtask) => subtask.sub_task_id == sub_task_id)
+                        await projectModel.findOneAndUpdate({ project_id: project_id },
+                            {
+                                $push: {
+                                    project_updated_by: {
+                                        username: check_user.username,
+                                        role: check_user.role,
+                                        message: `Subtask ${check_subtask.sub_task_name} in task ${check_task.task_name} has been deleted.`,
+                                        updated_date: new Date()
+                                    }
+                                }
+                            }
+                        )
                         const delete_subtask = await taskModel.findOneAndUpdate({
                             task_id: task_id,
+                            project_id:project_id,
                             "subtasks.sub_task_id": sub_task_id
                         },
                             {
-                                $pull: { "subtasks": { "sub_task_id": sub_task_id } }
+                                $pull: { "subtasks": { "sub_task_id": sub_task_id } },
+
+
                             },
+
+
                             { new: true }
                         )
                         if (delete_subtask) {

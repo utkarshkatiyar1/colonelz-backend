@@ -87,6 +87,18 @@ export const createTask = async (req, res) => {
                     })
 
                     await task.save();
+                    await projectModel.findOneAndUpdate({project_id:project_id},
+                        {
+                            $push:{
+                              project_updated_by:{
+                                username:check_user.username,
+                                role:check_user.role,
+                                message:`New Task ${task_name} has been created.`,
+                                updated_date: new Date()
+                              }  
+                            }
+                        }
+                    )
                     responseData(res, "Task created successfully", 200, true, "", [])
                 }
             }
@@ -203,7 +215,7 @@ export const getSingleTask = async (req, res) => {
                 responseData(res, "", 404, false, "Project not found", [])
             }
             else {
-                const check_task = await taskModel.findOne({ task_id: task_id })
+                const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
                 if (!check_task) {
                     responseData(res, "", 404, false, "Task not found", [])
                 }
@@ -328,7 +340,7 @@ export const updateTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id },
+                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id:project_id },
                             {
                                 $set: {
                                     task_name: task_name,
@@ -352,8 +364,24 @@ export const updateTask = async (req, res) => {
                                 }
                             },
                             { new: true, useFindAndModify: false }
+                            
                         )
+                       
                         if (update_task) {
+                           await projectModel.findOneAndUpdate({ project_id: project_id },
+                                {
+                                    $push: {
+                                        project_updated_by: {
+                                            username: check_user.username,
+                                            role: check_user.role,
+                                            message: `${task_name} task  has been updated.`,
+                                            updated_date: new Date()
+                                        }
+                                    }
+                                }
+                            )
+                           
+                           
                             responseData(res, "Task updated successfully", 200, true, "", [])
                         }
                         else {
@@ -399,12 +427,24 @@ export const deleteTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id });
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id });
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id })
+                        await projectModel.findOneAndUpdate({ project_id: project_id },
+                            {
+                                $push: {
+                                    project_updated_by: {
+                                        username: check_user.username,
+                                        role: check_user.role,
+                                        message: `${check_task.task_name} task  has been deleted.`,
+                                        updated_date: new Date()
+                                    }
+                                }
+                            }
+                        )
+                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id, project_id:project_id })
                         if (delete_task) {
                             responseData(res, "Task deleted successfully", 200, true, "", [])
                         }
