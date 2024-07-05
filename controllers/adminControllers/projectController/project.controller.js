@@ -281,7 +281,7 @@ export const updateProjectDetails = async (req, res) => {
 
             $push: {
               project_updated_by: {
-                user_name: find_user[0].username,
+                username: find_user[0].username,
                 role:find_user[0].role,
                 project_budget: project_budget,
                 project_status: project_status,
