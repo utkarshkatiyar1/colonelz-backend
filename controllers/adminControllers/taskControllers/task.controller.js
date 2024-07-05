@@ -93,7 +93,7 @@ export const createTask = async (req, res) => {
                               project_updated_by:{
                                 username:check_user.username,
                                 role:check_user.role,
-                                    message: `has created new task ${check_task.task_name}.`,
+                                    message: `has created new task ${task_name}.`,
                                 updated_date: new Date()
                               }  
                             }
