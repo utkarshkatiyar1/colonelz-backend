@@ -288,6 +288,7 @@ export const updateProjectDetails = async (req, res) => {
                 timeline_date: timeline_date,
                 description: description,
                 designer: designer,
+                message: `has updated project ${project_find[0].project_name}.`,
                 updated_date: new Date()
 
               }

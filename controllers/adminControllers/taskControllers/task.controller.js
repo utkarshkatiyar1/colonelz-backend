@@ -93,7 +93,7 @@ export const createTask = async (req, res) => {
                               project_updated_by:{
                                 username:check_user.username,
                                 role:check_user.role,
-                                message:`New Task ${task_name} has been created.`,
+                                    message: `has created new task ${check_task.task_name}.`,
                                 updated_date: new Date()
                               }  
                             }
@@ -374,7 +374,7 @@ export const updateTask = async (req, res) => {
                                         project_updated_by: {
                                             username: check_user.username,
                                             role: check_user.role,
-                                            message: `${task_name} task  has been updated.`,
+                                            message: `has updated task ${task_name}.`,
                                             updated_date: new Date()
                                         }
                                     }
@@ -438,7 +438,7 @@ export const deleteTask = async (req, res) => {
                                     project_updated_by: {
                                         username: check_user.username,
                                         role: check_user.role,
-                                        message: `${check_task.task_name} task  has been deleted.`,
+                                        message: `has deleted task ${check_task.task_name}.`,
                                         updated_date: new Date()
                                     }
                                 }

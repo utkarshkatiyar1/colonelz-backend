@@ -113,7 +113,7 @@ export const createSubTask = async (req, res) => {
                                             project_updated_by: {
                                                 username: check_user.username,
                                                 role: check_user.role,
-                                                message: `New Subtask ${sub_task_name} in task ${check_task.task_name} has been created.`,
+                                                message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
                                                 updated_date: new Date()
                                             }
                                         }
@@ -377,7 +377,7 @@ export const updateSubTask = async (req, res) => {
                                             project_updated_by: {
                                                 username: check_user.username,
                                                 role: check_user.role,
-                                                message: `Subtask ${sub_task_name} in task ${check_task.task_name} has been updated.`,
+                                                message: ` has updated subtask ${sub_task_name} in task ${check_task.task_name}.`,
                                                 updated_date: new Date()
                                             }
                                         }
@@ -450,7 +450,7 @@ export const deleteSubTask = async (req, res) => {
                                     project_updated_by: {
                                         username: check_user.username,
                                         role: check_user.role,
-                                        message: `Subtask ${check_subtask.sub_task_name} in task ${check_task.task_name} has been deleted.`,
+                                        message: ` has deleted subtask ${check_subtask.sub_task_name} in task ${check_task.task_name}.`,
                                         updated_date: new Date()
                                     }
                                 }
