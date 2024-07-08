@@ -133,6 +133,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
 
 export const shareQuotation = async (req, res) => {
     try {
+        const user_id = req.body.user_id;
         const user_name = req.body.user_name;
         const file_id = req.body.file_id;
         const folder_name = req.body.folder_name;
@@ -140,11 +141,15 @@ export const shareQuotation = async (req, res) => {
         const client_email = req.body.client_email;
         const client_name = req.body.client_name;
         const type = req.body.type;
-        if (!type || !file_id || !project_id) {
+        if (!type || !file_id || !project_id || ! user_id) {
             return responseData(res, "", 400, false, "Missing required fields");
         }
-      
 
+        const check_user = await registerModel.findOne({_id:user_id})
+        if(!check_user)
+            {
+                return responseData(res, "", 400, false, "User not found");
+            }
         if (type === "Client") {
             if (!onlyEmailValidation(client_email) || !client_name) {
                 return responseData(res, "", 400, false, "Invalid client email or missing client name");
@@ -236,6 +241,18 @@ export const shareQuotation = async (req, res) => {
                 project_id: project_id,
                 "quotation.$.itemId": file_id
             })
+            await projectModel.findOneAndUpdate({ project_id: project_id },
+                {
+                    $push: {
+                        project_updated_by: {
+                            username: check_user.username,
+                            role: check_user.role,
+                            message: `has sent the quotation for approval to cleint ${client_name}.`,
+                            updated_date: new Date()
+                        }
+                    }
+                }
+            )
             if (check_data.quotation.length > 0) {
                 for (let i = 0; i < check_data.quotation.length; i++) {
 
@@ -248,6 +265,9 @@ export const shareQuotation = async (req, res) => {
                     }
 
                 }
+                
+              
+
                 if (check_status == 0) {
                     transporter.sendMail(mailOptions, async (error, info) => {
                         if (error) {
@@ -324,7 +344,7 @@ export const shareQuotation = async (req, res) => {
 
 
             });
-            console.log(check_status)
+           
             if (!check_status) {
                 const user = await registerModel.findOne({ username: user_name });
               
@@ -447,6 +467,18 @@ export const shareQuotation = async (req, res) => {
                             },
                             { arrayFilters: [{ "elem.projectData": { $exists: true } }] }
                         );
+                        await projectModel.findOneAndUpdate({ project_id: project_id },
+                            {
+                                $push: {
+                                    project_updated_by: {
+                                        username: check_user.username,
+                                        role: check_user.role,
+                                        message: `has sent the quotation for approval to ${user_name}.`,
+                                        updated_date: new Date()
+                                    }
+                                }
+                            }
+                        )
                         const quotationsData = {
                             itemId: file_id,
                             admin_status: "pending",
