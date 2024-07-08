@@ -6,6 +6,7 @@ import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
+import registerModel from "../../../models/usersModels/register.model.js";
 
 
 
@@ -157,6 +158,7 @@ export const getAllProjectMom = async (req, res) => {
 
 export const createmom = async (req, res) => {
   try {
+    const user_id = req.body.user_id;
     const project_id = req.body.project_id;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
@@ -180,7 +182,12 @@ export const createmom = async (req, res) => {
       return res
         .status(400)
         .send({ status: false, message: "project_id is required" });
-    } else if (!meetingDate) {
+    }
+    else if(!user_id)
+      {
+        responseData(res,"",400,false, "User Id required");
+      }
+     else if (!meetingDate) {
       return res
         .status(400)
         .send({ status: false, message: "meetingDate is required" });
@@ -198,6 +205,11 @@ export const createmom = async (req, res) => {
         .status(400)
         .send({ status: false, message: "organiser is required" });
     } else {
+      const check_user = await registerModel.findOne({_id:user_id})
+      if(!check_user)
+        {
+            responseData(res,"",400,false, "User Not Found");
+        }
       const check_project = await projectModel.find({ project_id: project_id });
       if (check_project.length > 0) {
         const mom_id = `COl-M-${generateSixDigitNumber()}`; // generate meeting id
@@ -276,6 +288,18 @@ export const createmom = async (req, res) => {
             },
             { new: true }
           );
+          await projectModel.findOneAndUpdate({ project_id: project_id },
+            {
+              $push: {
+                project_updated_by: {
+                  username: check_user.username,
+                  role: check_user.role,
+                  message: `has created new mom.`,
+                  updated_date: new Date()
+                }
+              }
+            }
+          )
           const existingFile = await fileuploadModel.findOne({
             project_id: project_id,
           });

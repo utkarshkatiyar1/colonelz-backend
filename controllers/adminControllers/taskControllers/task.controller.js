@@ -34,7 +34,7 @@ export const createTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-        else if (!onlyAlphabetsValidation(task_name) &&  task_name.length > 3) {
+        else if (!onlyAlphabetsValidation(task_name) && task_name.length > 3) {
             responseData(res, "", 404, false, "Task Name should be alphabets", [])
         }
         else if (!task_priority) {
@@ -74,8 +74,8 @@ export const createTask = async (req, res) => {
                         task_description: task_description,
                         actual_task_start_date: actual_task_start_date,
                         actual_task_end_date: actual_task_end_date,
-                        estimated_task_end_date:estimated_task_end_date,
-                        estimated_task_start_date:estimated_task_start_date,
+                        estimated_task_end_date: estimated_task_end_date,
+                        estimated_task_start_date: estimated_task_start_date,
                         task_status: task_status,
                         task_priority: task_priority,
                         task_assignee: task_assignee,
@@ -87,6 +87,18 @@ export const createTask = async (req, res) => {
                     })
 
                     await task.save();
+                    await projectModel.findOneAndUpdate({ project_id: project_id },
+                        {
+                            $push: {
+                                project_updated_by: {
+                                    username: check_user.username,
+                                    role: check_user.role,
+                                    message: `has created new task ${task_name}.`,
+                                    updated_date: new Date()
+                                }
+                            }
+                        }
+                    )
                     responseData(res, "Task created successfully", 200, true, "", [])
                 }
             }
@@ -111,8 +123,8 @@ export const getAllTasks = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-       
-      else{
+
+        else {
             const check_user = await registerModel.findById({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -130,25 +142,24 @@ export const getAllTasks = async (req, res) => {
                     }
                     if (tasks.length > 0) {
                         let response = []
-                        let percentage ;
-                    
-                        let  count =0;
+                        
+
+                        
                         for (let i = 0; i < tasks.length; i++) {
+                            let count = 0;
+                            let percentage;
                             let total_length = tasks[i].subtasks.length;
-                            for(let j =0;j<tasks[i].subtasks.length;j++)
-                                {
-                                    
-                                if (tasks[i].subtasks[j].sub_task_status === 'Completed'  )
-                                    {
-                                        count++;
-                                    }
-                                if (tasks[i].subtasks[j].sub_task_status === 'Cancelled')
-                                    {
-                                             total_length--;
-                                    }
+                            for (let j = 0; j < tasks[i].subtasks.length; j++) {
+
+                                if (tasks[i].subtasks[j].sub_task_status === 'Completed') {
+                                    count++;
                                 }
-                            percentage = (count / total_length )*100;
-                                 
+                                if (tasks[i].subtasks[j].sub_task_status === 'Cancelled') {
+                                    total_length--;
+                                }
+                            }
+                            percentage = (count / total_length) * 100;
+
                             response.push({
                                 project_id: tasks[i].project_id,
                                 task_id: tasks[i].task_id,
@@ -156,8 +167,8 @@ export const getAllTasks = async (req, res) => {
                                 task_description: tasks[i].task_description,
                                 actual_task_start_date: tasks[i].actual_task_start_date,
                                 actual_task_end_date: tasks[i].actual_task_end_date,
-                                estimated_task_end_date:tasks[i].estimated_task_end_date,
-                                estimated_task_start_date:tasks[i].estimated_task_start_date,
+                                estimated_task_end_date: tasks[i].estimated_task_end_date,
+                                estimated_task_start_date: tasks[i].estimated_task_start_date,
                                 task_status: tasks[i].task_status,
                                 task_priority: tasks[i].task_priority,
                                 task_createdOn: tasks[i].task_createdOn,
@@ -175,9 +186,9 @@ export const getAllTasks = async (req, res) => {
                     }
                 }
             }
-      }
+        }
 
-     
+
     }
     catch (err) {
         console.log(err)
@@ -203,7 +214,7 @@ export const getSingleTask = async (req, res) => {
                 responseData(res, "", 404, false, "Project not found", [])
             }
             else {
-                const check_task = await taskModel.findOne({ task_id: task_id })
+                const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                 if (!check_task) {
                     responseData(res, "", 404, false, "Task not found", [])
                 }
@@ -212,39 +223,39 @@ export const getSingleTask = async (req, res) => {
                     let percentage;
 
                     let count = 0;
-                        let total_length = check_task.subtasks.length;
-                        for (let j = 0; j < check_task.subtasks.length; j++) {
+                    let total_length = check_task.subtasks.length;
+                    for (let j = 0; j < check_task.subtasks.length; j++) {
 
-                            if (check_task.subtasks[j].sub_task_status === 'Completed') {
-                                count++;
-                            }
-                            if (check_task.subtasks[j].sub_task_status === 'Cancelled') {
-                                total_length--;
-                            }
+                        if (check_task.subtasks[j].sub_task_status === 'Completed') {
+                            count++;
                         }
-                        percentage = (count / total_length) * 100;
+                        if (check_task.subtasks[j].sub_task_status === 'Cancelled') {
+                            total_length--;
+                        }
+                    }
+                    percentage = (count / total_length) * 100;
 
-                        response.push({
-                            project_id: check_task.project_id,
-                            task_id: check_task.task_id,
-                            task_name: check_task.task_name,
-                            task_description: check_task.task_description,
-                            actual_task_start_date: check_task.actual_task_start_date,
-                            actual_task_end_date: check_task.actual_task_end_date,
-                            estimated_task_end_date: check_task.estimated_task_end_date,
-                            estimated_task_start_date: check_task.estimated_task_start_date,
-                            task_status: check_task.task_status,
-                            task_priority: check_task.task_priority,
-                            task_createdOn: check_task.task_createdOn,
-                            reporter: check_task.reporter,
-                            task_assignee: check_task.task_assignee,
-                            task_createdBy: check_task.task_createdBy,
-                            number_of_subtasks: check_task.subtasks.length,
-                            percentage: percentage,
+                    response.push({
+                        project_id: check_task.project_id,
+                        task_id: check_task.task_id,
+                        task_name: check_task.task_name,
+                        task_description: check_task.task_description,
+                        actual_task_start_date: check_task.actual_task_start_date,
+                        actual_task_end_date: check_task.actual_task_end_date,
+                        estimated_task_end_date: check_task.estimated_task_end_date,
+                        estimated_task_start_date: check_task.estimated_task_start_date,
+                        task_status: check_task.task_status,
+                        task_priority: check_task.task_priority,
+                        task_createdOn: check_task.task_createdOn,
+                        reporter: check_task.reporter,
+                        task_assignee: check_task.task_assignee,
+                        task_createdBy: check_task.task_createdBy,
+                        number_of_subtasks: check_task.subtasks.length,
+                        percentage: percentage,
 
 
-                        })
-                    
+                    })
+
                     responseData(res, "Task found successfully", 200, true, "", response)
                 }
             }
@@ -289,10 +300,9 @@ export const updateTask = async (req, res) => {
         else if (!onlyAlphabetsValidation(task_name) && task_name.length > 3) {
             responseData(res, "", 404, false, "Task Name should be alphabets", [])
         }
-        else if(!task_id)
-            {
+        else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
-            }
+        }
         else if (!task_priority) {
             responseData(res, "", 404, false, "task priority required", [])
 
@@ -312,7 +322,7 @@ export const updateTask = async (req, res) => {
         else if (!reporter) {
             responseData(res, "", 404, false, "Task reporter required", [])
         }
-        else{
+        else {
             const check_user = await registerModel.findById({ _id: user_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -328,7 +338,7 @@ export const updateTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id },
+                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
                             {
                                 $set: {
                                     task_name: task_name,
@@ -345,14 +355,31 @@ export const updateTask = async (req, res) => {
                                 $push: {
                                     task_updatedBy: {
                                         task_updatedBy: check_user.username,
+                                        role: check_user.role,
                                         task_updatedOn: new Date()
                                     }
 
                                 }
                             },
                             { new: true, useFindAndModify: false }
+
                         )
+
                         if (update_task) {
+                            await projectModel.findOneAndUpdate({ project_id: project_id },
+                                {
+                                    $push: {
+                                        project_updated_by: {
+                                            username: check_user.username,
+                                            role: check_user.role,
+                                            message: `has updated task ${task_name}.`,
+                                            updated_date: new Date()
+                                        }
+                                    }
+                                }
+                            )
+
+
                             responseData(res, "Task updated successfully", 200, true, "", [])
                         }
                         else {
@@ -363,7 +390,7 @@ export const updateTask = async (req, res) => {
             }
         }
 
-       
+
     }
     catch (err) {
         console.log(err);
@@ -383,11 +410,11 @@ export const deleteTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-      
+
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
-        else{
+        else {
             const check_user = await registerModel.findOne({ user_id: user_id });
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
@@ -398,12 +425,24 @@ export const deleteTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id });
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id });
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id })
+                        await projectModel.findOneAndUpdate({ project_id: project_id },
+                            {
+                                $push: {
+                                    project_updated_by: {
+                                        username: check_user.username,
+                                        role: check_user.role,
+                                        message: `has deleted task ${check_task.task_name}.`,
+                                        updated_date: new Date()
+                                    }
+                                }
+                            }
+                        )
+                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id, project_id: project_id })
                         if (delete_task) {
                             responseData(res, "Task deleted successfully", 200, true, "", [])
                         }
@@ -415,7 +454,7 @@ export const deleteTask = async (req, res) => {
 
             }
         }
-       
+
 
     }
     catch (err) {
@@ -423,5 +462,59 @@ export const deleteTask = async (req, res) => {
         res.send(err);
 
     }
+}
+
+
+export const getAllTaskWithData = async (req, res) => {
+    try {
+        const project_id = req.query.project_id
+        if (!project_id) {
+            responseData(res, "", 404, false, "Project id is required", [])
+        }
+        else {
+            const check_project = await projectModel.findOne({ project_id: project_id });
+            if (!check_project) {
+                responseData(res, "", 404, false, "Project not found", [])
+            }
+            else {
+                const check_task = await taskModel.find({ project_id: project_id });
+                if (!check_task) {
+                    responseData(res, "", 404, false, "Task not found", [])
+                }
+                else {
+                    let response = []
+
+                    for (let i = 0; i < check_task.length; i++) {
+                        let count = 0;
+                        let percentage;
+                        let total_length = check_task[i].subtasks.length;
+                        for (let j = 0; j < check_task[i].subtasks.length; j++) {
+
+                            if (check_task[i].subtasks[j].sub_task_status === 'Completed') {
+                                count++;
+                            }
+                            if (check_task[i].subtasks[j].sub_task_status === 'Cancelled') {
+                                total_length--;
+                            }
+                        }
+                        percentage = (count / total_length) * 100;
+
+                        response.push({
+                            task_name: check_task[i].task_name,
+                            percentage: percentage
+
+
+                        })
+                    }
+                    responseData(res, "Task found", 200, true, "", response)
+                }
+            }
+        }
+    }
+    catch (err) {
+        console.log(err)
+        res.send(err)
+    }
+
 }
 

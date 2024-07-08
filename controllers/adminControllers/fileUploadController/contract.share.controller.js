@@ -106,7 +106,7 @@ const saveFileUploadData = async (
 
 ) => {
     try {
-        
+
 
         // Use update query to push data
         const updateResult = await fileuploadModel.updateOne(
@@ -405,7 +405,7 @@ export const shareContract = async (req, res) => {
                         return responseData(res, "", 400, false, "File not found");
                     }
                     const file_url = check_file.files.find(x => x.folder_name === folder_name)?.files.find(file => file.fileId === fileId);
-                   
+
                     const quotation = req.files.quotation;
                     // console.log(quotation)
                     if (!quotation) {
@@ -414,7 +414,7 @@ export const shareContract = async (req, res) => {
                     const response = await uploadImage(req, quotation, lead_id, quotation.name);
 
                     if (response.status) {
-                        
+
                         let fileUrls = [{
                             fileUrl: response.data.Location,
                             fileName: response.data.Location.split('/').pop(),
@@ -423,11 +423,11 @@ export const shareContract = async (req, res) => {
                             date: new Date()
                         }]
 
-                       
+
                         const existingFile = await fileuploadModel.findOne({
                             lead_id: lead_id
                         });
-                       
+
                         const folder_name = `quotation`;
                         const lead_Name = existingFile.name;
 
