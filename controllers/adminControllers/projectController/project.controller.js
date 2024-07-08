@@ -303,7 +303,7 @@ export const updateProjectDetails = async (req, res) => {
           type: "project",
           notification_id: generateSixDigitNumber(),
           itemId: project_ID,
-          message: `project  updated: Project name ${project_find[0].project_name}  update  on  ${formatDate(new Date())}.`,
+          message: `project  updated: Project name ${project_find[0].project_name}up date on ${formatDate(new Date())}.`,
           status: false,
         });
         await newNotification.save();
