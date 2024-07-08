@@ -466,3 +466,60 @@ export const deleteTask = async (req, res) => {
     }
 }
 
+
+export const getAllTaskWithData = async(req,res) =>{
+    try{
+        const project_id = req.query.project_id
+        if(!project_id)
+            {
+                 responseData(res, "", 404, false, "Project id is required", [])
+            }
+            else{
+                const check_project = await projectModel.findOne({ project_id: project_id });
+                if (!check_project) {
+                    responseData(res, "", 404, false, "Project not found", [])
+                }
+                else {
+                    const check_task = await taskModel.find({ project_id: project_id });
+                    if (!check_task) {
+                        responseData(res, "", 404, false, "Task not found", [])
+                    }
+                    else {
+                        let response =[]
+                       
+                        for(let i=0;i<check_task.length;i++)
+                            {
+                            let count = 0;
+                            let percentage;
+                            let total_length = check_task[i].subtasks.length;
+                            for (let j = 0; j < check_task[i].subtasks.length; j++) {
+
+                                if (check_task[i].subtasks[j].sub_task_status === 'Completed') {
+                                    count++;
+                                }
+                                if (check_task[i].subtasks[j].sub_task_status === 'Cancelled') {
+                                    total_length--;
+                                }
+                            }
+                            percentage = (count / total_length) * 100;
+
+                                response.push({
+                                    task_name:check_task[i].task_name,
+                                    percentage:percentage
+
+
+                                })
+                            }
+                        responseData(res, "Task found", 200, true, "", response)
+                    }
+                }
+            }
+    }
+    catch(err)
+    {
+        console.log(err)
+        res.send(err)
+    }
+   
+}
+

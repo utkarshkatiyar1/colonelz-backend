@@ -47,7 +47,7 @@ import { verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { contractStatus, getContractData, shareContract } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js";
 import { AddMemberInLead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
-import { createTask, deleteTask, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
+import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 // router.use(checkAvailableUserIsAdmin)
 
@@ -115,7 +115,8 @@ router.route("/create/task").post(verifyJWT, createTask);
 router.route("/get/all/task").get(verifyJWT, getAllTasks);
 router.route("/get/single/task").get(verifyJWT, getSingleTask);
 router.route("/update/task").put(verifyJWT, updateTask);
-router.route("/delete/task").delete(verifyJWT, deleteTask)
+router.route("/delete/task").delete(verifyJWT, deleteTask);
+router.route("/gettask/details").get(verifyJWT, getAllTaskWithData);
 
 
 router.route("/create/subtask").post(verifyJWT, createSubTask);
