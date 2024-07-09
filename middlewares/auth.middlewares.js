@@ -131,10 +131,10 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
           responseData(
             res,
-            "",
-            404,
-            false,
-            "Data Not Found! ",
+            "Data Not Found!",
+            200,
+            true,
+            " ",
 
           );
         }

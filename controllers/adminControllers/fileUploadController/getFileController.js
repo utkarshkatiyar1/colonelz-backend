@@ -92,10 +92,10 @@ import leadModel from "../../../models/adminModels/leadModel.js";
            
             responseData(
               res,
-              "",
-              404,
-              false,
-              "Data Not Found! ",
+              "Data Not Found!",
+              200,
+              true,
+              " ",
               
             );
           }
@@ -150,10 +150,10 @@ export const getleadData = async(req,res)=>{
           {
             responseData(
               res,
-              "",
-              404,
-              false,
               "Data Not Found! ",
+              200,
+              true,
+              "",
 
             );
           }
@@ -208,10 +208,10 @@ try{
   {
     responseData(
       res,
-      "",
-      404,
-      false,
-      "Data Not Found! ",
+      "Data Not Found!",
+      200,
+      true,
+      " ",
 
     );
   }
