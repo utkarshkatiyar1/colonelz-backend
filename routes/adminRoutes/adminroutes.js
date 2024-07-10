@@ -40,7 +40,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { createUser, deleteUser, getUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, isAdmin, isOrgAndAdmin, isProcurement } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, isAdmin, isOrgAndAdmin, isProcurement, isProjectArchitect } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -84,9 +84,9 @@ router.route("/create/lead").post(verifyJWT,createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
 router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
 router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
-router.route("/create/lead/project").post(verifyJWT, checkAvailableUserIsAdmin, leadToProject);
+router.route("/create/lead/project").post(verifyJWT, isProjectArchitect, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
-router.route("/lead/multiple/project").post(verifyJWT, leadToMultipleProject);
+router.route("/lead/multiple/project").post(verifyJWT, isProjectArchitect, leadToMultipleProject);
 
 router.route("/create/mom").post(verifyJWT, createmom);
 router.route("/getall/mom").get(verifyJWT, getAllMom);
