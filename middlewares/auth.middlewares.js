@@ -299,7 +299,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
               leadData.push({
 
                 lead_id: find_lead.lead_id,
-                lead_Name: find_lead.lead_name,
+                lead_Name: find_lead.name,
                 lead_email: find_lead.email,
                 lead_phone: find_lead.phone,
                 lead_status: find_lead.status,
