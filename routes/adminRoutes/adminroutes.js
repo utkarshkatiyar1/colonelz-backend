@@ -80,10 +80,10 @@ router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAll
 router.route("/getsingle/project").get(verifyJWT, getSingleProject);
 router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT,createLead);
+router.route("/create/lead").post(verifyJWT,isProjectArchitect, createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
 router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
-router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
+router.route("/update/lead").put(verifyJWT, isProjectArchitect, updateLead);
 router.route("/create/lead/project").post(verifyJWT, isProjectArchitect, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
 router.route("/lead/multiple/project").post(verifyJWT, isProjectArchitect, leadToMultipleProject);
