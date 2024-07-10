@@ -91,19 +91,44 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           let design = [];
           let completed = [];
           let archive = [];
-          const projects = await projectModel.find({}).sort({ createdAt: -1 });
-          for (let i = 0; i < projects.length; i++) {
-            if (projects[i].project_status == "executing") {
-              execution.push(projects[i]);
+          let projects = [];
+          const project = await projectModel.find({}).sort({ createdAt: -1 });
+          for (let i = 0; i < project.length; i++) {
+            if (project[i].project_status == "executing") {
+              execution.push(project[i]);
             }
-            if (projects[i].project_status == "designing") {
-              design.push(projects[i]);
+            if (project[i].project_status == "designing") {
+              design.push(project[i]);
             }
-            if (projects[i].project_status == "completed") {
-              completed.push(projects[i]);
+            if (project[i].project_status == "completed") {
+              completed.push(project[i]);
               
             }
+            projects.push({
+              project_name: project[i].project_name,
+              project_id: project[i].project_id,
+              client_name: project[i].client[0].client_name,
+              project_type: project[i].project_type,
+              project_status: project[i].project_status,
+              project_end_date: project[i].project_end_date,
+              project_start_date: project[i].project_start_date,
+              project_budget: project[i].project_budget,
+              project_description: project[i].project_description,
+              designer: project[i].designer,
+              client: project[i].client,
+              lead_id: project[i].lead_id,
+              mom: project[i].mom,
+              leadmanager: project[i].leadmanager,
+              visualizer: project[i].visualizer,
+              timeline_date: project[i].timeline_date,
+              project_location: project[i].project_location,
+              project_updated_by: project[i].project_updated_by,
+              quotation: project[i].quotation,
+
+            })
           }
+        
+        
 
          
 
