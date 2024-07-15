@@ -168,7 +168,7 @@ if (!check_lead)
 
             let fileUrls = [{
               fileUrl: response.data.Location,
-              fileName: response.data.Location.split('/').pop(),
+              fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${contract_pdf.size/1024} KB`,
               date: new Date()

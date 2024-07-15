@@ -253,7 +253,7 @@ export const createmom = async (req, res) => {
           for (let i = 0; i < fileSize.length; i++) {
             fileUrls = successfullyUploadedFiles.map((result) => ({
               fileUrl: result.data.Location,
-              fileName: result.data.Location.split('/').pop(),
+              fileName: decodeURIComponent(result.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${fileSize[i]} KB`,
               date: new Date()
@@ -440,6 +440,11 @@ export const sendPdf = async (req, res) => {
   try {
 
     const { project_id, mom_id } = req.body;
+    const cc = req.body.cc;
+    const bcc = req.body.bcc;
+    const client_email = req.body.client_email;
+    const subject = req.body.subject;
+    const body = req.body.body;
     const check_project = await projectModel.find({ project_id: project_id });
 
     if (check_project.length > 0) {
@@ -462,8 +467,11 @@ export const sendPdf = async (req, res) => {
           // Define the mail options
           const mailOptions = {
             from: 'info@colonelz.com',
-            to: check_project[0].client[0].client_email,
-            subject: 'MOM Data',
+            to: [check_project[0].client[0].client_email, client_email],
+            cc:cc,
+            bcc:bcc,
+            subject: subject,
+            html:body,
             attachments: [
               {
                 filename: mom_pdf.name,

@@ -49,6 +49,7 @@ import { AddMemberInLead } from "../../controllers/adminControllers/leadControll
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
+import { readPdf } from "../../controllers/adminControllers/fileUploadController/read.pdf.js";
 // router.use(checkAvailableUserIsAdmin)
 
 
@@ -73,6 +74,7 @@ router.route("/share/contract").post(verifyJWT, shareContract);
 router.route("/contract/approval").post(verifyJWT, contractStatus);
 router.route("/get/contractdata").get(verifyJWT, getContractData);
 router.route("/delete/folder").delete(verifyJWT, isAdmin, deleteFolder);
+
 
 
 
@@ -124,6 +126,9 @@ router.route("/get/all/subtask").get(verifyJWT, getAllSubTask);
 router.route("/get/single/subtask").get(verifyJWT, getSingleSubTask);
 router.route("/update/subtask").put(verifyJWT, updateSubTask);
 router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
+
+
+router.route("/read/pdf").post(readPdf);
 
 
 

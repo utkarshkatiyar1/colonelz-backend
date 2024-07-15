@@ -185,7 +185,7 @@ const fileupload = async (req, res) => {
           for (let i = 0; i < fileSize.length; i++) {
             fileUrls = successfullyUploadedFiles.map((result) => ({
               fileUrl: result.data.Location,
-              fileName: result.data.Location.split('/').pop(),
+              fileName: decodeURIComponent(result.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${fileSize[i]} KB`,
               date: new Date()
@@ -193,6 +193,7 @@ const fileupload = async (req, res) => {
             }));
 
           }
+          console.log(decodeURIComponent(fileUrls[0].fileName.replace(/\+/g, ' ')))
 
 
           const existingFile = await fileuploadModel.findOne({

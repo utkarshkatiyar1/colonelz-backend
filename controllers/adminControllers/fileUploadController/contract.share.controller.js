@@ -417,7 +417,7 @@ export const shareContract = async (req, res) => {
 
                         let fileUrls = [{
                             fileUrl: response.data.Location,
-                            fileName: response.data.Location.split('/').pop(),
+                            fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
                             fileId: `FL-${generateSixDigitNumber()}`,
                             fileSize: `${quotation.size / 1024} KB`,
                             date: new Date()
