@@ -84,14 +84,8 @@ export const createTask = async (req, res) => {
                         }
                         else
                         {
-                            
-                            const existProject = check_assignee.data[0].projectData.find((item)=> item.project_id === project_id)
-                            if(!existProject)
-                                {
-                                    
-                                    responseData(res, "", 404, false, "Task assignee is not part of this project", [])
-                                }
-                                else{
+                            if ((check_assignee.role === 'Senior Architect' || check_assignee.role === 'ADMIN') && (check_reporter.role ==='Senior Architect' ||  check_reporter.role ==='ADMIN') )
+                            {
                                 const task_id = `TK-${generateSixDigitNumber()}`
 
                                 const task = new taskModel({
@@ -113,12 +107,12 @@ export const createTask = async (req, res) => {
 
                                 })
                                 const taskTime = new timerModel({
-                                    project_id:project_id,
-                                    task_id:task_id,
-                                    task_name:task_name,
-                                    task_assignee:task_assignee,
-                                    task_time:'',
-                                    subtaskstime:[]
+                                    project_id: project_id,
+                                    task_id: task_id,
+                                    task_name: task_name,
+                                    task_assignee: task_assignee,
+                                    task_time: '',
+                                    subtaskstime: []
                                 })
 
                                 await task.save();
@@ -136,13 +130,66 @@ export const createTask = async (req, res) => {
                                     }
                                 )
                                 responseData(res, "Task created successfully", 200, true, "", [])
+
+                            }
+                            else{
+
+                                const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id)
+                                if (!existProject) {
+
+                                    responseData(res, "", 404, false, "Task assignee is not part of this project", [])
+                                }
+                                else {
+                                    const task_id = `TK-${generateSixDigitNumber()}`
+
+                                    const task = new taskModel({
+                                        project_id: project_id,
+                                        task_id: task_id,
+                                        task_name: task_name,
+                                        task_description: task_description,
+                                        actual_task_start_date: actual_task_start_date,
+                                        actual_task_end_date: actual_task_end_date,
+                                        estimated_task_end_date: estimated_task_end_date,
+                                        estimated_task_start_date: estimated_task_start_date,
+                                        task_status: task_status,
+                                        task_priority: task_priority,
+                                        task_assignee: task_assignee,
+                                        task_createdBy: check_user.username,
+                                        task_createdOn: new Date(),
+                                        reporter: reporter,
+                                        subtasks: []
+
+                                    })
+                                    const taskTime = new timerModel({
+                                        project_id: project_id,
+                                        task_id: task_id,
+                                        task_name: task_name,
+                                        task_assignee: task_assignee,
+                                        task_time: '',
+                                        subtaskstime: []
+                                    })
+
+                                    await task.save();
+                                    await taskTime.save();
+                                    await projectModel.findOneAndUpdate({ project_id: project_id },
+                                        {
+                                            $push: {
+                                                project_updated_by: {
+                                                    username: check_user.username,
+                                                    role: check_user.role,
+                                                    message: `has created new task ${task_name}.`,
+                                                    updated_date: new Date()
+                                                }
+                                            }
+                                        }
+                                    )
+                                    responseData(res, "Task created successfully", 200, true, "", [])
                                 }
 
-                        
+
+                            }
                         }
                     }
-                    
-                   
                 }
             }
 

@@ -74,7 +74,7 @@ export const createSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -90,27 +90,20 @@ export const createSubTask = async (req, res) => {
                             if (!check_assignee) {
                                 responseData(res, "", 404, false, " Subtask assignee is  not registered user", [])
                             }
-                            else
-                            {
+                            else {
                                 const check_reporter = await registerModel.findOne({ username: sub_task_reporter })
                                 if (!check_reporter) {
                                     responseData(res, "", 404, false, "Subtask reporter is  not registered user", [])
                                 }
-                                else
-                                {
-                                    const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id)
-                                    if (!existProject) {
+                                else {
+                                    if ((check_assignee.role === 'Senior Architect' || check_assignee.role === 'ADMIN') && (check_reporter.role === 'Senior Architect' || check_reporter.role === 'ADMIN')) {
+                                        const sub_task_id = `STK-${generateSixDigitNumber()}`;
 
-                                        responseData(res, "", 404, false, "Subtask assignee is not part of this project", [])
-                                    }
-                                    else {
-                                        const sub_task_id= `STK-${generateSixDigitNumber()}`;
-                                        
                                         const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
                                             {
                                                 $push: {
                                                     subtasks: {
-                                                        sub_task_id:sub_task_id,
+                                                        sub_task_id: sub_task_id,
                                                         sub_task_name: sub_task_name,
                                                         sub_task_description: sub_task_description,
                                                         estimated_sub_task_end_date: estimated_sub_task_end_date,
@@ -132,20 +125,20 @@ export const createSubTask = async (req, res) => {
                                         )
                                         if (update_task) {
                                             await timerModel.findOneAndUpdate({
-                                                project_id:project_id,
-                                                task_id:task_id
+                                                project_id: project_id,
+                                                task_id: task_id
                                             },
-                                            {
-                                                $push:{
-                                                    subtaskstime:{
-                                                        sub_task_id:sub_task_id,
-                                                        sub_task_name: sub_task_name,
-                                                        sub_task_assignee:sub_task_assignee,
-                                                        sub_task_time:''
+                                                {
+                                                    $push: {
+                                                        subtaskstime: {
+                                                            sub_task_id: sub_task_id,
+                                                            sub_task_name: sub_task_name,
+                                                            sub_task_assignee: sub_task_assignee,
+                                                            sub_task_time: ''
+                                                        }
                                                     }
                                                 }
-                                            }
-                                        )
+                                            )
                                             await projectModel.findOneAndUpdate({ project_id: project_id },
                                                 {
                                                     $push: {
@@ -163,9 +156,80 @@ export const createSubTask = async (req, res) => {
                                         else {
                                             responseData(res, "", 404, false, "Sub Task not added", [])
                                         }
+
                                     }
+                                    else {
+                                        const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id)
+                                        if (!existProject) {
+
+                                            responseData(res, "", 404, false, "Subtask assignee is not part of this project", [])
+                                        }
+                                        else {
+                                            const sub_task_id = `STK-${generateSixDigitNumber()}`;
+
+                                            const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
+                                                {
+                                                    $push: {
+                                                        subtasks: {
+                                                            sub_task_id: sub_task_id,
+                                                            sub_task_name: sub_task_name,
+                                                            sub_task_description: sub_task_description,
+                                                            estimated_sub_task_end_date: estimated_sub_task_end_date,
+                                                            estimated_sub_task_start_date: estimated_sub_task_start_date,
+                                                            actual_sub_task_end_date: actual_sub_task_end_date,
+                                                            actual_sub_task_start_date: actual_sub_task_start_date,
+                                                            sub_task_status: sub_task_status,
+                                                            sub_task_priority: sub_task_priority,
+                                                            sub_task_assignee: sub_task_assignee,
+                                                            sub_task_createdBy: check_user.username,
+                                                            sub_task_createdOn: new Date(),
+                                                            sub_task_reporter: sub_task_reporter
+
+                                                        }
+
+                                                    }
+                                                },
+                                                { new: true, useFindAndModify: false }
+                                            )
+                                            if (update_task) {
+                                                await timerModel.findOneAndUpdate({
+                                                    project_id: project_id,
+                                                    task_id: task_id
+                                                },
+                                                    {
+                                                        $push: {
+                                                            subtaskstime: {
+                                                                sub_task_id: sub_task_id,
+                                                                sub_task_name: sub_task_name,
+                                                                sub_task_assignee: sub_task_assignee,
+                                                                sub_task_time: ''
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                                await projectModel.findOneAndUpdate({ project_id: project_id },
+                                                    {
+                                                        $push: {
+                                                            project_updated_by: {
+                                                                username: check_user.username,
+                                                                role: check_user.role,
+                                                                message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
+                                                                updated_date: new Date()
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                                responseData(res, "Sub Task added successfully", 200, true, "", [])
+                                            }
+                                            else {
+                                                responseData(res, "", 404, false, "Sub Task not added", [])
+                                            }
+                                        }
+
+                                    }
+
                                 }
-                               
+
                             }
                         }
                     }
@@ -371,7 +435,7 @@ export const updateSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -383,7 +447,7 @@ export const updateSubTask = async (req, res) => {
                         else {
                             const update_subtask = await taskModel.findOneAndUpdate({
                                 task_id: task_id,
-                                project_id:project_id,
+                                project_id: project_id,
                                 "subtasks.sub_task_id": sub_task_id
                             },
                                 {
@@ -477,7 +541,7 @@ export const deleteSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -497,7 +561,7 @@ export const deleteSubTask = async (req, res) => {
                         )
                         const delete_subtask = await taskModel.findOneAndUpdate({
                             task_id: task_id,
-                            project_id:project_id,
+                            project_id: project_id,
                             "subtasks.sub_task_id": sub_task_id
                         },
                             {
