@@ -49,7 +49,8 @@ import { AddMemberInLead } from "../../controllers/adminControllers/leadControll
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
-import { readPdf } from "../../controllers/adminControllers/fileUploadController/read.pdf.js";
+import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
+
 // router.use(checkAvailableUserIsAdmin)
 
 
@@ -126,9 +127,11 @@ router.route("/get/all/subtask").get(verifyJWT, getAllSubTask);
 router.route("/get/single/subtask").get(verifyJWT, getSingleSubTask);
 router.route("/update/subtask").put(verifyJWT, updateSubTask);
 router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
+router.route("/update/subtask/time").put(verifyJWT,UpdateSubtimerController );
+router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
 
 
-router.route("/read/pdf").post(readPdf);
+
 
 
 
