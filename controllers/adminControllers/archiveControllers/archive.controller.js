@@ -37,7 +37,7 @@ export const archive = async (req, res) => {
             if (check_user.role === "ADMIN" || check_user.role === "Senior Architect") {
                 const archive = await arvhiveModel.find({})
                 if (archive.length < 1) {
-                    responseData(res, "", 400, false, "No data found", []);
+                    responseData(res, "No data found", 200, false, "", []);
                 }
                 if (archive.length > 0) {
                     let response = []
