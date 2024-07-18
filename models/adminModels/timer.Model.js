@@ -7,7 +7,11 @@ const SubtasktimeSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+
     sub_task_time: { type: String, required: true },
+    sub_task_isrunning: { type: Boolean, required: true },
+    sub_task_totalTime: { type: String, required: true },
+    sub_task_current: { type: String, required: true },
 });
 
 const taskWorkSchema = new mongoose.Schema({

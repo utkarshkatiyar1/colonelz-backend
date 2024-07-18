@@ -6,6 +6,9 @@ import timerModel from "../../../models/adminModels/timer.Model.js";
 export const UpdateSubtimerController = async (req, res) => {
     try {
         const time = req.body.time;
+        const isrunning = req.body.isrunning;
+        const totalTime = req.body.total_time;
+        const current = req.body.current;
         const project_id = req.body.project_id;
         const task_id = req.body.task_id;
         const sub_task_id = req.body.sub_task_id;
@@ -23,9 +26,19 @@ export const UpdateSubtimerController = async (req, res) => {
         else if (!sub_task_id) {
             return responseData(res, "", 400, false, "Sub task id is required")
         }
+        
+        else if(!totalTime)
+        {
+            return responseData(res, "", 400, false, "Total time is required")
+        }
+        else if(!current)
+        {
+            return responseData(res, "", 400, false, "Current time is required")
+        }
         else if (!sub_task_assignee) {
             sub_dataResponse(res, "", 400, false, "Sub task assignee is required")
         }
+
         else {
             const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
             if (!check_task) {
@@ -56,7 +69,15 @@ export const UpdateSubtimerController = async (req, res) => {
                                   project_id:project_id,
                                   'subtaskstime.sub_task_id':sub_task_id
                                 },
-                                { $set: {'subtaskstime.$.sub_task_time':time}},
+                                { $set: {
+                                    'subtaskstime.$.sub_task_time':time,
+                                    'subtaskstime.$.sub_task_isrunning':isrunning,
+
+                                    'subtaskstime.$.sub_task_totalTime':totalTime,
+                                    'subtaskstime.$.sub_task_current':current
+
+
+                                }},
                                 { new: true, useFindAndModify: false }
                             )
                             
@@ -115,7 +136,10 @@ export const GetSingleSubtimerController = async(req,res) =>{
                     const subtask = check_subtask.subtaskstime.find((item) => item.sub_task_id === sub_task_id);
                     if (subtask) {
                         const response = {
-                            sub_task_time: subtask.sub_task_time
+                            sub_task_time: subtask.sub_task_time,
+                            sub_task_isrunning: subtask.sub_task_isrunning,
+                            sub_task_total_time: subtask.sub_task_totalTime,
+                            sub_task_current: subtask.sub_task_current,
                         }
                         return responseData(res,"Sub task timer found" , 200, true, "",response )
                     } else {
