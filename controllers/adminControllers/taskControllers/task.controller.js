@@ -227,7 +227,7 @@ export const getAllTasks = async (req, res) => {
                 else {
                     const tasks = await taskModel.find({ project_id: project_id })
                     if (tasks.length < 1) {
-                        responseData(res, "", 404, false, "Tasks not found", [])
+                        responseData(res, "Tasks not found", 200, false, "", [])
 
                     }
                     if (tasks.length > 0) {
@@ -306,7 +306,7 @@ export const getSingleTask = async (req, res) => {
             else {
                 const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                 if (!check_task) {
-                    responseData(res, "", 404, false, "Task not found", [])
+                    responseData(res, "Task not found", 200, false, "", [])
                 }
                 else {
                     let response = []

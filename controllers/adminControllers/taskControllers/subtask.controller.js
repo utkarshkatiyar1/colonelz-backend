@@ -276,7 +276,7 @@ export const getAllSubTask = async (req, res) => {
                 else {
                     const check_task = await taskModel.findOne({ task_id: task_id })
                     if (!check_task) {
-                        responseData(res, "", 404, false, "Task not found", [])
+                        responseData(res, "Task not found", 200, false, "", [])
                     }
                     else {
                         let response = []
@@ -353,7 +353,7 @@ export const getSingleSubTask = async (req, res) => {
                         const sub_task = check_task.subtasks.find(item => item.sub_task_id == sub_task_id);
 
                         if (!sub_task) {
-                            return responseData(res, "", 404, false, "Sub-task not found", []);
+                            return responseData(res, "Sub-task not found", 200, false, "", []);
                         }
                         else {
                             return responseData(res, "Sub-task fetched successfully", 200, true, "", sub_task);
