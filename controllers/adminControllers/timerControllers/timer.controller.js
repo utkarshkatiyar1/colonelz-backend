@@ -136,10 +136,10 @@ export const GetSingleSubtimerController = async(req,res) =>{
                     const subtask = check_subtask.subtaskstime.find((item) => item.sub_task_id === sub_task_id);
                     if (subtask) {
                         const response = {
-                            sub_task_time: subtask.sub_task_time,
-                            sub_task_isrunning: subtask.sub_task_isrunning,
-                            sub_task_total_time: subtask.sub_task_totalTime,
-                            sub_task_current: subtask.sub_task_current,
+                            time: subtask.sub_task_time,
+                            isrunning: subtask.sub_task_isrunning,
+                            total_time: subtask.sub_task_totalTime,
+                            current: subtask.sub_task_current,
                         }
                         return responseData(res,"Sub task timer found" , 200, true, "",response )
                     } else {
