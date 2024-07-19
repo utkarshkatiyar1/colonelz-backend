@@ -56,7 +56,7 @@ import { GetSingleSubtimerController, UpdateSubtimerController } from "../../con
 
 router.route("/create/user").post(verifyJWT, isAdmin, createUser);
 router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
-router.route("/get/alluser").get(verifyJWT,isOrgAndAdmin, getUser);
+router.route("/get/alluser").get(verifyJWT, isOrgAndAdmin, getUser);
 router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
 
 
@@ -83,9 +83,9 @@ router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAll
 router.route("/getsingle/project").get(verifyJWT, getSingleProject);
 router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT,isProjectArchitect, createLead);
+router.route("/create/lead").post(verifyJWT, isProjectArchitect, createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
-router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
+router.route("/getsingle/lead").get(verifyJWT, getSingleLead);
 router.route("/update/lead").put(verifyJWT, isProjectArchitect, updateLead);
 router.route("/create/lead/project").post(verifyJWT, isProjectArchitect, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
@@ -99,8 +99,8 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
 router.route("/share/quotation").post(verifyJWT, isProcurement, shareQuotation);
-router.route("/get/quotationdata").get(verifyJWT,isProcurement, getQuotationData);
-router.route("/quotation/approval").post(verifyJWT,isProcurement, updateStatusAdmin);
+router.route("/get/quotationdata").get(verifyJWT, isProcurement, getQuotationData);
+router.route("/quotation/approval").post(verifyJWT, isProcurement, updateStatusAdmin);
 
 
 
@@ -127,8 +127,9 @@ router.route("/get/all/subtask").get(verifyJWT, getAllSubTask);
 router.route("/get/single/subtask").get(verifyJWT, getSingleSubTask);
 router.route("/update/subtask").put(verifyJWT, updateSubTask);
 router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
-router.route("/update/subtask/time").put(verifyJWT,UpdateSubtimerController );
+router.route("/update/subtask/time").put(verifyJWT, UpdateSubtimerController);
 router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
+
 
 
 
