@@ -24,7 +24,6 @@ export const createTask = async (req, res) => {
         const actual_task_start_date = req.body.actual_task_start_date;
         const estimated_task_start_date = req.body.estimated_task_start_date;
         const estimated_task_end_date = req.body.estimated_task_end_date;
-        const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -46,7 +45,7 @@ export const createTask = async (req, res) => {
         else if (!actual_task_start_date && !estimated_task_start_date) {
             responseData(res, "", 404, false, "Task start date  required", [])
         }
-        else if (!actual_task_end_date && !estimated_task_end_date) {
+        else if (!estimated_task_end_date) {
             responseData(res, "", 404, false, "Task end date required", [])
         }
         else if (!task_status) {
@@ -94,7 +93,7 @@ export const createTask = async (req, res) => {
                                     task_name: task_name,
                                     task_description: task_description,
                                     actual_task_start_date: actual_task_start_date,
-                                    actual_task_end_date: actual_task_end_date,
+                                    actual_task_end_date: "",
                                     estimated_task_end_date: estimated_task_end_date,
                                     estimated_task_start_date: estimated_task_start_date,
                                     task_status: task_status,
