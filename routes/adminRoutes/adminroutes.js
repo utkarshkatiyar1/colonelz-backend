@@ -19,6 +19,7 @@ import {
   getSingleLead,
   leadToMultipleProject,
   leadToProject,
+  updateFollowLead,
   updateLead,
 } from "../../controllers/adminControllers/leadController/lead.controller.js";
 import {
@@ -86,9 +87,10 @@ router.route("/update/project").put(verifyJWT, updateProjectDetails);
 router.route("/create/lead").post(verifyJWT, isProjectArchitect, createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
 router.route("/getsingle/lead").get(verifyJWT, getSingleLead);
-router.route("/update/lead").put(verifyJWT, isProjectArchitect, updateLead);
+router.route("/update/lead").put(verifyJWT, isProjectArchitect, updateFollowLead);
 router.route("/create/lead/project").post(verifyJWT, isProjectArchitect, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
+router.route("/update/lead/data").put(verifyJWT, updateLead);
 router.route("/lead/multiple/project").post(verifyJWT, isProjectArchitect, leadToMultipleProject);
 
 router.route("/create/mom").post(verifyJWT, createmom);

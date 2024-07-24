@@ -26,7 +26,7 @@ export const checkEmail = async (req, res) => {
   try {
     const email = req.query.email;
     const username = req.query.username;
-  
+
     if (!username) {
       responseData(res, "", 400, false, "Username cannot be empty", []);
     }
