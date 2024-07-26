@@ -49,11 +49,10 @@ export const shareFile = async (req, res) => {
             let findfiles;
             let attachments = [];
 
-            const check_user = await registerModel.findOne({_id:user_id})
-            if(!check_user)
-                {
-                    return responseData(res, "", 404, false, "User not found", null);
-                }
+            const check_user = await registerModel.findOne({ _id: user_id })
+            if (!check_user) {
+                return responseData(res, "", 404, false, "User not found", null);
+            }
 
             if (type === 'template') {
                 findfiles = await fileuploadModel.findOne({
@@ -90,23 +89,22 @@ export const shareFile = async (req, res) => {
             if (!findfiles) {
                 return responseData(res, "", 404, false, "Data Not Found", null);
             }
-          
+
             const mailOptions = {
-                from: check_user.email,
-                to: email,
-                cc:cc,
-                bcc:bcc,
+                from:check_user.email,
+                to:email, 
+                cc: cc,
+                bcc: bcc,
                 subject: subject,
                 html: body,
-                attachments: attachments
+                attachments: attachments,
+                replyTo: check_user.email 
             };
-
-          
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                     responseData(res, "", 400, false, "Failed to send email");
                 } else {
-                 
+
                     responseData(
                         res,
                         `Email has been sent successfully`,
