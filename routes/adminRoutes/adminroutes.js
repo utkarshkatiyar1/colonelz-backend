@@ -51,6 +51,7 @@ import { archive, deletearchive, restoreData } from "../../controllers/adminCont
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
+import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -59,6 +60,7 @@ router.route("/create/user").post(verifyJWT, isAdmin, createUser);
 router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
 router.route("/get/alluser").get(verifyJWT, isOrgAndAdmin, getUser);
 router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
+router.route("/get/userlist").get(verifyJWT, getUserList);
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
