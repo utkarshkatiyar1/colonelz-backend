@@ -472,11 +472,11 @@ export const shareContract = async (req, res) => {
     
     <p>PFA for your kind perusal:</p>
     <ul>
-        <li>Design Consultation Draft Contract- <a href="${file_url.fileUrl}">View and Download Contract</a></li>
-        <li>Tentative Project Estimate <a href="${response.data.Location}">View and Download Project Estimate</a></li>
+        <li>Design Consultation Draft Contract - <a href="${file_url.fileUrl}">View and Download Contract</a></li>
+        <li>Tentative Project Estimate - <a href="${response.data.Location}">View and Download Project Estimate</a></li>
     </ul>
     
-    <p>We look forward to the prospect of a successful collaboration for your <strong>${project_name} </strong>, at <strong>${site_location}</strong>. Please feel free to call if you have any questions or concerns.</p>
+    <p>We look forward to the prospect of a successful collaboration for your <strong>${project_name}</strong> at <strong>${site_location}</strong>. Please feel free to call if you have any questions or concerns.</p>
     
     <p class="note">Kindly note:</p>
     <ul class="note">
@@ -486,8 +486,7 @@ export const shareContract = async (req, res) => {
     </ul>
 </body>
 </html>
-
-    `
+`
                             };
 
 
