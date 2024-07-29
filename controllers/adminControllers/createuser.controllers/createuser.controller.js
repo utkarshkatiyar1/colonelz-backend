@@ -93,7 +93,7 @@ export const createUser = async (req, res) => {
                                         <p><strong>Password:  </strong>${password}</p>
                                          <p><strong>Organisation Name:  </strong>${user.organization}</p>
                                         <p>Please click on the following link to login:</p>
-                                        <p><a href="https://colonelz-crm.stg.initz.run/sign-in?redirectUrl=/app/crm/dashboard">Login</a></p>
+                                        <p><a href="https://colonelz.test.initz.run/sign-in?redirectUrl=/app/crm/dashboard">Login</a></p>
                                         <p>Please use the above credentials to log in to our system.</p>
                                         <p>If you have any questions or need assistance, feel free to contact us.</p>
                                         <p>Best regards,<br>COLONELZ</p>
