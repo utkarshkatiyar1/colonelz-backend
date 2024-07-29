@@ -58,6 +58,19 @@ export const UpdateSubtimerController = async (req, res) => {
                     else {
                        
                         if (check_subtask.sub_task_status === 'Completed' || check_subtask.sub_task_status === 'Cancelled') {
+                           await timerModel.findOneAndUpdate({
+                                task_id: task_id,
+                                project_id: project_id,
+                                'subtaskstime.sub_task_id': sub_task_id
+                            },
+                                {
+                                    $set: {
+                                        'subtaskstime.$.sub_task_isrunning': false,
+
+                                    }
+                                },
+                                { new: true, useFindAndModify: false }
+                            )
                             return responseData(res, "", 400, false, "Sub task is already completed or cancelled")
                         }
                         else if (check_subtask.sub_task_assignee !== sub_task_assignee) {
