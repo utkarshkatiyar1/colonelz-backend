@@ -147,7 +147,7 @@ export const createTask = async (req, res) => {
                                         task_name: task_name,
                                         task_description: task_description,
                                         actual_task_start_date: actual_task_start_date,
-                                        actual_task_end_date: actual_task_end_date,
+                                        actual_task_end_date: estimated_task_end_date,
                                         estimated_task_end_date: estimated_task_end_date,
                                         estimated_task_start_date: estimated_task_start_date,
                                         task_status: task_status,
