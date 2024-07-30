@@ -486,7 +486,7 @@ export const updateSubTask = async (req, res) => {
                                         }
                                     }
                                 )
-                                if(sub_task_status==='Completed')
+                                if(sub_task_status==='Completed' || sub_task_status ==='Cancelled')
                                 {
                                      await timerModel.findOneAndUpdate({
                                         task_id: task_id,
