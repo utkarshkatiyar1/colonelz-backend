@@ -35,14 +35,14 @@ export const createTask = async (req, res) => {
         else if (!project_id) {
             responseData(res, "", 404, false, "Project Id required", [])
         }
-        else if (!onlyAlphabetsValidation(task_name) && task_name.length > 3) {
+        else if (!onlyAlphabetsValidation(task_name) && task_name.length >= 3) {
             responseData(res, "", 404, false, "Task Name should be alphabets", [])
         }
         else if (!task_priority) {
             responseData(res, "", 404, false, "task priority required", [])
 
         }
-        else if (!actual_task_start_date && !estimated_task_start_date) {
+        else if (!estimated_task_start_date) {
             responseData(res, "", 404, false, "Task start date  required", [])
         }
         else if (!estimated_task_end_date) {
