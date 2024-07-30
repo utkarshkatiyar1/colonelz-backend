@@ -26,13 +26,11 @@ export const UpdateSubtimerController = async (req, res) => {
         else if (!sub_task_id) {
             return responseData(res, "", 400, false, "Sub task id is required")
         }
-        
-        else if(!totalTime)
-        {
+
+        else if (!totalTime) {
             return responseData(res, "", 400, false, "Total time is required")
         }
-        else if(!current)
-        {
+        else if (!current) {
             return responseData(res, "", 400, false, "Current time is required")
         }
         else if (!sub_task_assignee) {
@@ -56,9 +54,9 @@ export const UpdateSubtimerController = async (req, res) => {
 
                     }
                     else {
-                       
+
                         if (check_subtask.sub_task_status === 'Completed' || check_subtask.sub_task_status === 'Cancelled') {
-                           await timerModel.findOneAndUpdate({
+                            await timerModel.findOneAndUpdate({
                                 task_id: task_id,
                                 project_id: project_id,
                                 'subtaskstime.sub_task_id': sub_task_id
@@ -78,30 +76,30 @@ export const UpdateSubtimerController = async (req, res) => {
                         }
                         else {
                             const update_timer = await timerModel.findOneAndUpdate({
-                                task_id:task_id,
-                                  project_id:project_id,
-                                  'subtaskstime.sub_task_id':sub_task_id
+                                task_id: task_id,
+                                project_id: project_id,
+                                'subtaskstime.sub_task_id': sub_task_id
+                            },
+                                {
+                                    $set: {
+                                        'subtaskstime.$.sub_task_time': time,
+                                        'subtaskstime.$.sub_task_isrunning': isrunning,
+
+                                        'subtaskstime.$.sub_task_totalTime': totalTime,
+                                        'subtaskstime.$.sub_task_current': current
+
+
+                                    }
                                 },
-                                { $set: {
-                                    'subtaskstime.$.sub_task_time':time,
-                                    'subtaskstime.$.sub_task_isrunning':isrunning,
-
-                                    'subtaskstime.$.sub_task_totalTime':totalTime,
-                                    'subtaskstime.$.sub_task_current':current
-
-
-                                }},
                                 { new: true, useFindAndModify: false }
                             )
-                            
-                            if(update_timer)
-                                {
+
+                            if (update_timer) {
                                 return responseData(res, "Timer updated successfully", 200, true, "")
-                                }
-                                else
-                                {
-                                    return responseData(res, "", 400, false, "Timer not updated")
-                                }
+                            }
+                            else {
+                                return responseData(res, "", 400, false, "Timer not updated")
+                            }
                         }
                     }
                 }
@@ -116,13 +114,13 @@ export const UpdateSubtimerController = async (req, res) => {
 
 }
 
-export const GetSingleSubtimerController = async(req,res) =>{
+export const GetSingleSubtimerController = async (req, res) => {
     try {
-       
+
         const project_id = req.query.project_id;
         const task_id = req.query.task_id;
         const sub_task_id = req.query.sub_task_id;
-      
+
 
         if (!project_id) {
             return responseData(res, "", 400, false, "Project id is required")
@@ -133,19 +131,19 @@ export const GetSingleSubtimerController = async(req,res) =>{
         else if (!sub_task_id) {
             return responseData(res, "", 400, false, "Sub task id is required")
         }
-        
+
         else {
             const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
             if (!check_task) {
                 return responseData(res, "", 400, false, "Task not found")
             }
             else {
-                const check_subtask =await  timerModel.findOne({ task_id: task_id, project_id: project_id, 'subtaskstime.sub_task_id':sub_task_id })
+                const check_subtask = await timerModel.findOne({ task_id: task_id, project_id: project_id, 'subtaskstime.sub_task_id': sub_task_id })
                 if (!check_subtask) {
                     return responseData(res, "", 400, false, "Sub task not found")
                 }
-                else{
-                   
+                else {
+
                     const subtask = check_subtask.subtaskstime.find((item) => item.sub_task_id === sub_task_id);
                     if (subtask) {
                         const response = {
@@ -154,7 +152,7 @@ export const GetSingleSubtimerController = async(req,res) =>{
                             total_time: subtask.sub_task_totalTime,
                             current: subtask.sub_task_current,
                         }
-                        return responseData(res,"Sub task timer found" , 200, true, "",response )
+                        return responseData(res, "Sub task timer found", 200, true, "", response)
                     } else {
                         return responseData(res, "", 400, false, "Sub task not found")
                     }
