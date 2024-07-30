@@ -46,7 +46,7 @@ export const createSubTask = async (req, res) => {
             responseData(res, "", 404, false, "Sub task priority required", [])
 
         }
-        else if (!actual_sub_task_start_date) {
+        else if (!estimated_sub_task_start_date) {
             responseData(res, "", 404, false, "Sub task start date  required", [])
         }
         else if (!estimated_sub_task_end_date) {
