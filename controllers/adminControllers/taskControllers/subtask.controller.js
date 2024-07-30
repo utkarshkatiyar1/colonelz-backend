@@ -486,6 +486,22 @@ export const updateSubTask = async (req, res) => {
                                         }
                                     }
                                 )
+                                if(sub_task_status==='Completed')
+                                {
+                                     await timerModel.findOneAndUpdate({
+                                        task_id: task_id,
+                                        project_id: project_id,
+                                        'subtaskstime.sub_task_id': sub_task_id
+                                    },
+                                        {
+                                            $set: {
+                                               
+                                                'subtaskstime.$.sub_task_isrunning': false,
+                                            }
+                                        },
+                                        { new: true, useFindAndModify: false }
+                                    )
+                                }
                                 responseData(res, "Sub Task Updated Successfully", 200, true, "", [])
                             }
                             else {
