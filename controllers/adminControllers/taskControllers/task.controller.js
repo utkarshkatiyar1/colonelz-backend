@@ -396,10 +396,10 @@ export const updateTask = async (req, res) => {
             responseData(res, "", 404, false, "task priority required", [])
 
         }
-        else if (!actual_task_start_date && !estimated_task_start_date) {
+        else if ( !estimated_task_start_date) {
             responseData(res, "", 404, false, "Task start date  required", [])
         }
-        else if (!actual_task_end_date && !estimated_task_end_date) {
+        else if ( !estimated_task_end_date) {
             responseData(res, "", 404, false, "Task end date required", [])
         }
         else if (!task_status) {
