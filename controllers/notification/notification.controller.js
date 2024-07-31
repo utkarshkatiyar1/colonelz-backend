@@ -316,7 +316,7 @@ export const updateNotification = async (req, res) => {
         return responseData(res, "", 404, false, "User not found");
       }
       else {
-        if (find_user.role === "ADMIN" || find_user.role === "SENIOR ARCHITECT") {
+        if (find_user.role === "ADMIN" || find_user.role === "Senior Architect") {
           if (type === "One") {
             const notification = await Notification.findOneAndUpdate(
             {notification_id:notification_id},
