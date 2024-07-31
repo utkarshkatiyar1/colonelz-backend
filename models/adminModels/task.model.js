@@ -26,7 +26,7 @@ const TaskSchema = new mongoose.Schema({
     task_status: { type: String, required: true },
     estimated_task_start_date: { type: String, required: true },
     estimated_task_end_date: { type: String, required: true },
-    actual_task_start_date: { type: String, required: true },
+    actual_task_start_date: { type: String, },
     actual_task_end_date: { type: String, },
     task_description: { type: String },
     task_priority: { type: String, required: true },
