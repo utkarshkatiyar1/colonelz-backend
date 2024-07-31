@@ -142,7 +142,7 @@ export const getUser = async (req, res) => {
         }
         else {
             const check_user = await registerModel.findById(userId);
-            if (check_user.role === 'ADMIN' || check_user.role === 'ORGADMIN') {
+            if (check_user.role === 'ADMIN' || check_user.role === 'ORGADMIN' || check_user.role ==='Senior Architect') {
                 const users = await registerModel.find({ $and: [{ status: true }, { organization: check_user.organization }] })
 
                 if (users) {
