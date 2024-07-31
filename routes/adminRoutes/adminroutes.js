@@ -58,7 +58,7 @@ import { getUserList } from "../../controllers/adminControllers/createuser.contr
 
 router.route("/create/user").post(verifyJWT, isAdmin, createUser);
 router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
-router.route("/get/alluser").get(verifyJWT, isOrgAndAdmin, getUser);
+router.route("/get/alluser").get(verifyJWT, isAdmin, getUser);
 router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
 router.route("/get/userlist").get(verifyJWT, getUserList);
 
