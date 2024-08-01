@@ -464,7 +464,7 @@ export const shareContract = async (req, res) => {
     </style>
 </head>
 <body>
-    <p>Good evening <strong>${client_name} Ma'am & Sir</strong>,</p>
+    <p>Dear <strong>${client_name}</strong>,</p>
     
     <p>Hope you're doing well!</p>
     
