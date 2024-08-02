@@ -782,7 +782,18 @@ export const leadToMultipleProject = async (req, res) => {
               }
 
 
+              await leadModel.findOneAndUpdate(
+                { lead_id: lead_id },
+                {
+                  $set: {
+                    lead_status: "Follow Up",
+                    lead_update_track: []  
+                  }
+                }
+              )
+
               await fileUploadData.save()
+
               responseData(
                 res,
                 "lead activated successfully for another project.",
