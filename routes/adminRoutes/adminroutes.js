@@ -103,8 +103,8 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
 router.route("/share/quotation").post(verifyJWT, isProcurement, shareQuotation);
-router.route("/get/quotationdata").get(verifyJWT, isProcurement, getQuotationData);
-router.route("/quotation/approval").post(verifyJWT, isProcurement, updateStatusAdmin);
+router.route("/get/quotationdata").get(verifyJWT, isAdmin, getQuotationData);
+router.route("/quotation/approval").post(verifyJWT, isAdmin, updateStatusAdmin);
 
 
 

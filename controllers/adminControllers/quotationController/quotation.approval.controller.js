@@ -359,14 +359,7 @@ export const shareQuotation = async (req, res) => {
                 if (!findProject) {
                     return responseData(res, "", 401, false, "Project not found");
                 }
-                const checkApproval = await registerModel.findOne({
-                    username: user_name,
-                    "data.quotationData.project_id": project_id,
-                    "data.quotationData.approval_status": "pending"
-                });
-                if (checkApproval) {
-                    return responseData(res, "", 401, false, "Previous quotation not approved or rejected");
-                }
+              
                 const findFile = findQuotation.files.find(folder => folder.folder_name === folder_name)?.files.find(file => file.fileId === file_id);
                 if (!findFile) {
                     return responseData(res, "", 401, false, "File not found in the specified folder");
