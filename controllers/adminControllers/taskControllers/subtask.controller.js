@@ -3,6 +3,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import taskModel from "../../../models/adminModels/task.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
+import timerModel from "../../../models/adminModels/timer.Model.js";
 
 
 function generateSixDigitNumber() {
@@ -45,10 +46,10 @@ export const createSubTask = async (req, res) => {
             responseData(res, "", 404, false, "Sub task priority required", [])
 
         }
-        else if (!estimated_sub_task_start_date && !actual_sub_task_start_date) {
+        else if (!estimated_sub_task_start_date) {
             responseData(res, "", 404, false, "Sub task start date  required", [])
         }
-        else if (!estimated_sub_task_end_date && !actual_sub_task_end_date) {
+        else if (!estimated_sub_task_end_date) {
             responseData(res, "", 404, false, " Sub task end date required", [])
         }
         else if (!sub_task_status) {
@@ -73,7 +74,7 @@ export const createSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -82,54 +83,156 @@ export const createSubTask = async (req, res) => {
                     }
                     else {
                         if (check_task) {
-                            const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id:project_id },
-                                {
-                                    $push: {
-                                        subtasks: {
-                                            sub_task_id: `STK-${generateSixDigitNumber()}`,
-                                            sub_task_name: sub_task_name,
-                                            sub_task_description: sub_task_description,
-                                            estimated_sub_task_end_date: estimated_sub_task_end_date,
-                                            estimated_sub_task_start_date: estimated_sub_task_start_date,
-                                            actual_sub_task_end_date: actual_sub_task_end_date,
-                                            actual_sub_task_start_date: actual_sub_task_start_date,
-                                            sub_task_status: sub_task_status,
-                                            sub_task_priority: sub_task_priority,
-                                            sub_task_assignee: sub_task_assignee,
-                                            sub_task_createdBy: check_user.username,
-                                            sub_task_createdOn: new Date(),
-                                            sub_task_reporter: sub_task_reporter
+                            const check_assignee = await registerModel.findOne({
+                                username: sub_task_assignee,
 
-                                        }
-
-                                    }
-                                },
-                                { new: true, useFindAndModify: false }
-                            )
-                            if (update_task) {
-                                await projectModel.findOneAndUpdate({ project_id: project_id },
-                                    {
-                                        $push: {
-                                            project_updated_by: {
-                                                username: check_user.username,
-                                                role: check_user.role,
-                                                message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
-                                                updated_date: new Date()
-                                            }
-                                        }
-                                    }
-                                )
-                                responseData(res, "Sub Task added successfully", 200, true, "", [])
+                            })
+                            if (!check_assignee) {
+                                responseData(res, "", 404, false, " Subtask assignee is  not registered user", [])
                             }
                             else {
-                                responseData(res, "", 404, false, "Sub Task not added", [])
-                            }
+                                const check_reporter = await registerModel.findOne({ username: sub_task_reporter })
+                                if (!check_reporter) {
+                                    responseData(res, "", 404, false, "Subtask reporter is  not registered user", [])
+                                }
+                                else {
+                                    if ((check_assignee.role === 'Senior Architect' || check_assignee.role === 'ADMIN') && (check_reporter.role === 'Senior Architect' || check_reporter.role === 'ADMIN')) {
+                                        const sub_task_id = `STK-${generateSixDigitNumber()}`;
 
+                                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
+                                            {
+                                                $push: {
+                                                    subtasks: {
+                                                        sub_task_id: sub_task_id,
+                                                        sub_task_name: sub_task_name,
+                                                        sub_task_description: sub_task_description,
+                                                        estimated_sub_task_end_date: estimated_sub_task_end_date,
+                                                        estimated_sub_task_start_date: estimated_sub_task_start_date,
+                                                        actual_sub_task_end_date: actual_sub_task_end_date,
+                                                        actual_sub_task_start_date: actual_sub_task_start_date,
+                                                        sub_task_status: sub_task_status,
+                                                        sub_task_priority: sub_task_priority,
+                                                        sub_task_assignee: sub_task_assignee,
+                                                        sub_task_createdBy: check_user.username,
+                                                        sub_task_createdOn: new Date(),
+                                                        sub_task_reporter: sub_task_reporter
+
+                                                    }
+
+                                                }
+                                            },
+                                            { new: true, useFindAndModify: false }
+                                        )
+                                        if (update_task) {
+                                            await timerModel.findOneAndUpdate({
+                                                project_id: project_id,
+                                                task_id: task_id
+                                            },
+                                                {
+                                                    $push: {
+                                                        subtaskstime: {
+                                                            sub_task_id: sub_task_id,
+                                                            sub_task_name: sub_task_name,
+                                                            sub_task_assignee: sub_task_assignee,
+                                                            sub_task_time: ''
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                            await projectModel.findOneAndUpdate({ project_id: project_id },
+                                                {
+                                                    $push: {
+                                                        project_updated_by: {
+                                                            username: check_user.username,
+                                                            role: check_user.role,
+                                                            message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
+                                                            updated_date: new Date()
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                            responseData(res, "Sub Task added successfully", 200, true, "", [])
+                                        }
+                                        else {
+                                            responseData(res, "", 404, false, "Sub Task not added", [])
+                                        }
+
+                                    }
+                                    else {
+                                        const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id)
+                                        if (!existProject) {
+
+                                            responseData(res, "", 404, false, "Subtask assignee is not part of this project", [])
+                                        }
+                                        else {
+                                            const sub_task_id = `STK-${generateSixDigitNumber()}`;
+
+                                            const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
+                                                {
+                                                    $push: {
+                                                        subtasks: {
+                                                            sub_task_id: sub_task_id,
+                                                            sub_task_name: sub_task_name,
+                                                            sub_task_description: sub_task_description,
+                                                            estimated_sub_task_end_date: estimated_sub_task_end_date,
+                                                            estimated_sub_task_start_date: estimated_sub_task_start_date,
+                                                            actual_sub_task_end_date: actual_sub_task_end_date,
+                                                            actual_sub_task_start_date: actual_sub_task_start_date,
+                                                            sub_task_status: sub_task_status,
+                                                            sub_task_priority: sub_task_priority,
+                                                            sub_task_assignee: sub_task_assignee,
+                                                            sub_task_createdBy: check_user.username,
+                                                            sub_task_createdOn: new Date(),
+                                                            sub_task_reporter: sub_task_reporter
+
+                                                        }
+
+                                                    }
+                                                },
+                                                { new: true, useFindAndModify: false }
+                                            )
+                                            if (update_task) {
+                                                await timerModel.findOneAndUpdate({
+                                                    project_id: project_id,
+                                                    task_id: task_id
+                                                },
+                                                    {
+                                                        $push: {
+                                                            subtaskstime: {
+                                                                sub_task_id: sub_task_id,
+                                                                sub_task_name: sub_task_name,
+                                                                sub_task_assignee: sub_task_assignee,
+                                                                sub_task_time: ''
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                                await projectModel.findOneAndUpdate({ project_id: project_id },
+                                                    {
+                                                        $push: {
+                                                            project_updated_by: {
+                                                                username: check_user.username,
+                                                                role: check_user.role,
+                                                                message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
+                                                                updated_date: new Date()
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                                responseData(res, "Sub Task added successfully", 200, true, "", [])
+                                            }
+                                            else {
+                                                responseData(res, "", 404, false, "Sub Task not added", [])
+                                            }
+                                        }
+
+                                    }
+
+                                }
+
+                            }
                         }
                     }
-
-
-
                 }
             }
 
@@ -173,7 +276,7 @@ export const getAllSubTask = async (req, res) => {
                 else {
                     const check_task = await taskModel.findOne({ task_id: task_id })
                     if (!check_task) {
-                        responseData(res, "", 404, false, "Task not found", [])
+                        responseData(res, "Task not found", 200, false, "", [])
                     }
                     else {
                         let response = []
@@ -250,7 +353,7 @@ export const getSingleSubTask = async (req, res) => {
                         const sub_task = check_task.subtasks.find(item => item.sub_task_id == sub_task_id);
 
                         if (!sub_task) {
-                            return responseData(res, "", 404, false, "Sub-task not found", []);
+                            return responseData(res, "Sub-task not found", 200, false, "", []);
                         }
                         else {
                             return responseData(res, "Sub-task fetched successfully", 200, true, "", sub_task);
@@ -305,10 +408,10 @@ export const updateSubTask = async (req, res) => {
             responseData(res, "", 404, false, "Sub task priority required", [])
 
         }
-        else if (!estimated_sub_task_start_date && !actual_sub_task_start_date) {
+        else if (!estimated_sub_task_start_date ) {
             responseData(res, "", 404, false, "Sub task start date  required", [])
         }
-        else if (!estimated_sub_task_end_date && !actual_sub_task_end_date) {
+        else if (!estimated_sub_task_end_date ) {
             responseData(res, "", 404, false, " Sub task end date required", [])
         }
         else if (!sub_task_status) {
@@ -332,7 +435,7 @@ export const updateSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -344,7 +447,7 @@ export const updateSubTask = async (req, res) => {
                         else {
                             const update_subtask = await taskModel.findOneAndUpdate({
                                 task_id: task_id,
-                                project_id:project_id,
+                                project_id: project_id,
                                 "subtasks.sub_task_id": sub_task_id
                             },
                                 {
@@ -383,6 +486,22 @@ export const updateSubTask = async (req, res) => {
                                         }
                                     }
                                 )
+                                if(sub_task_status==='Completed' || sub_task_status ==='Cancelled')
+                                {
+                                     await timerModel.findOneAndUpdate({
+                                        task_id: task_id,
+                                        project_id: project_id,
+                                        'subtaskstime.sub_task_id': sub_task_id
+                                    },
+                                        {
+                                            $set: {
+                                               
+                                                'subtaskstime.$.sub_task_isrunning': false,
+                                            }
+                                        },
+                                        { new: true, useFindAndModify: false }
+                                    )
+                                }
                                 responseData(res, "Sub Task Updated Successfully", 200, true, "", [])
                             }
                             else {
@@ -438,7 +557,7 @@ export const deleteSubTask = async (req, res) => {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id:project_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
@@ -458,7 +577,7 @@ export const deleteSubTask = async (req, res) => {
                         )
                         const delete_subtask = await taskModel.findOneAndUpdate({
                             task_id: task_id,
-                            project_id:project_id,
+                            project_id: project_id,
                             "subtasks.sub_task_id": sub_task_id
                         },
                             {

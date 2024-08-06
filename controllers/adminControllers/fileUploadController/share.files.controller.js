@@ -32,6 +32,8 @@ export const shareFile = async (req, res) => {
         const folderId = req.body.folder_id;
         const email = req.body.email;
         const subject = req.body.subject;
+        const cc = req.body.cc;
+        const bcc = req.body.bcc;
         const body = req.body.body;
         const type = req.body.type;
         const user_id = req.body.user_id;
@@ -47,11 +49,10 @@ export const shareFile = async (req, res) => {
             let findfiles;
             let attachments = [];
 
-            const check_user = await registerModel.findOne({_id:user_id})
-            if(!check_user)
-                {
-                    return responseData(res, "", 404, false, "User not found", null);
-                }
+            const check_user = await registerModel.findOne({ _id: user_id })
+            if (!check_user) {
+                return responseData(res, "", 404, false, "User not found", null);
+            }
 
             if (type === 'template') {
                 findfiles = await fileuploadModel.findOne({
@@ -88,22 +89,22 @@ export const shareFile = async (req, res) => {
             if (!findfiles) {
                 return responseData(res, "", 404, false, "Data Not Found", null);
             }
-           
-          console.log(check_user.email)
+
             const mailOptions = {
-                from: check_user.email,
-                to: email,
+                from:check_user.email,
+                to:email, 
+                cc: cc,
+                bcc: bcc,
                 subject: subject,
                 html: body,
-                attachments: attachments
+                attachments: attachments,
+                replyTo: check_user.email 
             };
-
-          
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                     responseData(res, "", 400, false, "Failed to send email");
                 } else {
-                    console.log(info)
+
                     responseData(
                         res,
                         `Email has been sent successfully`,

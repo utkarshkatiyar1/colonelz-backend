@@ -71,6 +71,10 @@ const lead = new mongoose.Schema({
       },
     },
   ],
+  lead_update_track:[],
+  lead_status: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

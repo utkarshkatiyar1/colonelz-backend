@@ -1,0 +1,2613 @@
+{
+	"info": {
+		"_postman_id": "fdce99e2-a6d2-4f40-9fb6-328c69c856c2",
+		"name": "Interior Design",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31913302"
+	},
+	"item": [
+		{
+			"name": "Quotation",
+			"item": [
+				{
+					"name": "create quotation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "project_id",
+									"value": "COLP-134867",
+									"type": "text"
+								},
+								{
+									"key": "item",
+									"value": "fan",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "hello",
+									"type": "text"
+								},
+								{
+									"key": "unit",
+									"value": "abcd",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "50",
+									"type": "text"
+								},
+								{
+									"key": "rate",
+									"value": "100",
+									"type": "text"
+								},
+								{
+									"key": "discount",
+									"value": "10%",
+									"type": "text"
+								},
+								{
+									"key": "offer_price",
+									"value": "500",
+									"type": "text"
+								},
+								{
+									"key": "total_price",
+									"value": "4500",
+									"type": "text"
+								},
+								{
+									"key": "remark",
+									"value": "sadfgh",
+									"type": "text"
+								},
+								{
+									"key": "client_notes",
+									"value": "sadzfxcgh",
+									"type": "text"
+								},
+								{
+									"key": "type",
+									"value": "civip",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/create/quotation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"create",
+								"quotation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getquotation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/get/quotation/?project_id=COLP-134867",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"get",
+								"quotation",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-134867"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get  type wise quotation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getsingle/quotation/?project_id=COLP-134867&quotation_id=CCPL/780093&type=electrical w",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getsingle",
+								"quotation",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-134867"
+								},
+								{
+									"key": "quotation_id",
+									"value": "CCPL/780093"
+								},
+								{
+									"key": "type",
+									"value": "electrical w"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update quotation",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "project_id",
+									"value": "COLP-134867",
+									"type": "text"
+								},
+								{
+									"key": "quotation_id",
+									"value": "CCPL/971890",
+									"type": "text"
+								},
+								{
+									"key": "type",
+									"value": "electrical w",
+									"type": "text"
+								},
+								{
+									"key": "item_id",
+									"value": "ITM/639262",
+									"type": "text"
+								},
+								{
+									"key": "item",
+									"value": "bulb",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "shcablb",
+									"type": "text"
+								},
+								{
+									"key": "unit",
+									"value": "sbchsabdcl",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "100",
+									"type": "text"
+								},
+								{
+									"key": "rate",
+									"value": "20",
+									"type": "text"
+								},
+								{
+									"key": "discount",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "offer_price",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "total_price",
+									"value": "2000",
+									"type": "text"
+								},
+								{
+									"key": "remark",
+									"value": "csdbjhb",
+									"type": "text"
+								},
+								{
+									"key": "client_notes",
+									"value": "bcjszbcjkb",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/update/quotation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"update",
+								"quotation"
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-134867",
+									"disabled": true
+								},
+								{
+									"key": "quotation_id",
+									"value": "CCPL/780093",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "electrical w",
+									"disabled": true
+								},
+								{
+									"key": "item_id",
+									"value": "ITM/623160",
+									"disabled": true
+								},
+								{
+									"key": "item",
+									"value": "bulb",
+									"disabled": true
+								},
+								{
+									"key": "description",
+									"value": "svcsvhcdhj bhjchjdsvhj",
+									"disabled": true
+								},
+								{
+									"key": "unit",
+									"value": "cdhc",
+									"disabled": true
+								},
+								{
+									"key": "quantity",
+									"value": "20",
+									"disabled": true
+								},
+								{
+									"key": "rate",
+									"value": "100",
+									"disabled": true
+								},
+								{
+									"key": "discount",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "offer_price",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "total_price",
+									"value": "2000",
+									"disabled": true
+								},
+								{
+									"key": "remark",
+									"value": "csdfhb xhjvbdhb",
+									"disabled": true
+								},
+								{
+									"key": "client_notes",
+									"value": "dshcdshkb hvdshvbh  bdhvbdhk",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "share quotation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"user_name\":\"Arvind Maurya\",\r\n    \"file_id\":\"FL-958760\",\r\n    \"folder_name\":\"quotation\",\r\n    \"project_id\":\"COLP-327209\",\r\n    \"client_name\":\"Devashsish Gupta\",\r\n    \"client_email\":\"amaurya@initializ.io\",\r\n    \"type\":\"Client\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/share/quotation",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"share",
+								"quotation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get quotation Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/get/quotationdata/?project_id=COLP-327209",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"get",
+								"quotationdata",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-327209"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "approval quotaation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"project_id\":\"COLP-327209\",\r\n    \"file_id\":\"FL-808910\",\r\n    \"status\":\"rejected\",\r\n    \"remark\":\"Everything wrong\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/quotation/approval",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"quotation",
+								"approval"
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-327209",
+									"disabled": true
+								},
+								{
+									"key": "file_id",
+									"value": "FL-531450",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "approved",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "File",
+			"item": [
+				{
+					"name": "lead file uploader api",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Cache-Control",
+								"value": "no-cache",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-11 145830.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-16 010745.png"
+									]
+								},
+								{
+									"key": "folder_name",
+									"value": "site image",
+									"type": "text"
+								},
+								{
+									"key": "lead_id",
+									"value": "805654",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/fileupload/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"fileupload",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getfile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getfile/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getfile",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single file",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/get/onefile/?file_id=FL-523536&lead_id=781943&folder_name=Site Image&project_id=COLP-210333",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"get",
+								"onefile",
+								""
+							],
+							"query": [
+								{
+									"key": "file_id",
+									"value": "FL-523536"
+								},
+								{
+									"key": "lead_id",
+									"value": "781943"
+								},
+								{
+									"key": "folder_name",
+									"value": "Site Image"
+								},
+								{
+									"key": "project_id",
+									"value": "COLP-210333"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "contract generate",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"client\":\"Project XY\",\r\n    \"client_email\":[\"amaurya@initializ.io\"],\r\n    \"client_name\":[\"Mr. Ratnesh\",  \"ABC\"],\r\n    \"client_phone\":[\"1234567890\", \"9087654321\"],\r\n    \"project_name\":\"Initializ Project\",\r\n    \"site_address\":\"Lakhanpur, ViaksNagar Kanpur  208024\",\r\n    \"date\":\"12/03/2024\",\r\n    \"city\":\"Kanpur\",\r\n    \"type\":\"commercial\",\r\n    \"franchises\":\"initializ\",\r\n    \"quotation\":\"23-24/25\",\r\n    \"cost\":\"100000\",\r\n    \"design_charges_per_sft\":\"5000\",\r\n    \"cover_area_in_sft\":\"50\",\r\n    \"terrace_and_balcony_charges_per_sft\":\"6000\",\r\n    \"terrace_and_balcony_area_in_sft\":\"60\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/view/contract",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"view",
+								"contract"
+							],
+							"query": [
+								{
+									"key": "client",
+									"value": "Project ABCD",
+									"disabled": true
+								},
+								{
+									"key": "client_email",
+									"value": "[\"amaurya@initializ.io\"]",
+									"disabled": true
+								},
+								{
+									"key": "client_name",
+									"value": "[\"Mr. Ratnesh\",  \"ABC\"]",
+									"disabled": true
+								},
+								{
+									"key": "client_phone",
+									"value": "[\"1234567890\", \"9087654321\"]",
+									"disabled": true
+								},
+								{
+									"key": "project_name",
+									"value": "Initializ Project",
+									"disabled": true
+								},
+								{
+									"key": "site_address",
+									"value": "Lakhanpur, ViaksNagar Kanpur  208024",
+									"disabled": true
+								},
+								{
+									"key": "franchises",
+									"value": "initializ",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "residential",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "01/03/2024",
+									"disabled": true
+								},
+								{
+									"key": "city",
+									"value": "Kanpur",
+									"disabled": true
+								},
+								{
+									"key": "quotation",
+									"value": "23-24/45",
+									"disabled": true
+								},
+								{
+									"key": "cost",
+									"value": "10000000",
+									"disabled": true
+								},
+								{
+									"key": "design_charges_per_sft",
+									"value": "5000",
+									"disabled": true
+								},
+								{
+									"key": "cover_area_in_sft",
+									"value": "1000",
+									"disabled": true
+								},
+								{
+									"key": "terrace_and_balcony_charges_per_sft",
+									"value": "2000",
+									"disabled": true
+								},
+								{
+									"key": "terrace_and_balcony_area_in_sft",
+									"value": "60",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single lead file",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/lead/getfile/?lead_id=781941",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"lead",
+								"getfile",
+								""
+							],
+							"query": [
+								{
+									"key": "lead_id",
+									"value": "781941"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single project file",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/project/getfile/?project_id=COLP-311421",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"project",
+								"getfile",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-311421"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "project file upload",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/response.pdf",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-09 121252.png"
+									]
+								},
+								{
+									"key": "project_id",
+									"value": "COLP-692488",
+									"type": "text"
+								},
+								{
+									"key": "folder_name",
+									"value": "hello 1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/project/fileupload",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"project",
+								"fileupload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "share files",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"file_id\":[\"FL-800221\",\"FL-255300\",\"FL-523536\"],\r\n    \"lead_id\":\"781941\",\r\n    \"project_id\":\"\",\r\n    \"email\":[\"amaurya@initializ.io\", \"dgupta@initializ.io\"],\r\n    \"subject\":\"Testing\",\r\n    \"body\":\"Testing 123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/share/file",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"share",
+								"file"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "template  file uploader",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/C:/Users/ArvindMaurya/OneDrive - Initializ Labs Pvt. Ltd/Pictures/Screenshots/response.pdf"
+								},
+								{
+									"key": "folder_name",
+									"value": "commercial",
+									"type": "text"
+								},
+								{
+									"key": "sub_folder_name_first",
+									"value": "executing",
+									"type": "text"
+								},
+								{
+									"key": "sub_folder_name_second",
+									"value": "contract",
+									"type": "text"
+								},
+								{
+									"key": "type",
+									"value": "template",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/template/fileupload",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"template",
+								"fileupload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single template file",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/template/single/file?file_id=FL-651678&folder_id=FOL_ID654657",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"template",
+								"single",
+								"file"
+							],
+							"query": [
+								{
+									"key": "file_id",
+									"value": "FL-651678"
+								},
+								{
+									"key": "folder_id",
+									"value": "FOL_ID654657"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete file from lead, project and template",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/delete/file/?file_id=FL-993686&lead_id=781943&folder_name=Client Images&project_id=COLP-692488",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"delete",
+								"file",
+								""
+							],
+							"query": [
+								{
+									"key": "file_id",
+									"value": "FL-993686"
+								},
+								{
+									"key": "lead_id",
+									"value": "781943"
+								},
+								{
+									"key": "folder_name",
+									"value": "Client Images"
+								},
+								{
+									"key": "project_id",
+									"value": "COLP-692488"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "share contract",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"lead_id\":\"644974\",\r\n    \"folder_name\":\"contract\",\r\n    \"file_id\":\"FL-680434\",\r\n    \"type\":\"Client\",\r\n    // \"user_name\":\"arvind\",\r\n    \"email\":\"an8182maurya@gmail.com\",\r\n    \"client_name\":\"Arvind\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/share/contract",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"share",
+								"contract"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "contract approval by admin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"lead_id\":\"644974\",\r\n    \"status\":\"rejected\",\r\n    \"file_id\":\"FL-680434\",\r\n    \"remark\":\"hello \"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/contract/approval",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"contract",
+								"approval"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get contract Data",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "delete folder",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n      \"lead_id\":\"171660\",\r\n    \"project_id\":\"\",\r\n    \"type\":\"\",\r\n    \"folder_name\":\"CLIENT BRIEF\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/delete/folder",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"delete",
+								"folder"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "project",
+			"item": [
+				{
+					"name": "create project",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png"
+								},
+								{
+									"key": "project_name",
+									"value": "ABC Project",
+									"type": "text"
+								},
+								{
+									"key": "project_type",
+									"value": "commercial",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "This is commercial  project",
+									"type": "text"
+								},
+								{
+									"key": "leadmanager",
+									"value": "Roj",
+									"type": "text"
+								},
+								{
+									"key": "junior_designer",
+									"value": "Grecy",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "supervisor",
+									"value": "Lady",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "visualizer",
+									"value": "Evil",
+									"type": "text"
+								},
+								{
+									"key": "role",
+									"value": "ADMIN",
+									"type": "text"
+								},
+								{
+									"key": "project_status",
+									"value": "executing",
+									"type": "text"
+								},
+								{
+									"key": "project_start_date",
+									"value": "01-01-2024",
+									"type": "text"
+								},
+								{
+									"key": "timeline_date",
+									"value": "01-01-2023",
+									"type": "text"
+								},
+								{
+									"key": "project_budget",
+									"value": "50000",
+									"type": "text"
+								},
+								{
+									"key": "project_location",
+									"value": "Delhi",
+									"type": "text"
+								},
+								{
+									"key": "designer",
+									"value": "Daneil",
+									"type": "text"
+								},
+								{
+									"key": "client_name",
+									"value": "Client Z",
+									"type": "text"
+								},
+								{
+									"key": "client_contact",
+									"value": "1234567890",
+									"type": "text"
+								},
+								{
+									"key": "id",
+									"value": "65c32e19e0f36d8e1f30955c",
+									"type": "text"
+								},
+								{
+									"key": "client_email",
+									"value": "ab123@gmail.com",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/create/project/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"create",
+								"project",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getall/project",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getall",
+								"project"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getsingle/project/?project_id=COLP-869359",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getsingle",
+								"project",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-869359"
+								},
+								{
+									"key": "id",
+									"value": "65c32e19e0f36d8e1f30955c",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update project details",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"project_id\":\"138499\",\r\n    \"leadmanager\":\"dev\",\r\n    \"timeline_date\":\"02-02-2024\",\r\n    \"project_budget\":\"60000\"\r\n    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/update/project/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"update",
+								"project",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add member",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\":\"65c32e19e0f36d8e1f30955c\",\r\n    \"role\":\"Designer\",\r\n    \"user_name\":\"Arvind1010\",\r\n    \"project_id\":\"COLP-712091\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/add/member",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"add",
+								"member"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "lead",
+			"item": [
+				{
+					"name": "create lead",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-09 121252.png"
+									]
+								},
+								{
+									"key": "email",
+									"value": "Devg@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "1234567890",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Deva",
+									"type": "text"
+								},
+								{
+									"key": "location",
+									"value": "Kanpur",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "followUp",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "cdvhbshbh vscvshv vhzvhj hjhjvhjv hchhjvbh bh bhdhvbh hjbhjbhjvsbhzvb hjbhjcbhjvdbh bhjcb hjdbhbvhj dbc hbdhvbhjdb hcbhj bdfhh bhjbchjbvhjsbvhj bhjbhjcbvdsgvhb hjbhjdbvyidsgvu bhbhdbvsbvb jbhbvsdbhj bhjbshdvbdcb hbhjdsbiyv hbhbdhbvysdb hbhdbvdyb hbchb dyufhb jhbhjcbhbsyd bhhbsiduih jh bhbusivj ysyvgdu bhbyidsgfvib hbysvb hjbdusbyvb bhsdbcy bhbdsidu bhbvdyuvuyb hdysv hbyfuidvb dvuduvub hbiudv bchbdhbl bdbv dbhsbvhjbk hbsdbj bhjbjh",
+									"type": "text"
+								},
+								{
+									"key": "createdBy",
+									"value": "ADMIN",
+									"type": "text"
+								},
+								{
+									"key": "role",
+									"value": "ADMIN",
+									"type": "text"
+								},
+								{
+									"key": "date",
+									"value": "16-02-2024",
+									"type": "text"
+								},
+								{
+									"key": "source",
+									"value": "website",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/create/lead/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"create",
+								"lead",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all lead",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://col-u3yp.onrender.com/v1/api/admin/getall/lead/",
+							"protocol": "https",
+							"host": [
+								"col-u3yp",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getall",
+								"lead",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single lead",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getsingle/lead/?lead_id=959303",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getsingle",
+								"lead",
+								""
+							],
+							"query": [
+								{
+									"key": "lead_id",
+									"value": "959303"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update lead",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "lead_id",
+									"value": "571225",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "interested",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "xvnc nk ncjkvnjn ndjkfnvkn kcndvjkfn kndjkfn",
+									"type": "text"
+								},
+								{
+									"key": "createdBy",
+									"value": "ADMIN",
+									"type": "text"
+								},
+								{
+									"key": "date",
+									"value": "17-02-2024",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/update/lead/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"update",
+								"lead",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "lead to project",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n    {\r\n  \"lead_id\": \"270118\",\r\n  \"client_name\": \"client ABC\",\r\n  \"client_email\": \"client@example.com\",\r\n  \"client_contact\": \"+91-1234567890\",\r\n  \"location\": \"Kanpur\",\r\n  \"description\": \"Project Description Here\",\r\n  \"project_type\": \"commercial\",\r\n  \"project_name\": \"client ABC Project\",\r\n  \"project_status\":\"designing\",\r\n  \"timeline_date\":\"10-05-2024\",\r\n  \"project_start_date\":\"06-03-2024\",\r\n  \"project_budget\":\"1234567\"\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/create/lead/project",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"create",
+								"lead",
+								"project"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add member in lead",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\":\"65e9a25d3835ab420733b81a\",\r\n    \"role\":\"Lead manager\",\r\n    \"user_name\":\"lead\",\r\n    \"lead_id\":\"644974\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/add/member/lead",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"add",
+								"member",
+								"lead"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "chat",
+			"item": [
+				{
+					"name": "add participant",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/chat/add/partcipant/?chatId=12345&participantId=34532",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"chat",
+								"add",
+								"partcipant",
+								""
+							],
+							"query": [
+								{
+									"key": "chatId",
+									"value": "12345"
+								},
+								{
+									"key": "participantId",
+									"value": "34532"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create  a group",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Your Group Name\",\r\n  \"participants\": [\"participantId1\", \"participantId2\", \"participantId3\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/chat/group/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"chat",
+								"group",
+								""
+							],
+							"query": [
+								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "register",
+			"item": [
+				{
+					"name": "send otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \r\n    \"username\":\"Arvi\",\r\n    \"email\":\"banec81562@acuxi.com\",\r\n    \"password\":\"Test@123\",\r\n    \"orgnisation\":\"Initializ\"\r\n\r\n    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/send/otp/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"send",
+								"otp",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"banec81562@acuxi.com\",\r\n    \"otp\":\"172606\"\r\n  \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/verify/otp",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"verify",
+								"otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \r\n    \"username\":\"Arvi\",\r\n    \"email\":\"banec81562@acuxi.com\",\r\n    \"password\":\"Test@123\",\r\n    \"organization\":\"Initializ\"\r\n\r\n    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"username\":\"arvind\",\r\n    \"email\":\"an8182maurya@gmail.com\",\r\n    \"password\":\"arvind\",\r\n    \"confirmpassword\":\"arvind\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\":\"65c065d758f71d3c1422474f\",\r\n    \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuODE4Mm1hdXJ5YUBnbWFpbC5jb20iLCJpYXQiOjE3MDcxMTExODcsImV4cCI6MTcwNzcxNTk4N30.8JRFmffie4SzDFeW1gr8RoL0z1IPrXYGVVogDveTnd0\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/logout",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send otp for forget password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"an8182maurya@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/sendotp/forget/password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"sendotp",
+								"forget",
+								"password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "otp verfy for forget password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"email\":\"an8182maurya@gmail.com\",\r\n     \"otp\":\"622993\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/verifyotp/forget/password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"verifyotp",
+								"forget",
+								"password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n     \"email\":\"an8182maurya@gmail.com\",\r\n      \"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFuODE4Mm1hdXJ5YUBnbWFpbC5jb20iLCJpYXQiOjE3MDcxMjQ3ODksImV4cCI6MTcwNzIxMTE4OX0.W0EHeUnQEDVBm6kyOIxvH_v6Lk6J3ca9dvaqGoA9eC8\",\r\n     \"password\":\"Test@1234\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/reset/password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"reset",
+								"password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get user data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/getdata?userId=65c065d758f71d3c1422474f",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"getdata"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "65c065d758f71d3c1422474f"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "profile url upload",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png"
+								},
+								{
+									"key": "userId",
+									"value": "65c065d758f71d3c1422474f",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/profileurl",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"profileurl"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\":\"65e9a25d3835ab420733b81a\",\r\n    \"old_password\":\"Test@123\",\r\n    \"new_password\":\"Test@123\",\r\n    \"confirm_new_password\":\"Test@123\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/users/change/password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"users",
+								"change",
+								"password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "mom",
+			"item": [
+				{
+					"name": "create mom",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-04 114858.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-09 121252.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-11 141616.png",
+										"/C:/Users/ArvindMaurya/Pictures/Screenshots/Screenshot 2024-01-11 145830.png"
+									]
+								},
+								{
+									"key": "project_id",
+									"value": "COLP-719394",
+									"type": "text"
+								},
+								{
+									"key": "meetingdate",
+									"value": "03/02/2024",
+									"type": "text"
+								},
+								{
+									"key": "source",
+									"value": "At Client Place",
+									"type": "text"
+								},
+								{
+									"key": "client_name",
+									"value": "Abhishek Singh",
+									"type": "text"
+								},
+								{
+									"key": "organiser",
+									"value": "Harsh",
+									"type": "text"
+								},
+								{
+									"key": "consultant_name",
+									"value": "Naveen",
+									"type": "text"
+								},
+								{
+									"key": "remark",
+									"value": "This code snippet is configuring CORS (Cross-Origin Resource Sharing) for an Express.js application using the cors middleware. \nIt allows requests from specified origins and defines the allowed methods.",
+									"type": "text"
+								},
+								{
+									"key": "imaportant_note",
+									"value": "origin: An array containing the allowed origins for requests. In this case, requests are allowed from both \"http://localhost:5173\" and ",
+									"type": "text"
+								},
+								{
+									"key": "architech",
+									"value": "Gracy",
+									"type": "text"
+								},
+								{
+									"key": "",
+									"value": "COLP-162086",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/create/mom/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"create",
+								"mom",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all mom",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getall/mom/?project_id=COLP-162086",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getall",
+								"mom",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-162086"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Single mom",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getsingle/mom/?project_id=COLP-835511&mom_id=COL-M-876234",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getsingle",
+								"mom",
+								""
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-835511"
+								},
+								{
+									"key": "mom_id",
+									"value": "COL-M-876234"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "generate pdf",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"project_id\":\"COLP-162086\",\r\n    \"mom_id\":\"COl-M-658736\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/generate/pdf?project_id=COLP-162086&mom_id=COl-M-658736",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"generate",
+								"pdf"
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-162086"
+								},
+								{
+									"key": "mom_id",
+									"value": "COl-M-658736"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all project mom",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/getall/project/mom?id=65c32e19e0f36d8e1f30955c",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"getall",
+								"project",
+								"mom"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "65c32e19e0f36d8e1f30955c"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send mom pdf",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"project_id\":\"COLP-269975\",\r\n    \"mom_id\":\"COl-M-779036\"\r\n   \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/send/momdata?project_id=COLP-269975&mom_id=COl-M-779036",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"send",
+								"momdata"
+							],
+							"query": [
+								{
+									"key": "project_id",
+									"value": "COLP-269975"
+								},
+								{
+									"key": "mom_id",
+									"value": "COl-M-779036"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "notification",
+			"item": [
+				{
+					"name": "get notification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/get/notification",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"get",
+								"notification"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update notification",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\":\"65dc330846374c1f45ad9029\",\r\n    \"status\":true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/update/notification",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"update",
+								"notification"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "create User",
+			"item": [
+				{
+					"name": "create users",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"user_name\":\"Arvind1010\",\r\n    \"id\":\"65c32e19e0f36d8e1f30955c\",\r\n    \"role\":\"designer\",\r\n    \"email\":\"amaurya@initializ.io\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/create/user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"create",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get users",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "delete user",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/delete/user?userId=66136debdd60d483c81040c8",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"delete",
+								"user"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "66136debdd60d483c81040c8"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "tenant",
+			"item": [
+				{
+					"name": "organization register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"organization_name\":\"intz\",\r\n    \"organization_id\":\"intz-7890321\",\r\n    \"password\":\"Test@123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/tenant/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"tenant",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "organization login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n      \"organization_id\":\"intz-7890321\",\r\n    \"password\":\"Test@123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/tenant/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"tenant",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create users",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"organization_id\": \"intz-7890322\",\r\n    \"user_name\":\"dguptaa\",\r\n    \"role\":\"ADMIN\",\r\n    \"email\":\"dguptaa@initializ.io\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/tenant/create/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"tenant",
+								"create",
+								"users"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "archive",
+			"item": [
+				{
+					"name": "get archive data",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "delete archive",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"user_id\":\"663a2673711e4f0971b0170b\",\r\n    \"file_id\":\"FL-526232\",\r\n      \"lead_id\":\"915434\",\r\n    // \"project_id\":\"\",\r\n    // \"type\":\"template\",\r\n    // \"type\":\"\",\r\n    \"folder_name\":\"client brief\",\r\n    // \"sub_folder_name_first\":\"company policies\",\r\n// \"sub_folder_name_second\":\"testing1\",\r\n    \"delete_type\":\"file\"\r\n    \r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/v1/api/admin/delete/archive",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"v1",
+								"api",
+								"admin",
+								"delete",
+								"archive"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "restore file or folder",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

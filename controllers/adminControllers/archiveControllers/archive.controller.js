@@ -37,28 +37,27 @@ export const archive = async (req, res) => {
             if (check_user.role === "ADMIN" || check_user.role === "Senior Architect") {
                 const archive = await arvhiveModel.find({})
                 if (archive.length < 1) {
-                    responseData(res, "", 400, false, "No data found", []);
+                    responseData(res, "No data found", 200, false, "", []);
                 }
                 if (archive.length > 0) {
                     let response = []
-                   
+
                     let deleted_name;
 
                     for (let i = 0; i < archive.length; i++) {
-                        
-                            if (archive[i].deleted_type === 'file') {
-                                deleted_name = archive[i].files[0].fileName
+
+                        if (archive[i].deleted_type === 'file') {
+                            deleted_name = archive[i].files[0].fileName
+                        }
+                        else if (archive[i].deleted_type === 'folder') {
+                            if (archive[i].type) {
+                                deleted_name = archive[i].sub_folder_name_second
                             }
-                            else if (archive[i].deleted_type === 'folder') {
-                                if(archive[i].type)
-                                    {
-                                    deleted_name = archive[i].sub_folder_name_second
-                                    }
-                                    else{
-                                        deleted_name = archive[i].folder_name
-                                    }
-                                
-                            }    
+                            else {
+                                deleted_name = archive[i].folder_name
+                            }
+
+                        }
 
                         response.push({
                             lead_id: archive[i].lead_id,
@@ -509,7 +508,7 @@ const saveFileRestoreDataInLead = async (
                             files: {
                                 folder_name: existingFileUploadData.folder_name,
                                 updated_date: existingFileUploadData.files[0].updated_date,
-                                files: existingFileUploadData.files,
+                                files: existingFileUploadData.files[0].files,
                             },
                         },
                     }
@@ -550,6 +549,7 @@ const saveFileRestoreDataInProject = async (
 
 ) => {
     try {
+        
 
         // Use update query to push data
         if (existingFileUploadData.deleted_type === 'file') {
@@ -606,6 +606,7 @@ const saveFileRestoreDataInProject = async (
 
         }
         if (existingFileUploadData.deleted_type === "folder") {
+           
             const updateResult = await fileuploadModel.updateOne(
                 {
                     project_id: existingFileUploadData.project_id,
@@ -629,14 +630,15 @@ const saveFileRestoreDataInProject = async (
             } else {
                 // If the folder does not exist, create a new folder object
 
+
                 const updateNewFolderResult = await fileuploadModel.updateOne(
                     { project_id: existingFileUploadData.project_id },
                     {
                         $push: {
                             files: {
                                 folder_name: existingFileUploadData.folder_name,
-                                updated_date: existingFileUploadData.files[0].date,
-                                files: existingFileUploadData.files,
+                                updated_date: existingFileUploadData.files[0].updated_date,
+                                files: existingFileUploadData.files[0].files,
                             },
                         },
                     }
@@ -709,7 +711,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
                             folder_name: existingFileUploadData.folder_name,
                             sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
                             sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
-                            updated_date: existingFileUploadData.files[0].date,
+                            updated_date: existingFileUploadData.files[0].updated_date,
                             folder_id: existingFileUploadData.folder_Id,
                             files: existingFileUploadData.files,
                         },
@@ -888,6 +890,7 @@ export const restoreData = async (req, res) => {
 
                 }
                 if (restore_type === 'folder') {
+                    // console.log(filesData)
                     if (!filesData.project_id) {
                         await saveFileRestoreDataInLead(res, filesData)
                         await archiveModel.findOneAndDelete(

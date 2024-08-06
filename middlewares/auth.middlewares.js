@@ -91,19 +91,44 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           let design = [];
           let completed = [];
           let archive = [];
-          const projects = await projectModel.find({}).sort({ createdAt: -1 });
-          for (let i = 0; i < projects.length; i++) {
-            if (projects[i].project_status == "executing") {
-              execution.push(projects[i]);
+          let projects = [];
+          const project = await projectModel.find({}).sort({ createdAt: -1 });
+          for (let i = 0; i < project.length; i++) {
+            if (project[i].project_status == "executing") {
+              execution.push(project[i]);
             }
-            if (projects[i].project_status == "designing") {
-              design.push(projects[i]);
+            if (project[i].project_status == "designing") {
+              design.push(project[i]);
             }
-            if (projects[i].project_status == "completed") {
-              completed.push(projects[i]);
+            if (project[i].project_status == "completed") {
+              completed.push(project[i]);
               
             }
+            projects.push({
+              project_name: project[i].project_name,
+              project_id: project[i].project_id,
+              client_name: project[i].client[0].client_name,
+              project_type: project[i].project_type,
+              project_status: project[i].project_status,
+              project_end_date: project[i].project_end_date,
+              project_start_date: project[i].project_start_date,
+              project_budget: project[i].project_budget,
+              project_description: project[i].project_description,
+              designer: project[i].designer,
+              client: project[i].client,
+              lead_id: project[i].lead_id,
+              mom: project[i].mom,
+              leadmanager: project[i].leadmanager,
+              visualizer: project[i].visualizer,
+              timeline_date: project[i].timeline_date,
+              project_location: project[i].project_location,
+              project_updated_by: project[i].project_updated_by,
+              quotation: project[i].quotation,
+
+            })
           }
+        
+        
 
          
 
@@ -274,7 +299,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
               leadData.push({
 
                 lead_id: find_lead.lead_id,
-                lead_Name: find_lead.lead_name,
+                lead_Name: find_lead.name,
                 lead_email: find_lead.email,
                 lead_phone: find_lead.phone,
                 lead_status: find_lead.status,
@@ -426,6 +451,45 @@ export const isProcurement = async (req, res, next) => {
     }
 
     if (user.role === "ADMIN" || user.role === "Executive Assistant" || user.role === "Senior Architect" || user.role ==='ORGADMIN' ) {
+      next(); // Proceed to the next 
+    }
+    else {
+      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
+    }
+
+  } catch (err) {
+
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+}
+
+export const isProjectArchitect = async (req, res, next) => {
+
+  try {
+    const token = req.cookies?.auth ||
+      req.header("Authorization")?.replace("Bearer", "").trim();
+    ;
+    if (!token) {
+      return responseData(
+        res,
+        "",
+        401,
+        false,
+        "Unauthorized: No token provided"
+      );
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+
+    const user = await registerModel.findById(decodedToken?.id);
+
+
+    if (!user) {
+      return responseData(res, "", 401, false, "Unauthorized: User not found");
+    }
+
+    if (user.role === "ADMIN" || user.role === "Project Architect" || user.role === "Senior Architect" || user.role === 'ORGADMIN') {
       next(); // Proceed to the next 
     }
     else {

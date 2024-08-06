@@ -19,6 +19,7 @@ import {
   getSingleLead,
   leadToMultipleProject,
   leadToProject,
+  updateFollowLead,
   updateLead,
 } from "../../controllers/adminControllers/leadController/lead.controller.js";
 import {
@@ -40,7 +41,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { createUser, deleteUser, getUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, isAdmin, isOrgAndAdmin, isProcurement } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, isAdmin, isOrgAndAdmin, isProcurement, isProjectArchitect } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -49,13 +50,17 @@ import { AddMemberInLead } from "../../controllers/adminControllers/leadControll
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
+import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
+import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
+
 // router.use(checkAvailableUserIsAdmin)
 
 
 router.route("/create/user").post(verifyJWT, isAdmin, createUser);
 router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
-router.route("/get/alluser").get(verifyJWT,isOrgAndAdmin, getUser);
+router.route("/get/alluser").get(verifyJWT, isAdmin, getUser);
 router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
+router.route("/get/userlist").get(verifyJWT, getUserList);
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
@@ -76,17 +81,19 @@ router.route("/delete/folder").delete(verifyJWT, isAdmin, deleteFolder);
 
 
 
+
 router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAllProject);
 router.route("/getsingle/project").get(verifyJWT, getSingleProject);
 router.route("/update/project").put(verifyJWT, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT,createLead);
+router.route("/create/lead").post(verifyJWT, isProjectArchitect, createLead);
 router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
-router.route("/getsingle/lead").get(verifyJWT,  getSingleLead);
-router.route("/update/lead").put(verifyJWT, checkAvailableUserIsAdmin, updateLead);
-router.route("/create/lead/project").post(verifyJWT, checkAvailableUserIsAdmin, leadToProject);
+router.route("/getsingle/lead").get(verifyJWT, getSingleLead);
+router.route("/update/lead").put(verifyJWT, isProjectArchitect, updateFollowLead);
+router.route("/create/lead/project").post(verifyJWT, isProjectArchitect, leadToProject);
 router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
-router.route("/lead/multiple/project").post(verifyJWT, leadToMultipleProject);
+router.route("/update/lead/data").put(verifyJWT, updateLead);
+router.route("/lead/multiple/project").post(verifyJWT, isProjectArchitect, leadToMultipleProject);
 
 router.route("/create/mom").post(verifyJWT, createmom);
 router.route("/getall/mom").get(verifyJWT, getAllMom);
@@ -96,8 +103,8 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
 router.route("/share/quotation").post(verifyJWT, isProcurement, shareQuotation);
-router.route("/get/quotationdata").get(verifyJWT,isProcurement, getQuotationData);
-router.route("/quotation/approval").post(verifyJWT,isProcurement, updateStatusAdmin);
+router.route("/get/quotationdata").get(verifyJWT, isAdmin, getQuotationData);
+router.route("/quotation/approval").post(verifyJWT, isAdmin, updateStatusAdmin);
 
 
 
@@ -124,6 +131,12 @@ router.route("/get/all/subtask").get(verifyJWT, getAllSubTask);
 router.route("/get/single/subtask").get(verifyJWT, getSingleSubTask);
 router.route("/update/subtask").put(verifyJWT, updateSubTask);
 router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
+router.route("/update/subtask/time").put(verifyJWT, UpdateSubtimerController);
+router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
+
+
+
+
 
 
 

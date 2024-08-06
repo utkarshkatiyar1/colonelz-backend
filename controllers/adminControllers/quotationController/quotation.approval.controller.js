@@ -247,7 +247,7 @@ export const shareQuotation = async (req, res) => {
                         project_updated_by: {
                             username: check_user.username,
                             role: check_user.role,
-                            message: `has sent the quotation for approval to cleint ${client_name}.`,
+                            message: `has sent the quotation for approval to client ${client_name}.`,
                             updated_date: new Date()
                         }
                     }
@@ -359,14 +359,7 @@ export const shareQuotation = async (req, res) => {
                 if (!findProject) {
                     return responseData(res, "", 401, false, "Project not found");
                 }
-                const checkApproval = await registerModel.findOne({
-                    username: user_name,
-                    "data.quotationData.project_id": project_id,
-                    "data.quotationData.approval_status": "pending"
-                });
-                if (checkApproval) {
-                    return responseData(res, "", 401, false, "Previous quotation not approved or rejected");
-                }
+              
                 const findFile = findQuotation.files.find(folder => folder.folder_name === folder_name)?.files.find(file => file.fileId === file_id);
                 if (!findFile) {
                     return responseData(res, "", 401, false, "File not found in the specified folder");
@@ -524,7 +517,7 @@ export const shareQuotation = async (req, res) => {
 
 
 function approvalLinkClient(project_id, file_id, status) {
-    return `https://colonelz-crm.stg.initz.run/quotation?project_id=${project_id}&file_id=${file_id}`;
+    return `https://colonelz-test457689.test.initz.run/quotation?project_id=${project_id}&file_id=${file_id}`;
 }
 
 
