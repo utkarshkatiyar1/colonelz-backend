@@ -182,7 +182,7 @@ export const createLead = async (req, res) => {
       if (check_email.length < 1) {
         const lead_id = generateSixDigitNumber();
         const check_user = await registerModel.findById(userId)
-        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
+        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect' || check_user.role === 'SUPERADMIN') {
 
           let fileUrls = []
           const lead = new leadModel({
@@ -646,8 +646,7 @@ export const leadToProject = async (req, res) => {
                 });
                 project_data.save();
                 const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
-                if(lead_find_in_fileupload.length <1)
-                {
+                if (lead_find_in_fileupload.length < 1) {
                   responseData(res, "", 404, false, "lead not found in file manager")
                 }
                 if (lead_find_in_fileupload.length > 0) {
@@ -691,7 +690,7 @@ export const leadToProject = async (req, res) => {
         if (find_lead.length < 1) {
           responseData(res, "", 404, false, "lead not found", []);
         }
-        if(!check_user) {
+        if (!check_user) {
           responseData(res, "", 404, false, "User not found", []);
         }
 
@@ -701,7 +700,7 @@ export const leadToProject = async (req, res) => {
       console.log(err);
       return res.status(500).send(err);
 
-     
+
     }
   }
 };
@@ -787,7 +786,7 @@ export const leadToMultipleProject = async (req, res) => {
                 {
                   $set: {
                     lead_status: "Follow Up",
-                    lead_update_track: []  
+                    lead_update_track: []
                   }
                 }
               )
