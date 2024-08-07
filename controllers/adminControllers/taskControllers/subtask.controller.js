@@ -388,8 +388,17 @@ export const updateSubTask = async (req, res) => {
         const sub_task_priority = req.body.sub_task_priority;
         const sub_task_assignee = req.body.sub_task_assignee;
         const sub_task_reporter = req.body.sub_task_reporter;
+        const remark = req.body.remark;
 
-        if (!user_id) {
+        if (sub_task_status ==='Under Revision')
+        {
+            if(!remark)
+            {
+                responseData(res, "", 404, false, "Please enter remark ", [])
+            }
+        }
+
+       else if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
         }
         else if (!project_id) {
@@ -468,6 +477,11 @@ export const updateSubTask = async (req, res) => {
                                             sub_task_updatedBy: check_user.username,
                                             role: check_user.role,
                                             sub_task_updatedOn: new Date()
+                                        },
+                                        "subtasks.$.remark":{
+                                            remark:remark,
+                                            remark_by:check_user.username,
+                                            remark_date:new Date()
                                         }
                                     }
                                 },
@@ -483,10 +497,11 @@ export const updateSubTask = async (req, res) => {
                                                 message: ` has updated subtask ${sub_task_name} in task ${check_task.task_name}.`,
                                                 updated_date: new Date()
                                             }
+
                                         }
                                     }
                                 )
-                                if(sub_task_status==='Completed' || sub_task_status ==='Cancelled')
+                                if (sub_task_status === 'Completed' || sub_task_status === 'Cancelled' || sub_task_status ==='Under Revision')
                                 {
                                      await timerModel.findOneAndUpdate({
                                         task_id: task_id,
