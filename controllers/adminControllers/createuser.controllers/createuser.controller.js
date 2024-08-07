@@ -33,7 +33,7 @@ export const createUser = async (req, res) => {
     const user_name = req.body.user_name;
     const email = req.body.email;
     const role = req.body.role;
-    const access = req.body.access;
+    // const access = req.body.access;
     
 
 
@@ -68,22 +68,22 @@ export const createUser = async (req, res) => {
                                 if(check_role)
                                 {
                                     preAccess = check_role.access
-                                    if(access)
-                                    {
-                                        for (const key in access) {
-                                            if (preAccess[key]) {
-                                                // Replace existing permissions with new permissions from access[key]
-                                                preAccess[key] = access[key];
-                                            } else {
-                                                preAccess[key] = access[key];
-                                            }
-                                        }
-                                    }
+                                    // if(access)
+                                    // {
+                                    //     for (const key in access) {
+                                    //         if (preAccess[key]) {
+                                    //             // Replace existing permissions with new permissions from access[key]
+                                    //             preAccess[key] = access[key];
+                                    //         } else {
+                                    //             preAccess[key] = access[key];
+                                    //         }
+                                    //     }
+                                    // }
                                    
                                 }
-                                else{
-                                     preAccess = await RoleAccess(role, access);
-                                }
+                                // else{
+                                //      preAccess = await RoleAccess(role, access);
+                                // }
                                 
                                 
                                

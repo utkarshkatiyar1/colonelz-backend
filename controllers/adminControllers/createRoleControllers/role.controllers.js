@@ -19,8 +19,21 @@ export const createRole = async(req,res) =>{
         
         }
         else{
-            
-            
+            if (role === 'ADMIN'
+                || role === 'Site Supervisor'
+                || role === 'Jr.Interior Designer'
+                || role === '3D Visualizer'
+                || role === 'Jr. Executive HR & Marketing'
+                || role === 'Executive Assistant'
+                || role === 'Project Architect'
+                || role === 'Senior Architect'
+                
+            )
+            {
+                // console.log("Role already exists")
+                responseData(res, "", 400, false, "This role is predefine")
+            }
+            else{
                 const checkRole = await roleModel.findOne({role});
                 if(checkRole)
                 {
@@ -28,10 +41,10 @@ export const createRole = async(req,res) =>{
 
             }
             else{
-                    const newRole = await roleModel.create({ role, access });
-                    responseData(res, "Role created successfully", 200, true, "")
+                 const newRole = await roleModel.create({role, access});
+            responseData(res,"Role created successfully", 200, true, "")
             }
-        
+        }
            
         }
     }
@@ -61,6 +74,11 @@ export const UpdateRole = async(req,res) =>{
         const access = req.body.access;
         const id = req.query.id;
 
+        if(!id)
+        {
+            responseData(res, "", 400, false, "Role id is required")
+        }
+
         if(!role)
         {
             responseData(res, "", 400, false, "Role is required")
@@ -71,10 +89,20 @@ export const UpdateRole = async(req,res) =>{
             responseData(res, "", 400, false, "Access is required")
         }
         else{
+            const check_id = await roleModel.findById(id)
+            if(!check_id)
+            {
+                responseData(res,"",404, false, "Role not found for this id")
 
-            console.log(access)
-            const updatedRole = await roleModel.findByIdAndUpdate(id, {role, access});
-            responseData(res,"Role updated successfully", 200, true, "")
+            }
+            else
+            {
+
+                const updatedRole = await roleModel.findByIdAndUpdate(id, { role, access });
+                responseData(res, "Role updated successfully", 200, true, "")
+            }
+
+           
         }
 
     }
