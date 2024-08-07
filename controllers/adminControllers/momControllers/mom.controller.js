@@ -162,16 +162,7 @@ export const createmom = async (req, res) => {
     const project_id = req.body.project_id;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
-    // let client_name = req.body.client_name
-    //   ? JSON.parse(req.body.client_name)
-    //   : [];
-    // let architect = req.body.architect ? JSON.parse(req.body.architect) : [];
-    // let organisor = req.body.organisor ? JSON.parse(req.body.organisor) : [];
-    // let consultant_name = req.body.consultant_name
-    //   ? JSON.parse(req.body.consultant_name)
-    //   : [];
     const client_name = req.body.client_name;
-    const designer = req.body.designer;
     const organisor = req.body.organisor;
     const attendees = req.body.attendees;
     const remark = req.body.remark;
@@ -196,11 +187,7 @@ export const createmom = async (req, res) => {
         .status(400)
         .send({ status: false, message: "location is required" });
     } else if (!client_name && !onlyAlphabetsValidation(client_name)) {
-    } else if (!designer && !onlyAlphabetsValidation(designer)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "designer is required" });
-    } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
+    }  else if (!organisor && !onlyAlphabetsValidation(organisor)) {
       return res
         .status(400)
         .send({ status: false, message: "organiser is required" });
@@ -275,7 +262,6 @@ export const createmom = async (req, res) => {
                       attendees: {
                         client_name: client_name,
                         organisor: organisor,
-                        designer: designer,
                         attendees: attendees,
                       },
                       remark: remark,
@@ -350,7 +336,6 @@ export const createmom = async (req, res) => {
                       attendees: {
                         client_name: client_name,
                         organisor: organisor,
-                        designer: designer,
                         attendees: attendees,
                       },
                       remark: remark,
