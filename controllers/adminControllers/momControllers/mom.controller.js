@@ -404,17 +404,32 @@ export const getSingleMom = async (req, res) => {
       const check_mom = check_project[0].mom.filter(
         (mom) => mom.mom_id.toString() === mom_id
       );
+     
+      const response =[
+        {
+          client_name: check_mom[0].attendees.client_name,
+          mom_id:check_mom[0].mom_id,
+          meetingdate: check_mom[0].meetingdate,
+          location: check_mom[0].location,
+          attendees: check_mom[0].attendees,
+          remark: check_mom[0].remark,
+          files: check_mom[0].files,
+        }
+      ]
       if (check_mom.length > 0) {
-        responseData(res, "MOM Found", 200, true, "", check_mom);
+        responseData(res, "MOM Found", 200, true, "", response);
       } else {
         responseData(res, "", 404, false, "MOM Not Found");
       }
     }
     if (check_project.length < 1) {
       responseData(res, "", 404, false, "Project Not Found");
-    }
+    
+
+      }
+     
   } catch (error) {
-    responseData(res, "", 400, false, error.message);
+    responseData(res, "", 400, false, error.message, []);
   }
 };
 
