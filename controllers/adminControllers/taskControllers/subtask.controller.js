@@ -389,16 +389,9 @@ export const updateSubTask = async (req, res) => {
         const sub_task_assignee = req.body.sub_task_assignee;
         const sub_task_reporter = req.body.sub_task_reporter;
         const remark = req.body.remark;
+       
 
-        if (sub_task_status ==='Under Revision')
-        {
-            if(!remark)
-            {
-                responseData(res, "", 404, false, "Please enter remark ", [])
-            }
-        }
-
-       else if (!user_id) {
+        if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
         }
         else if (!project_id) {
@@ -454,39 +447,77 @@ export const updateSubTask = async (req, res) => {
                             responseData(res, "", 400, false, "The task has been canceled")
                         }
                         else {
-                            const update_subtask = await taskModel.findOneAndUpdate({
-                                task_id: task_id,
-                                project_id: project_id,
-                                "subtasks.sub_task_id": sub_task_id
-                            },
-                                {
-                                    $set: {
-                                        "subtasks.$.sub_task_name": sub_task_name,
-                                        "subtasks.$.sub_task_description": sub_task_description,
-                                        "subtasks.$.estimated_sub_task_start_date": estimated_sub_task_start_date,
-                                        "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
-                                        "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
-                                        "subtasks.$.actual_sub_task_end_date": actual_sub_task_end_date,
-                                        "subtasks.$.sub_task_status": sub_task_status,
-                                        "subtasks.$.sub_task_priority": sub_task_priority,
-                                        "subtasks.$.sub_task_assignee": sub_task_assignee,
-                                        "subtasks.$.sub_task_reporter": sub_task_reporter
-                                    },
-                                    $push: {
-                                        "subtasks.$.sub_task_updatedBy": {
-                                            sub_task_updatedBy: check_user.username,
-                                            role: check_user.role,
-                                            sub_task_updatedOn: new Date()
-                                        },
-                                        "subtasks.$.remark":{
-                                            remark:remark,
-                                            remark_by:check_user.username,
-                                            remark_date:new Date()
-                                        }
-                                    }
+                            let update_subtask
+                            
+                            if (sub_task_status ==='Under Revision')
+                            {
+                                if (!remark) {
+                                    responseData(res, "", 404, false, "Please enter remark ", [])
+                                }
+                                 update_subtask = await taskModel.findOneAndUpdate({
+                                    task_id: task_id,
+                                    project_id: project_id,
+                                    "subtasks.sub_task_id": sub_task_id
                                 },
-                                { new: true, useFindAndModify: false }
-                            )
+                                    {
+                                        $set: {
+                                            "subtasks.$.sub_task_name": sub_task_name,
+                                            "subtasks.$.sub_task_description": sub_task_description,
+                                            "subtasks.$.estimated_sub_task_start_date": estimated_sub_task_start_date,
+                                            "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
+                                            "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
+                                            "subtasks.$.actual_sub_task_end_date": actual_sub_task_end_date,
+                                            "subtasks.$.sub_task_status": sub_task_status,
+                                            "subtasks.$.sub_task_priority": sub_task_priority,
+                                            "subtasks.$.sub_task_assignee": sub_task_assignee,
+                                            "subtasks.$.sub_task_reporter": sub_task_reporter
+                                        },
+                                        $push: {
+                                            "subtasks.$.sub_task_updatedBy": {
+                                                sub_task_updatedBy: check_user.username,
+                                                role: check_user.role,
+                                                sub_task_updatedOn: new Date()
+                                            },
+                                            "subtasks.$.remark": {
+                                                remark: remark,
+                                                remark_by: check_user.username,
+                                                remark_date: new Date()
+                                            }
+                                        }
+                                    },
+                                    { new: true, useFindAndModify: false }
+                                )
+                            }
+                            else{
+                                 update_subtask = await taskModel.findOneAndUpdate({
+                                    task_id: task_id,
+                                    project_id: project_id,
+                                    "subtasks.sub_task_id": sub_task_id
+                                },
+                                    {
+                                        $set: {
+                                            "subtasks.$.sub_task_name": sub_task_name,
+                                            "subtasks.$.sub_task_description": sub_task_description,
+                                            "subtasks.$.estimated_sub_task_start_date": estimated_sub_task_start_date,
+                                            "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
+                                            "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
+                                            "subtasks.$.actual_sub_task_end_date": actual_sub_task_end_date,
+                                            "subtasks.$.sub_task_status": sub_task_status,
+                                            "subtasks.$.sub_task_priority": sub_task_priority,
+                                            "subtasks.$.sub_task_assignee": sub_task_assignee,
+                                            "subtasks.$.sub_task_reporter": sub_task_reporter
+                                        },
+                                        $push: {
+                                            "subtasks.$.sub_task_updatedBy": {
+                                                sub_task_updatedBy: check_user.username,
+                                                role: check_user.role,
+                                                sub_task_updatedOn: new Date()
+                                            },
+                                        }
+                                    },
+                                    { new: true, useFindAndModify: false }
+                                )
+                            }
                             if (update_subtask) {
                                 await projectModel.findOneAndUpdate({ project_id: project_id },
                                     {
