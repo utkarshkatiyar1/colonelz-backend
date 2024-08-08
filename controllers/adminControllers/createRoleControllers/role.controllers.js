@@ -117,8 +117,27 @@ export const UpdateRole = async(req,res) =>{
 export const DeleteRole = async(req,res) =>{
     try{
         const id = req.query.id;
-        const deletedRole = await roleModel.findByIdAndDelete(id);
-        responseData(res,"Role deleted successfully", 200, true, "")
+        if(!id)
+        {
+            responseData(res, "", 400, false, "Role id is required")
+        }
+        else
+        {
+            const check_role = await roleModel.findById(id)
+            if(!check_role)
+            {
+                responseData(res,"",404, false, "Role not found for this id")
+
+            }
+            else
+            {
+                const deletedRole = await roleModel.findByIdAndDelete(id);
+                responseData(res, `${check_role.role} role has been deleted`, 200, true, "")  
+                
+            }
+           
+        }
+        
     }
     catch(err)
     {
@@ -127,3 +146,43 @@ export const DeleteRole = async(req,res) =>{
     
     }
 }
+
+
+export const roleWiseAccess = async(req,res) =>{
+try{
+    const access = await roleModel.find({});
+    if(access.length<1)
+    {
+        responseData(res, "No role found", 200, true, "")
+    }
+    else
+    {
+       const transformedData = {};
+
+        access.forEach(user => {
+            Object.keys(user.access).forEach(resource => {
+                user.access[resource].forEach(action => {
+                    if (!transformedData[resource]) {
+                        transformedData[resource] = {};
+                    }
+                    if (!transformedData[resource][action]) {
+                        transformedData[resource][action] = [];
+                    }
+                    transformedData[resource][action].push(user.role);
+                });
+            });
+        });
+
+        responseData(res, "Role found successfully", 200, true, "", transformedData)
+    }
+
+
+
+}
+catch(err)
+{
+    responseData(res, "", 500, false, "Internal Server Error")
+    console.log(err)
+}
+}
+
