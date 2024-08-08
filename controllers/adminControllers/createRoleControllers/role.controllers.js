@@ -1,4 +1,5 @@
 import roleModel from "../../../models/adminModels/role.model.js";
+import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 
 
@@ -99,8 +100,19 @@ export const UpdateRole = async(req,res) =>{
             {
 
                 const updatedRole = await roleModel.findByIdAndUpdate(id, { role, access });
+
+                if (updatedRole) {
+                  const find_user =   await registerModel.find({role:role})
+                  if(find_user.length>0)
+                  {
+                    find_user.forEach(async(user)=>{
+                        await registerModel.findByIdAndUpdate(user._id, {access:access})
+                    })
+                    
+                }
                 responseData(res, "Role updated successfully", 200, true, "")
             }
+        }
 
            
         }
