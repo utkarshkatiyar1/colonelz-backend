@@ -370,29 +370,37 @@ export const createmom = async (req, res) => {
 
 export const getAllMom = async (req, res) => {
   try {
-    const project_id = req.query.project_id;
+    const { project_id } = req.query;
     const check_project = await projectModel
-      .find({
-        project_id: project_id,
-      })
+      .find({ project_id })
       .sort({ createdAt: -1 });
 
-
-
-    if (check_project.length > 0) {
-      const response = {
-        client_name: check_project[0].client[0].client_name,
-        mom_data: check_project[0].mom,
-      };
-      responseData(res, "MOM Found", 200, true, "", response);
+    if (check_project.length === 0) {
+      return responseData(res, "", 404, false, "Project Not Found.");
     }
-    if (check_project.length < 1) {
-      responseData(res, "", 404, false, "Project Not Found.");
-    }
+
+    const project = check_project[0];
+    const response = project.mom.map(momItem => ({
+      client_name: momItem.attendees.client_name,
+      mom_id: momItem.mom_id,
+      meetingdate: momItem.meetingdate,
+      location: momItem.location,
+      attendees: momItem.attendees,
+      remark: momItem.remark,
+      files: momItem.files,
+    }));
+
+    const response1 = {
+      client_name: project.client[0].client_name,
+      mom_data: response,
+    };
+
+    responseData(res, "MOM Found", 200, true, "", response1);
   } catch (error) {
     responseData(res, "", 400, false, error.message);
   }
 };
+
 
 export const getSingleMom = async (req, res) => {
   try {
