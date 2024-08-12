@@ -162,16 +162,7 @@ export const createmom = async (req, res) => {
     const project_id = req.body.project_id;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
-    // let client_name = req.body.client_name
-    //   ? JSON.parse(req.body.client_name)
-    //   : [];
-    // let architect = req.body.architect ? JSON.parse(req.body.architect) : [];
-    // let organisor = req.body.organisor ? JSON.parse(req.body.organisor) : [];
-    // let consultant_name = req.body.consultant_name
-    //   ? JSON.parse(req.body.consultant_name)
-    //   : [];
     const client_name = req.body.client_name;
-    const designer = req.body.designer;
     const organisor = req.body.organisor;
     const attendees = req.body.attendees;
     const remark = req.body.remark;
@@ -196,11 +187,7 @@ export const createmom = async (req, res) => {
         .status(400)
         .send({ status: false, message: "location is required" });
     } else if (!client_name && !onlyAlphabetsValidation(client_name)) {
-    } else if (!designer && !onlyAlphabetsValidation(designer)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "designer is required" });
-    } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
+    }  else if (!organisor && !onlyAlphabetsValidation(organisor)) {
       return res
         .status(400)
         .send({ status: false, message: "organiser is required" });
@@ -275,7 +262,6 @@ export const createmom = async (req, res) => {
                       attendees: {
                         client_name: client_name,
                         organisor: organisor,
-                        designer: designer,
                         attendees: attendees,
                       },
                       remark: remark,
@@ -350,7 +336,6 @@ export const createmom = async (req, res) => {
                       attendees: {
                         client_name: client_name,
                         organisor: organisor,
-                        designer: designer,
                         attendees: attendees,
                       },
                       remark: remark,
@@ -385,29 +370,37 @@ export const createmom = async (req, res) => {
 
 export const getAllMom = async (req, res) => {
   try {
-    const project_id = req.query.project_id;
+    const { project_id } = req.query;
     const check_project = await projectModel
-      .find({
-        project_id: project_id,
-      })
+      .find({ project_id })
       .sort({ createdAt: -1 });
 
-
-
-    if (check_project.length > 0) {
-      const response = {
-        client_name: check_project[0].client[0].client_name,
-        mom_data: check_project[0].mom,
-      };
-      responseData(res, "MOM Found", 200, true, "", response);
+    if (check_project.length === 0) {
+      return responseData(res, "", 404, false, "Project Not Found.");
     }
-    if (check_project.length < 1) {
-      responseData(res, "", 404, false, "Project Not Found.");
-    }
+
+    const project = check_project[0];
+    const response = project.mom.map(momItem => ({
+      client_name: momItem.attendees.client_name,
+      mom_id: momItem.mom_id,
+      meetingdate: momItem.meetingdate,
+      location: momItem.location,
+      attendees: momItem.attendees,
+      remark: momItem.remark,
+      files: momItem.files,
+    }));
+
+    const response1 = {
+      client_name: project.client[0].client_name,
+      mom_data: response,
+    };
+
+    responseData(res, "MOM Found", 200, true, "", response1);
   } catch (error) {
     responseData(res, "", 400, false, error.message);
   }
 };
+
 
 export const getSingleMom = async (req, res) => {
   try {
@@ -419,17 +412,32 @@ export const getSingleMom = async (req, res) => {
       const check_mom = check_project[0].mom.filter(
         (mom) => mom.mom_id.toString() === mom_id
       );
+     
+      const response =[
+        {
+          client_name: check_mom[0].attendees.client_name,
+          mom_id:check_mom[0].mom_id,
+          meetingdate: check_mom[0].meetingdate,
+          location: check_mom[0].location,
+          attendees: check_mom[0].attendees,
+          remark: check_mom[0].remark,
+          files: check_mom[0].files,
+        }
+      ]
       if (check_mom.length > 0) {
-        responseData(res, "MOM Found", 200, true, "", check_mom);
+        responseData(res, "MOM Found", 200, true, "", response);
       } else {
         responseData(res, "", 404, false, "MOM Not Found");
       }
     }
     if (check_project.length < 1) {
       responseData(res, "", 404, false, "Project Not Found");
-    }
+    
+
+      }
+     
   } catch (error) {
-    responseData(res, "", 400, false, error.message);
+    responseData(res, "", 400, false, error.message, []);
   }
 };
 

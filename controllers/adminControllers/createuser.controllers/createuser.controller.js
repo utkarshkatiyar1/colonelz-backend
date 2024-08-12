@@ -3,6 +3,8 @@ import { responseData } from "../../../utils/respounse.js";
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import loginModel from "../../../models/usersModels/login.model.js";
+import { RoleAccess } from "../../../utils/role.js";
+import roleModel from "../../../models/adminModels/role.model.js";
 
 
 function generateStrongPassword() {
@@ -31,6 +33,9 @@ export const createUser = async (req, res) => {
     const user_name = req.body.user_name;
     const email = req.body.email;
     const role = req.body.role;
+    // const access = req.body.access;
+    
+
 
     if (!id) {
         return responseData(res, "", 400, false, "Please provide id");
@@ -42,7 +47,7 @@ export const createUser = async (req, res) => {
             if (!user) {
                 return responseData(res, "", 404, false, "User not found");
             } else {
-                if (user.role === 'ADMIN' || user.role === 'ORGADMIN') {
+                if (user.role === 'ADMIN' || user.role === 'ORGADMIN' || user.role ==='SUPERADMIN') {
                     // if(user.role ==='ADMIN' && role ==='ADMIN')
                     //     {
                     //         return responseData(res, "", 400, false, "You are not allowed to create admin");
@@ -58,6 +63,30 @@ export const createUser = async (req, res) => {
                             if (err) {
                                 return responseData(res, "", 400, false, "Something went wrong");
                             } else {
+                                let preAccess
+                                const check_role = await roleModel.findOne({role:role})
+                                if(check_role)
+                                {
+                                    preAccess = check_role.access
+                                    // if(access)
+                                    // {
+                                    //     for (const key in access) {
+                                    //         if (preAccess[key]) {
+                                    //             // Replace existing permissions with new permissions from access[key]
+                                    //             preAccess[key] = access[key];
+                                    //         } else {
+                                    //             preAccess[key] = access[key];
+                                    //         }
+                                    //     }
+                                    // }
+                                   
+                                }
+                                // else{
+                                //      preAccess = await RoleAccess(role, access);
+                                // }
+                                
+                                
+                               
                                 const newUser = new registerModel({
                                     username: user_name,
                                     email: email,
@@ -66,12 +95,14 @@ export const createUser = async (req, res) => {
                                     userProfile: "",
                                     organization: user.organization,
                                     password: hash,
+                                    access:preAccess,
                                     data: {
                                         projectData: [],
                                         quotationData: [],
                                         notificationData: [],
                                         leadData: []
                                     }
+                                    
                                 });
 
                                 const mailOptions = {
@@ -106,7 +137,8 @@ export const createUser = async (req, res) => {
                                     if (error) {
                                         console.log(error);
                                         responseData(res, "", 400, false, "Failed to send email");
-                                    } else {
+                                    }
+                                     else {
                                         newUser.save();
                                         responseData(
                                             res,
@@ -142,7 +174,7 @@ export const getUser = async (req, res) => {
         }
         else {
             const check_user = await registerModel.findById(userId);
-            if (check_user.role === 'ADMIN' || check_user.role === 'ORGADMIN' || check_user.role ==='Senior Architect') {
+            if (check_user.role === 'ADMIN' || check_user.role === 'ORGADMIN' || check_user.role ==='Senior Architect' || check_user.role ==='SUPERADMIN') {
                 const users = await registerModel.find({ $and: [{ status: true }, { organization: check_user.organization }] })
 
                 if (users) {

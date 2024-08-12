@@ -13,6 +13,7 @@ export const verifyJWT = async (req, res, next) => {
   try {
     const token = req.cookies?.auth ||
       req.header("Authorization")?.replace("Bearer", "").trim();
+    
     ;
     if (!token) {
       return responseData(
@@ -34,6 +35,7 @@ export const verifyJWT = async (req, res, next) => {
     }
 req.user = user
     next(); // Proceed to the next 
+  
   } catch (err) {
    
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
@@ -59,7 +61,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
 
     const user = await registerModel.findById(decodedToken?.id);
-    if (user.role === 'ADMIN' || user.role === 'Senior Architect' || user.role ==='ORGADMIN')
+    if (user.role === 'ADMIN' || user.role === 'Senior Architect' || user.role ==='ORGADMIN' || user.role ==='SUPERADMIN')
     {
       next();
     }
@@ -370,7 +372,7 @@ export const isAdmin = async(req,res,next) =>{
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" || user.role === "Senior Architect" || user.role ==='ORGADMIN' )
+    if (user.role === "ADMIN" || user.role === "Senior Architect" || user.role ==='ORGADMIN' || user.role === 'SUPERADMIN' )
   {
     next(); // Proceed to the next 
   }
@@ -410,7 +412,7 @@ export const isOrgAndAdmin = async (req, res, next) => {
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
 
-    if (user.role === "ADMIN" || user.role === 'ORGADMIN') {
+    if (user.role === "ADMIN" || user.role === 'ORGADMIN' || user.role === 'SUPERADMIN') {
       next(); // Proceed to the next 
     }
     else {

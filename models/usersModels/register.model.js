@@ -32,6 +32,7 @@ const signUp = new mongoose.Schema({
     // required:true,
   },
   data: [],
+  access: {},
   createdAt: {
     type: Date,
     default: Date.now,

@@ -52,58 +52,60 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
+import { createAddMember, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateLeadAccess, updateProjectAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
+import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
 
-router.route("/create/user").post(verifyJWT, isAdmin, createUser);
-router.route("/add/member").post(verifyJWT, isOrgAndAdmin, addMember);
-router.route("/get/alluser").get(verifyJWT, isAdmin, getUser);
-router.route("/delete/user").delete(verifyJWT, isOrgAndAdmin, deleteUser);
+router.route("/create/user").post(verifyJWT, CreateUserAccess, createUser);
+router.route("/add/member").post(verifyJWT,createAddMember, addMember);
+router.route("/get/alluser").get(verifyJWT, GetUser, getUser);
+router.route("/delete/user").delete(verifyJWT,  deleteUser, deleteUser);
 router.route("/get/userlist").get(verifyJWT, getUserList);
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
-router.route("/getfile").get(verifyJWT, checkAvailableUserIsAdmin, getFileData);
-router.route("/get/onefile").get(verifyJWT, getSingleFileData);
-router.route("/lead/getfile").get(verifyJWT, getleadData);
-router.route("/project/getfile").get(verifyJWT, getprojectData);
+router.route("/getfile").get(verifyJWT, readFileAccess, checkAvailableUserIsAdmin,  getFileData);
+router.route("/get/onefile").get(verifyJWT, readFileAccess, getSingleFileData);
+router.route("/lead/getfile").get(verifyJWT,readLeadAccess, getleadData);
+router.route("/project/getfile").get(verifyJWT,readProjectAccess, getprojectData);
 router.route("/project/fileupload").post(verifyJWT, projectFileUpload);
-router.route("/view/contract").post(verifyJWT, contractShare);
+router.route("/view/contract").post(verifyJWT,readContractAccess, contractShare);
 router.route("/share/file").post(verifyJWT, shareFile);
 router.route("/template/fileupload").post(verifyJWT, templateFileUpload);
-router.route("/template/single/file").get(verifyJWT, getSingleTemplateFile);
-router.route("/delete/file").delete(verifyJWT, isAdmin, deleteFile);
-router.route("/share/contract").post(verifyJWT, shareContract);
-router.route("/contract/approval").post(verifyJWT, contractStatus);
-router.route("/get/contractdata").get(verifyJWT, getContractData);
-router.route("/delete/folder").delete(verifyJWT, isAdmin, deleteFolder);
+router.route("/template/single/file").get(verifyJWT,readFileAccess, getSingleTemplateFile);
+router.route("/delete/file").delete(verifyJWT,deletedFileAccess, deleteFile);
+router.route("/share/contract").post(verifyJWT,readContractAccess, shareContract);
+router.route("/contract/approval").post(verifyJWT,readContractAccess, contractStatus);
+router.route("/get/contractdata").get(verifyJWT,readContractAccess, getContractData);
+router.route("/delete/folder").delete(verifyJWT, isAdmin,deletedFileAccess, deleteFolder);
 
 
 
 
-router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin, getAllProject);
-router.route("/getsingle/project").get(verifyJWT, getSingleProject);
-router.route("/update/project").put(verifyJWT, updateProjectDetails);
+router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmin,  getAllProject);
+router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
+router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
 
-router.route("/create/lead").post(verifyJWT, isProjectArchitect, createLead);
-router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, getAllLead);
-router.route("/getsingle/lead").get(verifyJWT, getSingleLead);
-router.route("/update/lead").put(verifyJWT, isProjectArchitect, updateFollowLead);
-router.route("/create/lead/project").post(verifyJWT, isProjectArchitect, leadToProject);
-router.route("/add/member/lead").post(verifyJWT, isOrgAndAdmin, AddMemberInLead);
-router.route("/update/lead/data").put(verifyJWT, updateLead);
-router.route("/lead/multiple/project").post(verifyJWT, isProjectArchitect, leadToMultipleProject);
+router.route("/create/lead").post(verifyJWT,createLeadAccess, createLead);
+router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdmin,  getAllLead);
+router.route("/getsingle/lead").get(verifyJWT, readLeadAccess, getSingleLead);
+router.route("/update/lead").put(verifyJWT, updateLeadAccess, updateFollowLead);
+router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadToProject);
+router.route("/add/member/lead").post(verifyJWT,createAddMember, AddMemberInLead);
+router.route("/update/lead/data").put(verifyJWT,updateLeadAccess, updateLead);
+router.route("/lead/multiple/project").post(verifyJWT, createProjectAccess, leadToMultipleProject);
 
-router.route("/create/mom").post(verifyJWT, createmom);
-router.route("/getall/mom").get(verifyJWT, getAllMom);
-router.route("/getsingle/mom").get(verifyJWT, getSingleMom);
-router.route("/getall/project/mom").get(verifyJWT, checkAvailableUserIsAdmin, getAllProjectMom);
+router.route("/create/mom").post(verifyJWT,createMomAccess, createmom);
+router.route("/getall/mom").get(verifyJWT,readMomAccess, getAllMom);
+router.route("/getsingle/mom").get(verifyJWT,readMomAccess, getSingleMom);
+router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailableUserIsAdmin, getAllProjectMom);
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
-router.route("/share/quotation").post(verifyJWT, isProcurement, shareQuotation);
-router.route("/get/quotationdata").get(verifyJWT, isAdmin, getQuotationData);
+router.route("/share/quotation").post(verifyJWT, createQuotationAccess, shareQuotation);
+router.route("/get/quotationdata").get(verifyJWT, readQuotationAccess, getQuotationData);
 router.route("/quotation/approval").post(verifyJWT, isAdmin, updateStatusAdmin);
 
 
@@ -113,17 +115,17 @@ router.route("/get/notification").get(verifyJWT, checkAvailableUserIsAdmin, getN
 router.route("/update/notification").put(verifyJWT, updateNotification);
 
 
-router.route("/get/archive").get(verifyJWT, isAdmin, archive);
-router.route("/delete/archive").delete(verifyJWT, isAdmin, deletearchive);
-router.route("/restore/file").post(verifyJWT, isAdmin, restoreData);
+router.route("/get/archive").get(verifyJWT, readArchiveAccess, archive);
+router.route("/delete/archive").delete(verifyJWT, deleteArchiveAccess, deletearchive);
+router.route("/restore/file").post(verifyJWT, restoreArchiveAccess, restoreData);
 
 
-router.route("/create/task").post(verifyJWT, createTask);
-router.route("/get/all/task").get(verifyJWT, getAllTasks);
-router.route("/get/single/task").get(verifyJWT, getSingleTask);
-router.route("/update/task").put(verifyJWT, updateTask);
-router.route("/delete/task").delete(verifyJWT, deleteTask);
-router.route("/gettask/details").get(verifyJWT, getAllTaskWithData);
+router.route("/create/task").post(verifyJWT,createTaskAccess, createTask);
+router.route("/get/all/task").get(verifyJWT,readTaskAccess, getAllTasks);
+router.route("/get/single/task").get(verifyJWT,readTaskAccess, getSingleTask);
+router.route("/update/task").put(verifyJWT,updateTaskAccess, updateTask);
+router.route("/delete/task").delete(verifyJWT,deleteTskAccess, deleteTask);
+router.route("/gettask/details").get(verifyJWT,readProjectAccess, getAllTaskWithData);
 
 
 router.route("/create/subtask").post(verifyJWT, createSubTask);
@@ -133,6 +135,15 @@ router.route("/update/subtask").put(verifyJWT, updateSubTask);
 router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
 router.route("/update/subtask/time").put(verifyJWT, UpdateSubtimerController);
 router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
+
+
+
+router.route("/create/role").post(verifyJWT, CreateRoleAccess, createRole);
+router.route("/get/role").get(verifyJWT,GetRole, getRole );
+router.route("/update/role").put(verifyJWT, updateRole,UpdateRole );
+router.route("/delete/role").delete(verifyJWT, deleteRole, DeleteRole);
+router.route("/rolewise/access").get(verifyJWT, roleWiseAccess);
+router.route("/get/rolename").get(verifyJWT, roleName);
 
 
 
