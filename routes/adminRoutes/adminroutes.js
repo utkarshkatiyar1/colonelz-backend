@@ -79,7 +79,7 @@ router.route("/delete/file").delete(verifyJWT,deletedFileAccess, deleteFile);
 router.route("/share/contract").post(verifyJWT,readContractAccess, shareContract);
 router.route("/contract/approval").post(verifyJWT,readContractAccess, contractStatus);
 router.route("/get/contractdata").get(verifyJWT,readContractAccess, getContractData);
-router.route("/delete/folder").delete(verifyJWT, isAdmin,deletedFileAccess, deleteFolder);
+router.route("/delete/folder").delete(verifyJWT,deletedFileAccess, deleteFolder);
 
 
 
