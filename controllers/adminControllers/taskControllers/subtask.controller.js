@@ -298,7 +298,8 @@ export const getAllSubTask = async (req, res) => {
                                 sub_task_assignee: check_task.subtasks[i].sub_task_assignee,
                                 sub_task_createdBy: check_task.subtasks[i].sub_task_createdBy,
                                 sub_task_createdOn: check_task.subtasks[i].sub_task_createdOn,
-                                sub_task_reporter: check_task.subtasks[i].sub_task_reporter
+                                sub_task_reporter: check_task.subtasks[i].sub_task_reporter,
+                                remark:check_task.subtasks[i].remark
 
                             })
                         }
