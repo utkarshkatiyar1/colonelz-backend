@@ -1220,7 +1220,7 @@ export const restoreArchiveAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-        else if (!user.access?.archive?.includes('update')) {
+        else if (!user.access?.archive?.includes('restore')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to restore archive");
         }
 
