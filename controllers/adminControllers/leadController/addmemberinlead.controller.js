@@ -82,7 +82,7 @@ export const AddMemberInLead = async(req,res) =>{
                                 responseData(res, "", 404, false, "User Name not found");
                             }
                         } else {
-                            responseData(res, "", 404, false, "Project not found");
+                            responseData(res, "", 404, false, "Lead not found");
                         }
                     } else {
                         responseData(res, "", 400, false, "You are not admin");

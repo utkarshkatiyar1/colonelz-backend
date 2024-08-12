@@ -66,7 +66,7 @@ router.route("/get/userlist").get(verifyJWT, getUserList);
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
-router.route("/getfile").get(verifyJWT, checkAvailableUserIsAdmin, readFileAccess, getFileData);
+router.route("/getfile").get(verifyJWT, readFileAccess, checkAvailableUserIsAdmin,  getFileData);
 router.route("/get/onefile").get(verifyJWT, readFileAccess, getSingleFileData);
 router.route("/lead/getfile").get(verifyJWT,readLeadAccess, getleadData);
 router.route("/project/getfile").get(verifyJWT,readProjectAccess, getprojectData);
@@ -84,12 +84,12 @@ router.route("/delete/folder").delete(verifyJWT, isAdmin,deletedFileAccess, dele
 
 
 
-router.route("/getall/project").get(verifyJWT, checkAvailableUserIsAdmin,readProjectAccess,  getAllProject);
+router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmin,  getAllProject);
 router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
 router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
 
 router.route("/create/lead").post(verifyJWT,createLeadAccess, createLead);
-router.route("/getall/lead").get(verifyJWT, checkAvailableUserIsAdmin, readLeadAccess, getAllLead);
+router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdmin,  getAllLead);
 router.route("/getsingle/lead").get(verifyJWT, readLeadAccess, getSingleLead);
 router.route("/update/lead").put(verifyJWT, updateLeadAccess, updateFollowLead);
 router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadToProject);
@@ -100,7 +100,7 @@ router.route("/lead/multiple/project").post(verifyJWT, createProjectAccess, lead
 router.route("/create/mom").post(verifyJWT,createMomAccess, createmom);
 router.route("/getall/mom").get(verifyJWT,readMomAccess, getAllMom);
 router.route("/getsingle/mom").get(verifyJWT,readMomAccess, getSingleMom);
-router.route("/getall/project/mom").get(verifyJWT, checkAvailableUserIsAdmin,readMomAccess, getAllProjectMom);
+router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailableUserIsAdmin, getAllProjectMom);
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
