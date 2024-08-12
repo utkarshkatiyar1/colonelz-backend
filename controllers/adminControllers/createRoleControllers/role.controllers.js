@@ -198,3 +198,20 @@ catch(err)
 }
 }
 
+
+export const roleName = async (req, res) => {
+    try {
+        const roles = await roleModel.find({}, 'role'); 
+        if (roles.length === 0) {
+            return responseData(res, "No role found", 200, true, "");
+        }
+        const response = roles.map(role => role.role); 
+
+        return responseData(res, "Role found successfully", 200, true, "", response);
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+}
+
+

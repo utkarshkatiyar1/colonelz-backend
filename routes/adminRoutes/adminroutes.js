@@ -53,7 +53,7 @@ import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSu
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
 import { createAddMember, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateLeadAccess, updateProjectAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
-import { createRole, DeleteRole, getRole, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
+import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -143,6 +143,7 @@ router.route("/get/role").get(verifyJWT,GetRole, getRole );
 router.route("/update/role").put(verifyJWT, updateRole,UpdateRole );
 router.route("/delete/role").delete(verifyJWT, deleteRole, DeleteRole);
 router.route("/rolewise/access").get(verifyJWT, roleWiseAccess);
+router.route("/get/rolename").get(verifyJWT, roleName);
 
 
 
