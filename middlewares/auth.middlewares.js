@@ -220,6 +220,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
         let completed = [];
         let archive = [];
         let MomData = [];
+        let templateData= [];
 
         for (const item of user.data[0].projectData) {
           let find_project = await projectModel.findOne({ project_id: item.project_id });
@@ -315,6 +316,13 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
           }
         }
+          const fileData = await fileuploadModel.find({ type:"template"})
+          if(fileData)
+          {
+            const template= fileData.find((item) => item.files.find((file) =>file.folder_name === "miscellaneous" && file.sub_folder_name_first === "miscellaneous"))
+            templateData.push(template)
+          }
+           
 
        
         const response = {
@@ -329,10 +337,11 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           MomData,
           leadData,
           leads,
+          templateData,
 
         };
         
-        console.log(userData)
+       
         
         responseData(res, "user data found", 200, true, "", response)
     
@@ -386,123 +395,6 @@ export const isAdmin = async(req,res,next) =>{
   }
 }
 
-export const isOrgAndAdmin = async (req, res, next) => {
-
-  try {
-    const token = req.cookies?.auth ||
-      req.header("Authorization")?.replace("Bearer", "").trim();
-    ;
-    if (!token) {
-      return responseData(
-        res,
-        "",
-        401,
-        false,
-        "Unauthorized: No token provided"
-      );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-
-    const user = await registerModel.findById(decodedToken?.id);
-
-
-    if (!user) {
-      return responseData(res, "", 401, false, "Unauthorized: User not found");
-    }
-
-    if (user.role === "ADMIN" || user.role === 'ORGADMIN' || user.role === 'SUPERADMIN') {
-      next(); // Proceed to the next 
-    }
-    else {
-      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
-    }
-
-  } catch (err) {
-
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
-  }
-}
-
-
-export const isProcurement = async (req, res, next) => {
-
-  try {
-    const token = req.cookies?.auth ||
-      req.header("Authorization")?.replace("Bearer", "").trim();
-    ;
-    if (!token) {
-      return responseData(
-        res,
-        "",
-        401,
-        false,
-        "Unauthorized: No token provided"
-      );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-
-    const user = await registerModel.findById(decodedToken?.id);
-
-
-    if (!user) {
-      return responseData(res, "", 401, false, "Unauthorized: User not found");
-    }
-
-    if (user.role === "ADMIN" || user.role === "Executive Assistant" || user.role === "Senior Architect" || user.role ==='ORGADMIN' ) {
-      next(); // Proceed to the next 
-    }
-    else {
-      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
-    }
-
-  } catch (err) {
-
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
-  }
-}
-
-export const isProjectArchitect = async (req, res, next) => {
-
-  try {
-    const token = req.cookies?.auth ||
-      req.header("Authorization")?.replace("Bearer", "").trim();
-    ;
-    if (!token) {
-      return responseData(
-        res,
-        "",
-        401,
-        false,
-        "Unauthorized: No token provided"
-      );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-
-    const user = await registerModel.findById(decodedToken?.id);
-
-
-    if (!user) {
-      return responseData(res, "", 401, false, "Unauthorized: User not found");
-    }
-
-    if (user.role === "ADMIN" || user.role === "Project Architect" || user.role === "Senior Architect" || user.role === 'ORGADMIN') {
-      next(); // Proceed to the next 
-    }
-    else {
-      return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
-    }
-
-  } catch (err) {
-
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
-  }
-}
 
 
 
