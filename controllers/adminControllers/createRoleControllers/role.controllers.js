@@ -9,17 +9,23 @@ export const createRole = async(req,res) =>{
         const role = req.body.role;
         const access = req.body.access;
 
+
+        const isEmpty = (obj) => {
+            return Object.entries(obj).length === 0;
+        };
+
         if(!role)
         {
             responseData(res, "", 400, false, "Role is required")
         
         }
-        else if(!access)
+        else if(isEmpty(access))
         {
             responseData(res, "", 400, false, "Access is required")
         
         }
         else{
+
             if (role === 'ADMIN'
                 || role === 'Site Supervisor'
                 || role === 'Jr.Interior Designer'
