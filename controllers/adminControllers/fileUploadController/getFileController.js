@@ -224,6 +224,76 @@ responseData(res,"",500,false,"Internal Server Error",error)
 
 }
 
+export const getCompanyData = async(req,res) =>{
+  try {
+    const data = await fileuploadModel.find({});
+    if (data.length > 0) {
+      let templateData = []
+      await Promise.all(data.map(async (element) => {
+        if (element.lead_id == null && element.project_id == null) {
+          let files = []
+
+          // console.log(element.files)
+          for (let i = 0; i < element.files.length; i++) {
+
+
+            files.push({
+              folder_name: element.files[i].folder_name,
+              folder_id: element.files[i].folder_id,
+              sub_folder_name_first: element.files[i].sub_folder_name_first,
+              sub_folder_name_second: element.files[i].sub_folder_name_second,
+              updated_date: element.files[i].updated_date,
+              total_files: element.files[i].files.length,
+              files: element.files[i].files
+
+            })
+
+          }
+
+          templateData.push({
+            type: element.type,
+            files: files
+
+          })
+        }
+        else{
+          templateData= [];
+        }
+
+      }))
+
+      const response = {
+        templateData: templateData
+      }
+      responseData(
+        res,
+        `Get File  Data Successfully !`,
+        200,
+        true,
+        "",
+        response
+      );
+    }
+    if (data.length < 1) {
+
+      responseData(
+        res,
+        "Data Not Found!",
+        200,
+        true,
+        " ",
+
+      );
+    }
+  } catch (err) {
+    res.send(err);
+    console.log(err);
+  }
+
+
+
+}
+
 
 
 

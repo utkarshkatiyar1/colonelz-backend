@@ -316,16 +316,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
           }
         }
-          let templateData = await fileuploadModel.find({ type:"template"})
-          if(!templateData)
-          {
-            templateData = [];
-          }
-       
           
-           
-
-       
         const response = {
           total_Project: projects.length,
           Execution_Phase: execution.length,
@@ -338,7 +329,6 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
           MomData,
           leadData,
           leads,
-          templateData,
 
         };
         

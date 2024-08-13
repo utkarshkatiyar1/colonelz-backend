@@ -3,7 +3,7 @@ const router = Router();
 
 import fileupload from "../../controllers/adminControllers/fileUploadController/fileuploadController.js";
 
-import { getFileData, getleadData, getprojectData } from "../../controllers/adminControllers/fileUploadController/getFileController.js";
+import { getCompanyData, getFileData, getleadData, getprojectData } from "../../controllers/adminControllers/fileUploadController/getFileController.js";
 import getSingleFileData from "../../controllers/adminControllers/fileUploadController/getSingleFileController.js";
 
 import {
@@ -80,6 +80,7 @@ router.route("/share/contract").post(verifyJWT,readContractAccess, shareContract
 router.route("/contract/approval").post(verifyJWT,readContractAccess, contractStatus);
 router.route("/get/contractdata").get(verifyJWT,readContractAccess, getContractData);
 router.route("/delete/folder").delete(verifyJWT,deletedFileAccess, deleteFolder);
+router.route("/get/companyData").get(verifyJWT,readFileCompanyDataAccess, getCompanyData);
 
 
 
