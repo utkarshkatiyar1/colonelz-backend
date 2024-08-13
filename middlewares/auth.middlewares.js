@@ -220,7 +220,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
         let completed = [];
         let archive = [];
         let MomData = [];
-        let templateData= [];
+        // let templateData= [];
 
         for (const item of user.data[0].projectData) {
           let find_project = await projectModel.findOne({ project_id: item.project_id });
@@ -316,12 +316,13 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
 
           }
         }
-          const fileData = await fileuploadModel.find({ type:"template"})
-          if(fileData)
+          let templateData = await fileuploadModel.find({ type:"template"})
+          if(!templateData)
           {
-            const template= fileData.find((item) => item.files.find((file) =>file.folder_name === "miscellaneous" && file.sub_folder_name_first === "miscellaneous"))
-            templateData.push(template)
+            templateData = [];
           }
+       
+          
            
 
        
