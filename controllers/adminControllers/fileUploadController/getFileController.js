@@ -43,41 +43,41 @@ import leadModel from "../../../models/adminModels/leadModel.js";
                 }
                 
                 }
-                if(element.lead_id ==null && element.project_id ==null)
-                {
-                  let files=[]
+                // if(element.lead_id ==null && element.project_id ==null)
+                // {
+                //   let files=[]
                   
-                  // console.log(element.files)
-                  for(let i=0;i<element.files.length;i++)
-                  {
+                //   // console.log(element.files)
+                //   for(let i=0;i<element.files.length;i++)
+                //   {
 
                     
-                    files.push({
-                      folder_name:element.files[i].folder_name,
-                      folder_id:element.files[i].folder_id,
-                      sub_folder_name_first:element.files[i].sub_folder_name_first,
-                      sub_folder_name_second: element.files[i].sub_folder_name_second,
-                      updated_date:element.files[i].updated_date,
-                      total_files:element.files[i].files.length,
-                      files:element.files[i].files
+                //     files.push({
+                //       folder_name:element.files[i].folder_name,
+                //       folder_id:element.files[i].folder_id,
+                //       sub_folder_name_first:element.files[i].sub_folder_name_first,
+                //       sub_folder_name_second: element.files[i].sub_folder_name_second,
+                //       updated_date:element.files[i].updated_date,
+                //       total_files:element.files[i].files.length,
+                //       files:element.files[i].files
                       
-                    })
+                //     })
 
-                  }
+                //   }
 
-                  templateData.push({
-                   type:element.type,
-                    files:files
+                //   templateData.push({
+                //    type:element.type,
+                //     files:files
 
-                  })
-                }
+                //   })
+                // }
 
               }))
               
               const response  = {
                 leadData: leadData,
                 projectData: projectData,
-                templateData:templateData
+                // templateData:templateData
               }
             responseData(
               res,
