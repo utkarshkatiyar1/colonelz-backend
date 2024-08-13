@@ -52,7 +52,7 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateLeadAccess, updateProjectAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateLeadAccess, updateProjectAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 
 // router.use(checkAvailableUserIsAdmin)
@@ -74,7 +74,7 @@ router.route("/project/fileupload").post(verifyJWT, projectFileUpload);
 router.route("/view/contract").post(verifyJWT,readContractAccess, contractShare);
 router.route("/share/file").post(verifyJWT, shareFile);
 router.route("/template/fileupload").post(verifyJWT, templateFileUpload);
-router.route("/template/single/file").get(verifyJWT,readFileAccess, getSingleTemplateFile);
+router.route("/template/single/file").get(verifyJWT,readFileCompanyDataAccess, getSingleTemplateFile);
 router.route("/delete/file").delete(verifyJWT,deletedFileAccess, deleteFile);
 router.route("/share/contract").post(verifyJWT,readContractAccess, shareContract);
 router.route("/contract/approval").post(verifyJWT,readContractAccess, contractStatus);
