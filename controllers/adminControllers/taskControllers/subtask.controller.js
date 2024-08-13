@@ -68,6 +68,9 @@ export const createSubTask = async (req, res) => {
 
             }
             else {
+                
+
+
                 const check_project = await projectModel.findOne({ project_id: project_id })
                 if (!check_project) {
 
@@ -78,11 +81,13 @@ export const createSubTask = async (req, res) => {
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
-                    if (check_task.task_status === 'Cancelled') {
+                   else if (check_task.task_status === 'Cancelled') {
                         responseData(res, "", 400, false, "The task has been canceled")
                     }
                     else {
-                        if (check_task) {
+                        if (check_task.task_assignee === check_user.username || check_user.role ==="ADMIN" || check_user.role ==="SUPERADMIN") {
+
+
                             const check_assignee = await registerModel.findOne({
                                 username: sub_task_assignee,
 
@@ -231,6 +236,9 @@ export const createSubTask = async (req, res) => {
                                 }
 
                             }
+                        }
+                        else{
+                            responseData(res, "", 400, false, "You are not task asignee or admin")
                         }
                     }
                 }
@@ -443,11 +451,16 @@ export const updateSubTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
 
+
                     else {
                         if (check_task.task_status === 'Cancelled') {
                             responseData(res, "", 400, false, "The task has been canceled")
                         }
                         else {
+                            if (check_task.task_assignee === check_user.username || check_user.role === "ADMIN" || check_user.role === "SUPERADMIN" )
+                            {
+
+                            
                             let update_subtask
                             
                             if (sub_task_status ==='Under Revision')
@@ -554,6 +567,10 @@ export const updateSubTask = async (req, res) => {
                             else {
                                 responseData(res, "", 404, false, "Sub Task Not Updated", [])
                             }
+                        }
+                        else{
+                                responseData(res, "", 404, false, "Sub Task Not Updated because you are not Admin or task Assignee", [])
+                        }
                         }
 
 

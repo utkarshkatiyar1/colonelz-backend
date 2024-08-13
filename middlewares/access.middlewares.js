@@ -1755,6 +1755,131 @@ export const deleteRole = async (req, res, next) => {
     }
 }
 
+//COmpany Data
+
+
+export const readFileCompanyDataAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                401,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 401, false, "Unauthorized: User not found");
+        }
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.companyData?.includes('read')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to see files and folders");
+        }
+
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    }
+};
+export const updateFilecompanyDataAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                401,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 401, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.companyData?.includes('update')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to update files");
+        }
+
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    }
+};
+export const deletedFilecompanyDataAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                401,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 401, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.companyData?.includes('delete')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete files or folders");
+        }
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    }
+};
+
 
 
 

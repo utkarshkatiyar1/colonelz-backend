@@ -29,7 +29,7 @@ export const addMember = async (req, res) => {
         try {
             const find_user = await registerModel.findOne({ _id: id });
             if (find_user) {
-                if (find_user.role === "ADMIN") {
+                 
                     const find_project = await projectModel.findOne({ project_id: project_id });
                     if (find_project) {
                         const find_user_name = await registerModel.findOne({ username: user_name });
@@ -83,9 +83,7 @@ export const addMember = async (req, res) => {
                     } else {
                         responseData(res, "", 404, false, "Project not found");
                     }
-                } else {
-                    responseData(res, "", 400, false, "You are not admin");
-                }
+                
             } else {
                 responseData(res, "", 404, false, "User not found");
             }

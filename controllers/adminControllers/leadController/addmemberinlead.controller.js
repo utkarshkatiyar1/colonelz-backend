@@ -30,7 +30,7 @@ export const AddMemberInLead = async(req,res) =>{
             try {
                 const find_user = await registerModel.findOne({ _id: id });
                 if (find_user) {
-                    if (find_user.role === "ADMIN") {
+                    
                         const find_lead = await leadModel.findOne({ lead_id: lead_id});
                         if (find_lead) {
                             const find_user_name = await registerModel.findOne({ username: user_name });
@@ -84,9 +84,7 @@ export const AddMemberInLead = async(req,res) =>{
                         } else {
                             responseData(res, "", 404, false, "Lead not found");
                         }
-                    } else {
-                        responseData(res, "", 400, false, "You are not admin");
-                    }
+                    
                 } else {
                     responseData(res, "", 404, false, "User not found");
                 }
