@@ -182,7 +182,7 @@ export const createLead = async (req, res) => {
       if (check_email.length < 1) {
         const lead_id = generateSixDigitNumber();
         const check_user = await registerModel.findById(userId)
-        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect' || check_user.role === 'SUPERADMIN') {
+        if (check_user) {
 
           let fileUrls = []
           const lead = new leadModel({
