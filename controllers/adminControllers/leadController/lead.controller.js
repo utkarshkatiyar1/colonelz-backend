@@ -271,10 +271,10 @@ export const createLead = async (req, res) => {
         else {
           responseData(
             res,
-            "You have not access to create lead",
+            "",
             400,
             false,
-            "",
+            "You have not access to create lead",
           );
         }
       }
@@ -763,7 +763,7 @@ export const leadToMultipleProject = async (req, res) => {
                 ]
 
               })
-              if (check_user.role === 'Project Architect') {
+           
                 const add_project_in_user = await registerModel.findOneAndUpdate(
                   { _id: user_id },
                   {
@@ -778,7 +778,7 @@ export const leadToMultipleProject = async (req, res) => {
                     arrayFilters: [{ "outer.leadData": { $exists: true } }]
                   }
                 );
-              }
+              
 
 
               await leadModel.findOneAndUpdate(
@@ -807,10 +807,10 @@ export const leadToMultipleProject = async (req, res) => {
           else {
             responseData(
               res,
-              "You have not access to activate lead  for another project",
+              "",
               400,
               false,
-              "",
+              "You have not access to activate lead  for another project",
             );
           }
         }
@@ -819,10 +819,10 @@ export const leadToMultipleProject = async (req, res) => {
       else {
         responseData(
           res,
-          "lead already activate",
+          "",
           400,
           false,
-          "",
+          "lead already activate",
         );
       }
     }
