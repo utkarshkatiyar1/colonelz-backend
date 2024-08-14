@@ -249,6 +249,7 @@ export const getCompanyData = async(req,res) =>{
             })
 
           }
+          
 
           templateData.push({
             type: element.type,
@@ -256,9 +257,7 @@ export const getCompanyData = async(req,res) =>{
 
           })
         }
-        else{
-          templateData= [];
-        }
+
 
       }))
 
