@@ -52,7 +52,7 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateLeadAccess, updateProjectAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateContractAccess, updateLeadAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 
 // router.use(checkAvailableUserIsAdmin)
@@ -77,7 +77,7 @@ router.route("/template/fileupload").post(verifyJWT, templateFileUpload);
 router.route("/template/single/file").get(verifyJWT,readFileCompanyDataAccess, getSingleTemplateFile);
 router.route("/delete/file").delete(verifyJWT,deletedFileAccess, deleteFile);
 router.route("/share/contract").post(verifyJWT,readContractAccess, shareContract);
-router.route("/contract/approval").post(verifyJWT,readContractAccess, contractStatus);
+router.route("/contract/approval").post(verifyJWT, updateContractAccess, contractStatus);
 router.route("/get/contractdata").get(verifyJWT,readContractAccess, getContractData);
 router.route("/delete/folder").delete(verifyJWT,deletedFileAccess, deleteFolder);
 router.route("/get/companyData").get(verifyJWT,readFileCompanyDataAccess, getCompanyData);
@@ -107,7 +107,7 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 router.route("/share/quotation").post(verifyJWT, readQuotationAccess, shareQuotation);
 router.route("/get/quotationdata").get(verifyJWT, readQuotationAccess, getQuotationData);
-router.route("/quotation/approval").post(verifyJWT, isAdmin, updateStatusAdmin);
+router.route("/quotation/approval").post(verifyJWT, updateQuotationAccess, updateStatusAdmin);
 
 
 
