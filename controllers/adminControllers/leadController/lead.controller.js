@@ -729,7 +729,7 @@ export const leadToMultipleProject = async (req, res) => {
           responseData(res, "", 400, false, " Invalid user Id", []);
         }
         else {
-          if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
+          if (check_user) {
             const check_lead = await leadModel.findOne({ lead_id: lead_id })
             if (!check_lead) {
               responseData(res, "", 404, false, "lead not found", []);
