@@ -105,7 +105,7 @@ router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailable
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 
 
-router.route("/share/quotation").post(verifyJWT, createQuotationAccess, shareQuotation);
+router.route("/share/quotation").post(verifyJWT, readQuotationAccess, shareQuotation);
 router.route("/get/quotationdata").get(verifyJWT, readQuotationAccess, getQuotationData);
 router.route("/quotation/approval").post(verifyJWT, isAdmin, updateStatusAdmin);
 
