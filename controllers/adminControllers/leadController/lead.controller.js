@@ -240,7 +240,7 @@ export const createLead = async (req, res) => {
             ]
 
           })
-          if (check_user.role === 'Project Architect') {
+
             const add_project_in_user = await registerModel.findOneAndUpdate(
               { _id: userId },
               {
@@ -255,7 +255,7 @@ export const createLead = async (req, res) => {
                 arrayFilters: [{ "outer.leadData": { $exists: true } }]
               }
             );
-          }
+          
 
 
           const lead_data = await lead.save();
