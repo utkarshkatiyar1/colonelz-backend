@@ -145,7 +145,7 @@ export const createLead = async (req, res) => {
       "",
       401,
       false,
-      "name should be greater than 3 characters."
+      "name should be greater than 3 characters And number and special characters not allow"
     );
 
   } else if (!userId) {
@@ -168,7 +168,7 @@ export const createLead = async (req, res) => {
       "",
       401,
       false,
-      "lead manager should be greater than 3 characters."
+      "lead manager should be greater than 3 characters And number and special characters not allow"
     )
 
   }
@@ -568,7 +568,7 @@ export const leadToProject = async (req, res) => {
                     {
                       $push: {
                         "data.$[outer].projectData": {
-                          project_id: lead_id,
+                          project_id: projectID,
                           role: check_user.role,
                         }
                       }
