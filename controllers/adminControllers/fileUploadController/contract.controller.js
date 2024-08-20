@@ -133,7 +133,7 @@ export const contractShare = async (req, res) => {
     try {
 
       const find_user = await registerModel.findOne({ _id: userId });
-      if (find_user.role === 'Senior Architect' || find_user.role === 'ADMIN') {
+      if (find_user) {
 
         const lead = await leadModel.findOne({ lead_id: lead_id })
         if (!lead) {
@@ -223,7 +223,7 @@ export const contractShare = async (req, res) => {
         });
       }
       else {
-        return responseData(res, "", 400, false, "You are not a Senior Architect or Admin");
+        return responseData(res, "", 400, false, "You are not a registered User");
       }
     }
     catch (err) {

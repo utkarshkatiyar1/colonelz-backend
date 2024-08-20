@@ -563,6 +563,20 @@ export const leadToProject = async (req, res) => {
                       }
                     }
                   )
+                  await registerModel.findOneAndUpdate(
+                    { _id: user_id },
+                    {
+                      $push: {
+                        "data.$[outer].projectData": {
+                          project_id: lead_id,
+                          role: check_user.role,
+                        }
+                      }
+                    },
+                    {
+                      arrayFilters: [{ "outer.projectData": { $exists: true } }]
+                    }
+                  );
                   responseData(
                     res,
                     "project created successfully",

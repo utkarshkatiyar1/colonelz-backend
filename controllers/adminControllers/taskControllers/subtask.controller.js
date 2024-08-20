@@ -238,7 +238,7 @@ export const createSubTask = async (req, res) => {
                             }
                         }
                         else{
-                            responseData(res, "", 400, false, "You are not task asignee or admin")
+                            responseData(res, "", 400, false, "You are not task assignee or admin")
                         }
                     }
                 }
