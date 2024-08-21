@@ -139,7 +139,12 @@ export const createTask = async (req, res) => {
                                     responseData(res, "", 404, false, "Task assignee is not part of this project", [])
                                 }
                                 else {
-                                    const task_id = `TK-${generateSixDigitNumber()}`
+                                    const exitsreportproject = check_reporter.data[0].projectData.find((item) =>item.project_id ===project_id)
+                                    if(!exitsreportproject){
+                                        responseData(res, "", 404, false, "Report to is not part of this project", [])
+                                    }
+                                   else{
+                                     const task_id = `TK-${generateSixDigitNumber()}`
 
                                     const task = new taskModel({
                                         project_id: project_id,
@@ -183,9 +188,8 @@ export const createTask = async (req, res) => {
                                         }
                                     )
                                     responseData(res, "Task created successfully", 200, true, "", [])
+                                   }
                                 }
-
-
                             }
                         }
                     }
