@@ -85,7 +85,7 @@ export const createSubTask = async (req, res) => {
                         responseData(res, "", 400, false, "The task has been canceled")
                     }
                     else {
-                        if (check_task.task_assignee === check_user.username || check_user.role ==="ADMIN" || check_user.role ==="SUPERADMIN") {
+                        if (check_task.task_assignee === check_user.username || check_task.task_createdBy === check_user.username || check_user.role ==="ADMIN" || check_user.role ==="SUPERADMIN") {
 
 
                             const check_assignee = await registerModel.findOne({
@@ -98,7 +98,7 @@ export const createSubTask = async (req, res) => {
                             else {
                                 const check_reporter = await registerModel.findOne({ username: sub_task_reporter })
                                 if (!check_reporter) {
-                                    responseData(res, "", 404, false, "Subtask reporter is  not registered user", [])
+                                    responseData(res, "", 404, false, "Subtask report to is  not registered user", [])
                                 }
                                 else {
                                     if ((check_assignee.role === 'Senior Architect' || check_assignee.role === 'ADMIN') && (check_reporter.role === 'Senior Architect' || check_reporter.role === 'ADMIN')) {
@@ -457,7 +457,7 @@ export const updateSubTask = async (req, res) => {
                             responseData(res, "", 400, false, "The task has been canceled")
                         }
                         else {
-                            if (check_task.task_assignee === check_user.username || check_user.role === "ADMIN" || check_user.role === "SUPERADMIN" )
+                            if (check_task.task_assignee === check_user.username || check_task.task_createdBy === check_user.username || check_user.role === "ADMIN" || check_user.role === "SUPERADMIN" )
                             {
 
                             
