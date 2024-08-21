@@ -179,8 +179,36 @@ export const getAllTasks = async (req, res) => {
                     }
                     if (tasks.length > 0) {
                         let response = []
-                        
+                       let userList = []
 
+                    const finduser = await registerModel.find({
+                        'data.projectData.project_id':project_id
+                    })
+                    if(finduser.length > 0)
+                    {
+                        for(let i =0;i<finduser.length;i++)
+                        {
+                            userList.push(finduser[i].username)
+
+                        }
+                       
+
+                    }
+                    const findSeniorAdmin = await registerModel.find({})
+                    if(findSeniorAdmin.length > 0)
+                    {
+                        for(let i=0;i<findSeniorAdmin.length;i++)
+                        {
+                            if (findSeniorAdmin[i].role === 'Senior Architect' || findSeniorAdmin[i].role ==='ADMIN')
+                            {
+                                userList.push(findSeniorAdmin[i].username
+                                
+                            )
+                        }
+                    }
+                }
+                    
+                        
                         
                         for (let i = 0; i < tasks.length; i++) {
                             let count = 0;
@@ -214,6 +242,7 @@ export const getAllTasks = async (req, res) => {
                                 task_createdBy: tasks[i].task_createdBy,
                                 number_of_subtasks: tasks[i].subtasks.length,
                                 percentage: percentage,
+                                userList
 
 
                             })
