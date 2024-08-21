@@ -14,6 +14,56 @@ function generateSixDigitNumber() {
 
     return randomNumber;
 }
+
+const createTaskAndTimer = async (res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+    const task_id = `TK-${generateSixDigitNumber()}`;
+
+    const task = new taskModel({
+        project_id,
+        task_id,
+        task_name,
+        task_description,
+        actual_task_start_date,
+        actual_task_end_date: "",
+        estimated_task_start_date,
+        estimated_task_end_date,
+        task_status,
+        task_priority,
+        task_assignee,
+        task_createdBy: check_user.username,
+        task_createdOn: new Date(),
+        reporter,
+        subtasks: []
+    });
+
+    const taskTime = new timerModel({
+        project_id,
+        task_id,
+        task_name,
+        task_assignee,
+        task_time: '',
+        subtaskstime: []
+    });
+
+    await task.save();
+    await taskTime.save();
+
+    await projectModel.findOneAndUpdate(
+        { project_id },
+        {
+            $push: {
+                project_updated_by: {
+                    username: check_user.username,
+                    role: check_user.role,
+                    message: `has created new task ${task_name}.`,
+                    updated_date: new Date()
+                }
+            }
+        }
+    );
+
+    responseData(res, "Task created successfully", 200, true, "", []);
+};
 export const createTask = async (req, res) => {
 
     try {
@@ -29,179 +79,73 @@ export const createTask = async (req, res) => {
         const task_assignee = req.body.task_assignee;
         const reporter = req.body.reporter;
 
-        if (!user_id) {
-            responseData(res, "", 404, false, "User Id required", [])
+        if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
+        if (!project_id) return responseData(res, "", 404, false, "Project Id required", []);
+        if (!onlyAlphabetsValidation(task_name) || task_name.length < 3) {
+            return responseData(res, "", 404, false, "Task Name should be alphabets and at least 3 characters long", []);
         }
-        else if (!project_id) {
-            responseData(res, "", 404, false, "Project Id required", [])
-        }
-        else if (!onlyAlphabetsValidation(task_name) && task_name.length >= 3) {
-            responseData(res, "", 404, false, "Task Name should be alphabets", [])
-        }
-        else if (!task_priority) {
-            responseData(res, "", 404, false, "task priority required", [])
+        if (!task_priority) return responseData(res, "", 404, false, "Task priority required", []);
+        if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []);
+        if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
+        if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
+        if (!task_assignee) return responseData(res, "", 404, false, "Task assignee required", []);
+        if (!reporter) return responseData(res, "", 404, false, "Task reporter required", []);
 
-        }
-        else if (!estimated_task_start_date) {
-            responseData(res, "", 404, false, "Task start date  required", [])
-        }
-        else if (!estimated_task_end_date) {
-            responseData(res, "", 404, false, "Task end date required", [])
-        }
-        else if (!task_status) {
-            responseData(res, "", 404, false, "Task status required", [])
-        }
-        else if (!task_assignee) {
-            responseData(res, "", 404, false, "Task assignee required", [])
-        }
-        else if (!reporter) {
-            responseData(res, "", 404, false, "Task reporter required", [])
-        }
+        // Check if the user exists
+        const check_user = await registerModel.findById({ _id: user_id });
+        if (!check_user) return responseData(res, "", 404, false, "User not found", []);
+
+        // Check if the project exists
+        const check_project = await projectModel.findOne({ project_id });
+        if (!check_project) return responseData(res, "", 404, false, "Project not found", []);
+
+        // Check if the assignee exists and is active
+        const check_assignee = await registerModel.findOne({ username: task_assignee, status: true });
+        if (!check_assignee) return responseData(res, "", 404, false, "Task assignee is not a registered user", []);
+
+        // Check if the reporter exists and is active
+        const check_reporter = await registerModel.findOne({ username: reporter, status: true });
+        if (!check_reporter) return responseData(res, "", 404, false, "Task reporter is not a registered user", []);
+
+        // Validate roles and project association
+        const isSeniorOrAdmin = (user) => ['Senior Architect', 'ADMIN'].includes(user.role);
+
+        if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
+            // Create task if both assignee and reporter are Senior Architect or ADMIN
+            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+        } 
+
+        else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
+            // Create task if both assignee and reporter are Senior Architect or ADMIN
+            const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
+            if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
+
+            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+        } 
+        else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
+            // Create task if both assignee and reporter are Senior Architect or ADMIN
+            const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
+            if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
+
+
+            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+        } 
+
         else {
-            const check_user = await registerModel.findById({ _id: user_id })
-            if (!check_user) {
-                responseData(res, "", 404, false, "User not found", [])
-            }
-            
-            else {
-                const check_project = await projectModel.findOne({ project_id: project_id })
-                if (!check_project) {
-                    responseData(res, "", 404, false, "Project not found", [])
-                }
-                else {
-                    const check_assignee = await registerModel.findOne({ username: task_assignee,
-                        
-                     })
-                    if (!check_assignee) {
-                        responseData(res, "", 404, false, "Task assignee is  not registered user", [])
-                    }
-                    else
-                    {
-                        const check_reporter = await registerModel.findOne({ username: reporter })
-                        if (!check_reporter) {
-                            responseData(res, "", 404, false, "Task reporter is  not registered user", [])
-                        }
-                        else
-                        {
-                            if ((check_assignee.role === 'Senior Architect' || check_assignee.role === 'ADMIN') && (check_reporter.role ==='Senior Architect' ||  check_reporter.role ==='ADMIN') )
-                            {
-                                const task_id = `TK-${generateSixDigitNumber()}`
+            // Check project association for assignee and reporter
+            const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
+            if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
 
-                                const task = new taskModel({
-                                    project_id: project_id,
-                                    task_id: task_id,
-                                    task_name: task_name,
-                                    task_description: task_description,
-                                    actual_task_start_date: actual_task_start_date,
-                                    actual_task_end_date: "",
-                                    estimated_task_end_date: estimated_task_end_date,
-                                    estimated_task_start_date: estimated_task_start_date,
-                                    task_status: task_status,
-                                    task_priority: task_priority,
-                                    task_assignee: task_assignee,
-                                    task_createdBy: check_user.username,
-                                    task_createdOn: new Date(),
-                                    reporter: reporter,
-                                    subtasks: []
+            const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
+            if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
 
-                                })
-                                const taskTime = new timerModel({
-                                    project_id: project_id,
-                                    task_id: task_id,
-                                    task_name: task_name,
-                                    task_assignee: task_assignee,
-                                    task_time: '',
-                                    subtaskstime: []
-                                })
-
-                                await task.save();
-                                await taskTime.save();
-                                await projectModel.findOneAndUpdate({ project_id: project_id },
-                                    {
-                                        $push: {
-                                            project_updated_by: {
-                                                username: check_user.username,
-                                                role: check_user.role,
-                                                message: `has created new task ${task_name}.`,
-                                                updated_date: new Date()
-                                            }
-                                        }
-                                    }
-                                )
-                                responseData(res, "Task created successfully", 200, true, "", [])
-
-                            }
-                            else{
-
-                                const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id)
-                                if (!existProject) {
-
-                                    responseData(res, "", 404, false, "Task assignee is not part of this project", [])
-                                }
-                                else {
-                                    const exitsreportproject = check_reporter.data[0].projectData.find((item) =>item.project_id ===project_id)
-                                    if(!exitsreportproject){
-                                        responseData(res, "", 404, false, "Report to is not part of this project", [])
-                                    }
-                                   else{
-                                     const task_id = `TK-${generateSixDigitNumber()}`
-
-                                    const task = new taskModel({
-                                        project_id: project_id,
-                                        task_id: task_id,
-                                        task_name: task_name,
-                                        task_description: task_description,
-                                        actual_task_start_date: actual_task_start_date,
-                                        actual_task_end_date: estimated_task_end_date,
-                                        estimated_task_end_date: estimated_task_end_date,
-                                        estimated_task_start_date: estimated_task_start_date,
-                                        task_status: task_status,
-                                        task_priority: task_priority,
-                                        task_assignee: task_assignee,
-                                        task_createdBy: check_user.username,
-                                        task_createdOn: new Date(),
-                                        reporter: reporter,
-                                        subtasks: []
-
-                                    })
-                                    const taskTime = new timerModel({
-                                        project_id: project_id,
-                                        task_id: task_id,
-                                        task_name: task_name,
-                                        task_assignee: task_assignee,
-                                        task_time: '',
-                                        subtaskstime: []
-                                    })
-
-                                    await task.save();
-                                    await taskTime.save();
-                                    await projectModel.findOneAndUpdate({ project_id: project_id },
-                                        {
-                                            $push: {
-                                                project_updated_by: {
-                                                    username: check_user.username,
-                                                    role: check_user.role,
-                                                    message: `has created new task ${task_name}.`,
-                                                    updated_date: new Date()
-                                                }
-                                            }
-                                        }
-                                    )
-                                    responseData(res, "Task created successfully", 200, true, "", [])
-                                   }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+            // Create task if validation passes
+            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
-        res.send(err);
+        res.status(500).send({ error: 'Internal Server Error', details: err });
     }
 
 }

@@ -13,6 +13,55 @@ function generateSixDigitNumber() {
 
     return randomNumber;
 }
+const createSubTaskAndTimer = async (data, res) => {
+    try {
+        const { project_id, task_id, sub_task_name, sub_task_description, actual_sub_task_start_date,
+            estimated_sub_task_start_date, estimated_sub_task_end_date, actual_sub_task_end_date,
+            sub_task_status, sub_task_priority, sub_task_assignee, sub_task_reporter, check_user, check_task } = data;
+
+        const sub_task_id = `STK-${generateSixDigitNumber()}`;
+
+        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id }, {
+            $push: {
+                subtasks: {
+                    sub_task_id, sub_task_name, sub_task_description,
+                    estimated_sub_task_end_date, estimated_sub_task_start_date,
+                    actual_sub_task_end_date, actual_sub_task_start_date,
+                    sub_task_status, sub_task_priority, sub_task_assignee,
+                    sub_task_createdBy: check_user.username, sub_task_createdOn: new Date(),
+                    sub_task_reporter
+                }
+            }
+        }, { new: true, useFindAndModify: false });
+
+        if (update_task) {
+            await timerModel.findOneAndUpdate({ project_id: project_id, task_id: task_id }, {
+                $push: {
+                    subtaskstime: {
+                        sub_task_id, sub_task_name, sub_task_assignee, sub_task_time: ''
+                    }
+                }
+            });
+
+            await projectModel.findOneAndUpdate({ project_id: project_id }, {
+                $push: {
+                    project_updated_by: {
+                        username: check_user.username, role: check_user.role,
+                        message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
+                        updated_date: new Date()
+                    }
+                }
+            });
+
+            responseData(res, "Sub Task added successfully", 200, true, "", []);
+        } else {
+            responseData(res, "", 404, false, "Sub Task not added", []);
+        }
+    } catch (err) {
+        console.log(err);
+        res.send(err);
+    }
+}
 
 export const createSubTask = async (req, res) => {
     try {
@@ -30,237 +79,102 @@ export const createSubTask = async (req, res) => {
         const sub_task_assignee = req.body.sub_task_assignee;
         const sub_task_reporter = req.body.sub_task_reporter;
 
-        if (!user_id) {
-            responseData(res, "", 404, false, "User Id required", [])
-        }
-        else if (!project_id) {
-            responseData(res, "", 404, false, "Project Id required", [])
-        }
-        else if (!task_id) {
-            responseData(res, "", 404, false, "Task Id required", [])
-        }
-        else if (!onlyAlphabetsValidation(sub_task_name) && sub_task_name.length > 3) {
-            responseData(res, "", 404, false, "Sub task Name should be alphabets", [])
-        }
-        else if (!sub_task_priority) {
-            responseData(res, "", 404, false, "Sub task priority required", [])
+        if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
+        if (!project_id) return responseData(res, "", 404, false, "Project Id required", []);
+        if (!task_id) return responseData(res, "", 404, false, "Task Id required", []);
+        if (!sub_task_name || !onlyAlphabetsValidation(sub_task_name) || sub_task_name.length <= 3)
+            return responseData(res, "", 404, false, "Subtask Name should be alphabets and more than 3 characters", []);
+        if (!sub_task_priority) return responseData(res, "", 404, false, "Subtask priority required", []);
+        if (!estimated_sub_task_start_date) return responseData(res, "", 404, false, "Subtask start date required", []);
+        if (!estimated_sub_task_end_date) return responseData(res, "", 404, false, "Subtask end date required", []);
+        if (!sub_task_status) return responseData(res, "", 404, false, "Subtask status required", []);
+        if (!sub_task_assignee) return responseData(res, "", 404, false, "Subtask assignee required", []);
+        if (!sub_task_reporter) return responseData(res, "", 404, false, "Subtask reporter required", []);
 
+        // Check if user exists
+        const check_user = await registerModel.findById({ _id: user_id });
+        if (!check_user) return responseData(res, "", 404, false, "User not found", []);
+
+        // Check if project exists
+        const check_project = await projectModel.findOne({ project_id: project_id });
+        if (!check_project) return responseData(res, "", 404, false, "Project not found", []);
+
+        // Check if task exists
+        const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id });
+        if (!check_task) return responseData(res, "", 404, false, "Task not found", []);
+        if (check_task.task_status === 'Cancelled') return responseData(res, "", 400, false, "The task has been canceled", []);
+
+        // Ensure user is authorized
+        if (![check_task.task_assignee, check_task.task_createdBy, "ADMIN", "SUPERADMIN" ].includes(check_user.username))
+            return responseData(res, "", 400, false, "You are not authorized to create this subtask", []);
+
+        // Check if subtask assignee exists
+        const check_assignee = await registerModel.findOne({ username: sub_task_assignee, status:true });
+        if (!check_assignee) return responseData(res, "", 404, false, "Subtask assignee is not a registered user", []);
+
+        // Check if subtask reporter exists
+        const check_reporter = await registerModel.findOne({ username: sub_task_reporter, status: true });
+        if (!check_reporter) return responseData(res, "", 404, false, "Subtask reporter is not a registered user", []);
+
+        // Handle role-based project assignment checks
+        const isAuthorizedAssignee = ["Senior Architect", "ADMIN"].includes(check_assignee.role);
+        const isAuthorizedReporter = ["Senior Architect", "ADMIN"].includes(check_reporter.role);
+
+        if (isAuthorizedAssignee && isAuthorizedReporter) {
+            // Subtask can be created directly
+            await createSubTaskAndTimer({
+                project_id, task_id, sub_task_name, sub_task_description,
+                actual_sub_task_start_date, estimated_sub_task_start_date,
+                estimated_sub_task_end_date, actual_sub_task_end_date,
+                sub_task_status, sub_task_priority, sub_task_assignee,
+                sub_task_reporter, check_user, check_task
+            }, res);
+        } 
+
+        else if (isAuthorizedAssignee && !isAuthorizedReporter) {
+            const isReporterInProject = check_reporter.data[0].projectData.some(item => item.project_id === project_id);
+            if (!isReporterInProject) return responseData(res, "", 404, false, "Subtask reporter is not part of this project", []);
+
+            await createSubTaskAndTimer({
+                project_id, task_id, sub_task_name, sub_task_description,
+                actual_sub_task_start_date, estimated_sub_task_start_date,
+                estimated_sub_task_end_date, actual_sub_task_end_date,
+                sub_task_status, sub_task_priority, sub_task_assignee,
+                sub_task_reporter, check_user, check_task
+            }, res);
         }
-        else if (!estimated_sub_task_start_date) {
-            responseData(res, "", 404, false, "Sub task start date  required", [])
-        }
-        else if (!estimated_sub_task_end_date) {
-            responseData(res, "", 404, false, " Sub task end date required", [])
-        }
-        else if (!sub_task_status) {
-            responseData(res, "", 404, false, "  Sub task status required", [])
-        }
-        else if (!sub_task_assignee) {
-            responseData(res, "", 404, false, "  Sub task assignee required", [])
-        }
-        else if (!sub_task_reporter) {
-            responseData(res, "", 404, false, " Sub task reporter required", [])
+
+       else if (!isAuthorizedAssignee && isAuthorizedReporter) {
+            const isAssigneeInProject = check_assignee.data[0].projectData.some(item => item.project_id === project_id);
+            if (!isAssigneeInProject) return responseData(res, "", 404, false, "Subtask assignee is not part of this project", []);
+
+            await createSubTaskAndTimer({
+                project_id, task_id, sub_task_name, sub_task_description,
+                actual_sub_task_start_date, estimated_sub_task_start_date,
+                estimated_sub_task_end_date, actual_sub_task_end_date,
+                sub_task_status, sub_task_priority, sub_task_assignee,
+                sub_task_reporter, check_user, check_task
+            }, res);
         }
         else {
-            const check_user = await registerModel.findOne({ _id: user_id })
-            if (!check_user) {
-                responseData(res, "", 404, false, "User not found", [])
+            // Ensure both assignee and reporter are part of the project
+            const isAssigneeInProject = check_assignee.data[0].projectData.some(item => item.project_id === project_id);
+            if (!isAssigneeInProject) return responseData(res, "", 404, false, "Subtask assignee is not part of this project", []);
 
-            }
-            else {
-                
+            const isReporterInProject = check_reporter.data[0].projectData.some(item => item.project_id === project_id);
+            if (!isReporterInProject) return responseData(res, "", 404, false, "Subtask reporter is not part of this project", []);
 
-
-                const check_project = await projectModel.findOne({ project_id: project_id })
-                if (!check_project) {
-
-                    responseData(res, "", 404, false, "Project not found", [])
-                }
-                else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
-                    if (!check_task) {
-                        responseData(res, "", 404, false, "Task not found", [])
-                    }
-                   else if (check_task.task_status === 'Cancelled') {
-                        responseData(res, "", 400, false, "The task has been canceled")
-                    }
-                    else {
-                        if (check_task.task_assignee === check_user.username || check_task.task_createdBy === check_user.username || check_user.role ==="ADMIN" || check_user.role ==="SUPERADMIN") {
-
-
-                            const check_assignee = await registerModel.findOne({
-                                username: sub_task_assignee,
-
-                            })
-                            if (!check_assignee) {
-                                responseData(res, "", 404, false, " Subtask assignee is  not registered user", [])
-                            }
-                            else {
-                                const check_reporter = await registerModel.findOne({ username: sub_task_reporter })
-                                if (!check_reporter) {
-                                    responseData(res, "", 404, false, "Subtask report to is  not registered user", [])
-                                }
-                                else {
-                                    if ((check_assignee.role === 'Senior Architect' || check_assignee.role === 'ADMIN') && (check_reporter.role === 'Senior Architect' || check_reporter.role === 'ADMIN')) {
-                                        const sub_task_id = `STK-${generateSixDigitNumber()}`;
-
-                                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
-                                            {
-                                                $push: {
-                                                    subtasks: {
-                                                        sub_task_id: sub_task_id,
-                                                        sub_task_name: sub_task_name,
-                                                        sub_task_description: sub_task_description,
-                                                        estimated_sub_task_end_date: estimated_sub_task_end_date,
-                                                        estimated_sub_task_start_date: estimated_sub_task_start_date,
-                                                        actual_sub_task_end_date: actual_sub_task_end_date,
-                                                        actual_sub_task_start_date: actual_sub_task_start_date,
-                                                        sub_task_status: sub_task_status,
-                                                        sub_task_priority: sub_task_priority,
-                                                        sub_task_assignee: sub_task_assignee,
-                                                        sub_task_createdBy: check_user.username,
-                                                        sub_task_createdOn: new Date(),
-                                                        sub_task_reporter: sub_task_reporter
-
-                                                    }
-
-                                                }
-                                            },
-                                            { new: true, useFindAndModify: false }
-                                        )
-                                        if (update_task) {
-                                            await timerModel.findOneAndUpdate({
-                                                project_id: project_id,
-                                                task_id: task_id
-                                            },
-                                                {
-                                                    $push: {
-                                                        subtaskstime: {
-                                                            sub_task_id: sub_task_id,
-                                                            sub_task_name: sub_task_name,
-                                                            sub_task_assignee: sub_task_assignee,
-                                                            sub_task_time: ''
-                                                        }
-                                                    }
-                                                }
-                                            )
-                                            await projectModel.findOneAndUpdate({ project_id: project_id },
-                                                {
-                                                    $push: {
-                                                        project_updated_by: {
-                                                            username: check_user.username,
-                                                            role: check_user.role,
-                                                            message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
-                                                            updated_date: new Date()
-                                                        }
-                                                    }
-                                                }
-                                            )
-                                            responseData(res, "Sub Task added successfully", 200, true, "", [])
-                                        }
-                                        else {
-                                            responseData(res, "", 404, false, "Sub Task not added", [])
-                                        }
-
-                                    }
-                                    else {
-                                        const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id)
-                                        if (!existProject) {
-
-                                            responseData(res, "", 404, false, "Subtask assignee to  is not part of this project", [])
-                                        }
-                                       
-                                        else {
-
-                                            const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id)
-                                            if (!exitsreportproject) {
-                                                responseData(res, "", 404, false, "Report to is not part of this project", [])
-                                            }
-                                            else
-                                            {
-                                                const sub_task_id = `STK-${generateSixDigitNumber()}`;
-
-                                                const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
-                                                    {
-                                                        $push: {
-                                                            subtasks: {
-                                                                sub_task_id: sub_task_id,
-                                                                sub_task_name: sub_task_name,
-                                                                sub_task_description: sub_task_description,
-                                                                estimated_sub_task_end_date: estimated_sub_task_end_date,
-                                                                estimated_sub_task_start_date: estimated_sub_task_start_date,
-                                                                actual_sub_task_end_date: actual_sub_task_end_date,
-                                                                actual_sub_task_start_date: actual_sub_task_start_date,
-                                                                sub_task_status: sub_task_status,
-                                                                sub_task_priority: sub_task_priority,
-                                                                sub_task_assignee: sub_task_assignee,
-                                                                sub_task_createdBy: check_user.username,
-                                                                sub_task_createdOn: new Date(),
-                                                                sub_task_reporter: sub_task_reporter
-
-                                                            }
-
-                                                        }
-                                                    },
-                                                    { new: true, useFindAndModify: false }
-                                                )
-                                                if (update_task) {
-                                                    await timerModel.findOneAndUpdate({
-                                                        project_id: project_id,
-                                                        task_id: task_id
-                                                    },
-                                                        {
-                                                            $push: {
-                                                                subtaskstime: {
-                                                                    sub_task_id: sub_task_id,
-                                                                    sub_task_name: sub_task_name,
-                                                                    sub_task_assignee: sub_task_assignee,
-                                                                    sub_task_time: ''
-                                                                }
-                                                            }
-                                                        }
-                                                    )
-                                                    await projectModel.findOneAndUpdate({ project_id: project_id },
-                                                        {
-                                                            $push: {
-                                                                project_updated_by: {
-                                                                    username: check_user.username,
-                                                                    role: check_user.role,
-                                                                    message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
-                                                                    updated_date: new Date()
-                                                                }
-                                                            }
-                                                        }
-                                                    )
-                                                    responseData(res, "Sub Task added successfully", 200, true, "", [])
-                                                }
-                                                else {
-                                                    responseData(res, "", 404, false, "Sub Task not added", [])
-                                                }
-                                            }
-                                           
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-                        }
-                        else{
-                            responseData(res, "", 400, false, "You are not task assignee or admin")
-                        }
-                    }
-                }
-            }
-
+            await createSubTaskAndTimer({
+                project_id, task_id, sub_task_name, sub_task_description,
+                actual_sub_task_start_date, estimated_sub_task_start_date,
+                estimated_sub_task_end_date, actual_sub_task_end_date,
+                sub_task_status, sub_task_priority, sub_task_assignee,
+                sub_task_reporter, check_user, check_task
+            }, res);
         }
-
-
-    }
-    catch (err) {
-        console.log(err)
-        res.send(err)
+    } catch (err) {
+        console.log(err);
+        res.send(err);
     }
 }
 
