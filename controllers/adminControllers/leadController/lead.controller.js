@@ -470,13 +470,13 @@ export const leadToProject = async (req, res) => {
     responseData(res, "", 400, false, "client_email is required", []);
   }
   else if (!onlyPhoneNumberValidation(client_contact)) {
-    responseData(res, "", 400, false, "client_contact is required", []);
+    responseData(res, "", 400, false, "client_contact should be  10 digit number", []);
   }
   else if (!location) {
     responseData(res, "", 400, false, "location is required", []);
   }
   else if (!validateOnlyNumbers(project_budget)) {
-    responseData(res, "", 400, false, "project_budget is required", []);
+    responseData(res, "", 400, false, "project_budget should be number", []);
   }
   else if (!project_type) {
     responseData(res, "", 400, false, "project_type is required", []);
