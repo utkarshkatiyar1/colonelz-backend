@@ -30,10 +30,16 @@ export const verifyJWT = async (req, res, next) => {
     const user = await registerModel.findById(decodedToken?.id);
 
 
+
     if (!user) {
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
+    
 req.user = user
+if(user.status===false)
+{
+  return responseData(res, "", 401, false, "Unauthorized: User is not active");
+}
     next(); // Proceed to the next 
   
   } catch (err) {

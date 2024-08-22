@@ -229,3 +229,79 @@ export const deleteUser = async (req, res) => {
         return responseData(res, "", 500, false, err.message);
     }
 }
+
+
+export const archiveUser = async(req,res) =>{
+    try{
+       const findDeleteUser = await registerModel.find({status: false})
+       if(findDeleteUser.length<1)
+       {
+           return responseData(res, "", 404, false, "No User Found");
+       }
+       else{
+           const filteredUsers = findDeleteUser.reduce((acc, user) => {
+               if (user) {
+                   acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id, access:user.access });
+               }
+               return acc;
+           }, []);
+           return responseData(res, "User Found", 200, true, "", filteredUsers);
+       }
+    }
+    catch(err)
+    {
+        console.log(err)
+        return responseData(res, "", 500, false, `${err}`);
+    }
+} 
+
+export const restoreUser = async(req,res) =>{
+    try{
+        const user_id = req.body.user_id;
+        if(!user_id)
+        {
+            return responseData(res, "", 400, false, "User Id is required");
+        }
+        else{
+            const user = await registerModel.findOne({ _id: user_id, status: false })
+            if (!user) {
+                return responseData(res, "", 404, false, "User Not Found");
+            }
+            else {
+             await registerModel.findOneAndUpdate({ _id: user_id }, { status: true }, { new: true })
+             return responseData(res, "User Restored Successfully", 200, true, "");
+              
+        }
+    }
+    }
+    catch(err)
+    {
+        console.log(err)
+        return responseData(res, "", 500, false, `${err}`);
+    }
+}
+
+export const deleteUserArchive = async(req,res) =>{
+    try{
+        const user_id = req.body.user_id;
+        if(!user_id)
+        {
+            return responseData(res, "", 400, false, "User Id is required");
+        }
+        else{
+            const user = await registerModel.findOne({ _id: user_id, status: false })
+            if (!user) {
+                return responseData(res, "", 404, false, "User Not Found");
+            }
+            else {
+             await registerModel.findOneAndDelete({ _id: user_id })
+             return responseData(res, "User Deleted Successfully", 200, true, "");
+             }
+}
+}
+catch(err)
+{
+        console.log(err)
+        return responseData(res, "", 500, false, `${err}`);   
+}
+}

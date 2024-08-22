@@ -7,6 +7,7 @@ import {
   onlyAlphabetsValidation,
   onlyEmailValidation,
   onlyPhoneNumberValidation,
+  validateOnlyNumbers,
 } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import AWS from "aws-sdk";
@@ -462,6 +463,31 @@ export const leadToProject = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user_id is required", []);
   }
+  else if (!client_name) {
+    responseData(res, "", 400, false, "client_name is required", []);
+  }
+  else if (!client_email) {
+    responseData(res, "", 400, false, "client_email is required", []);
+  }
+  else if (!onlyPhoneNumberValidation(client_contact)) {
+    responseData(res, "", 400, false, "client_contact is required", []);
+  }
+  else if (!location) {
+    responseData(res, "", 400, false, "location is required", []);
+  }
+  else if (!validateOnlyNumbers(project_budget)) {
+    responseData(res, "", 400, false, "project_budget is required", []);
+  }
+  else if (!project_type) {
+    responseData(res, "", 400, false, "project_type is required", []);
+  }
+  else if (!project_name) {
+    responseData(res, "", 400, false, "project_name is required", []);
+  }
+  else if (!project_status) {
+    responseData(res, "", 400, false, "project_status is required", []);
+    
+  }
   else {
     try {
       const check_user = await registerModel.findById(user_id)
@@ -791,24 +817,6 @@ export const leadToMultipleProject = async (req, res) => {
                 ]
 
               })
-           
-                const add_project_in_user = await registerModel.findOneAndUpdate(
-                  { _id: user_id },
-                  {
-                    $push: {
-                      "data.$[outer].leadData": {
-                        lead_id: lead_id,
-                        role: check_user.role,
-                      }
-                    }
-                  },
-                  {
-                    arrayFilters: [{ "outer.leadData": { $exists: true } }]
-                  }
-                );
-              
-
-
               await leadModel.findOneAndUpdate(
                 { lead_id: lead_id },
                 {

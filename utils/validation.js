@@ -40,3 +40,11 @@ export const onlyOrgValidation = (org)=>{
     }
 }
 
+export const validateOnlyNumbers = (input) => {
+  const numberRegex = /^[0-9]+$/;
+
+  if (numberRegex.test(input)) {
+    return true;  
+  }
+  return false;
+}
