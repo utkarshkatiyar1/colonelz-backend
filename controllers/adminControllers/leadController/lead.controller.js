@@ -466,7 +466,7 @@ export const leadToProject = async (req, res) => {
   else if (!client_name) {
     responseData(res, "", 400, false, "client_name is required", []);
   }
-  else if (!client_email) {
+  else if (!onlyEmailValidation(client_email)) {
     responseData(res, "", 400, false, "client_email is required", []);
   }
   else if (!onlyPhoneNumberValidation(client_contact)) {
