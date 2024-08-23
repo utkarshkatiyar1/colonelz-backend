@@ -100,7 +100,7 @@ export const removeMemberInProject = async (req, res) => {
         const project_id = req.body.project_id;
         const username = req.body.username;
 
-        if (!lead_id) {
+        if (!project_id) {
             responseData(res, "", 400, false, "Project id is required");
         }
         else if (!username) {

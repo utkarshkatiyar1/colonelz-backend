@@ -528,3 +528,57 @@ const transporter = nodemailer.createTransport({
     pass: process.env.API_KEY,
   },
 });
+
+
+export const updateMom = async(req,res) =>{
+  try{
+    const project_id = req.query.project_id;
+    const mom_id = req.query.mom_id;
+    const description = req.body.remark;
+    if(!project_id)
+    {
+      responseData(res, "", 404, false, "Project Id is required");
+    }
+   else if(!mom_id)
+    {
+      responseData(res, "", 404, false, "MOM Id is required");
+    }
+    else{
+      const check_project = await projectModel.findOne({ project_id: project_id });
+      if (check_project) {
+        const check_mom = check_project.mom.filter(
+          (mom) => mom.mom_id.toString() === mom_id
+        );
+        if(check_mom)
+        {
+        await projectModel.findOneAndUpdate({
+            project_id:project_id,
+            'mom.mom_id':mom_id
+          },{
+            $set:{
+              'mom.$.remark':description
+            }
+          },
+          { new: true }
+            
+        )
+          responseData(res, "MOM Updated Successfully", 200, true, "");
+
+        }
+        else{
+          responseData(res, "", 404, false, "MOM Not Found");
+        } 
+      }
+      else{
+        responseData(res, "", 404, false, "Project Not Found");
+      }
+    }
+
+  }
+  catch(err)
+  {
+    console.log(err);
+    responseData(res, "", 500, false, "Internal server Error");
+
+  }
+}

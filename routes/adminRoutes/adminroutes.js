@@ -12,6 +12,7 @@ import {
   getAllProjectMom,
   getSingleMom,
   sendPdf,
+  updateMom,
 } from "../../controllers/adminControllers/momControllers/mom.controller.js";
 import {
   createLead,
@@ -52,7 +53,7 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateContractAccess, updateLeadAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteAddMember, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateContractAccess, updateLeadAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
 
@@ -92,7 +93,7 @@ router.route("/get/companyData").get(verifyJWT,readFileCompanyDataAccess, getCom
 router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmin,  getAllProject);
 router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
 router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
-router.route("/remove/member/project").post(verifyJWT, removeMemberInProject);
+router.route("/remove/member/project").post(verifyJWT,deleteAddMember, removeMemberInProject);
 
 router.route("/create/lead").post(verifyJWT,createLeadAccess, createLead);
 router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdmin,  getAllLead);
@@ -102,13 +103,14 @@ router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadTo
 router.route("/add/member/lead").post(verifyJWT,createAddMember, AddMemberInLead);
 router.route("/update/lead/data").put(verifyJWT,updateLeadAccess, updateLead);
 router.route("/lead/multiple/project").post(verifyJWT, createProjectAccess, leadToMultipleProject);
-router.route("/remove/member/lead").post(verify, removeMemberInlead);
+router.route("/remove/member/lead").post(verify,deleteAddMember, removeMemberInlead);
 
 router.route("/create/mom").post(verifyJWT,createMomAccess, createmom);
 router.route("/getall/mom").get(verifyJWT,readMomAccess, getAllMom);
 router.route("/getsingle/mom").get(verifyJWT,readMomAccess, getSingleMom);
 router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailableUserIsAdmin, getAllProjectMom);
 router.route("/send/momdata").post(verifyJWT, sendPdf);
+router.route("/update/mom").put(verifyJWT, updateMom);
 
 
 router.route("/share/quotation").post(verifyJWT, readQuotationAccess, shareQuotation);
