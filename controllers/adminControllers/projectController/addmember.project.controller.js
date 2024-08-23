@@ -93,3 +93,58 @@ export const addMember = async (req, res) => {
     }
 }
 
+export const removeMemberInProject = async (req, res) => {
+    try {
+
+
+        const project_id = req.body.project_id;
+        const username = req.body.username;
+
+        if (!lead_id) {
+            responseData(res, "", 400, false, "Project id is required");
+        }
+        else if (!username) {
+            responseData(res, "", 400, false, "Username is required");
+        }
+        else {
+            const find_lead = await projectModel.findOne({ project_id: project_id });
+            if (find_lead) {
+                const find_user = await registerModel.findOne({ username: username });
+                // console.log(find_user)
+                if (find_user) {
+                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.projectData.project_id":project_id });
+                    if (find_user_in_lead) {
+                        const remove_lead_in_user = await registerModel.findOneAndUpdate(
+                            { username: username },
+                            {
+                                $pull: {
+                                    "data.$[outer].projectData": {
+                                        project_id: project_id,
+                                    }
+                                }
+                            },
+                            { arrayFilters: [{ "outer.projectData": { $exists: true } }] }
+                        );
+                        if (remove_lead_in_user) {
+                            responseData(res, "Member removed successfully", 200, true, "");
+                        } else {
+                            responseData(res, "", 404, false, "Member not found");
+                        }
+                    } else {
+                        responseData(res, "", 404, false, "Member not found");
+                    }
+                } else {
+                    responseData(res, "", 404, false, "User not found");
+                }
+            } else {
+                responseData(res, "", 404, false, "Project not found");
+            }
+
+        }
+    }
+    catch (err) {
+        console.log(err)
+        responseData(res, "", 500, false, "Invernal  Server Error")
+    }
+}
+

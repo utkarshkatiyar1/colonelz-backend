@@ -244,7 +244,7 @@ export const checkAvailableUserIsAdmin = async(req,res,next) =>{
                 project_status: find_project.project_status,
                 files: find_file.files
               });
-              console.log(projectData)
+             
             }
             if (find_project.mom.length !== 0) {
               // console.log(find_project.mom)

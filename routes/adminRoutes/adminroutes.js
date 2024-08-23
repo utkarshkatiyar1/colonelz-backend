@@ -40,13 +40,13 @@ import { getSingleTemplateFile, templateFileUpload } from "../../controllers/adm
 import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fileUploadController/delete.file.controller.js";
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
-import { addMember } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
+import { addMember, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
 import { checkAvailableUserIsAdmin, isAdmin } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { contractStatus, getContractData, shareContract } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js";
-import { AddMemberInLead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
+import { AddMemberInLead, removeMemberInlead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
@@ -54,6 +54,7 @@ import { GetSingleSubtimerController, UpdateSubtimerController } from "../../con
 import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
 import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateContractAccess, updateLeadAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
+import { verify } from "crypto";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -91,6 +92,7 @@ router.route("/get/companyData").get(verifyJWT,readFileCompanyDataAccess, getCom
 router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmin,  getAllProject);
 router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
 router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
+router.route("/remove/member/project").post(verifyJWT, removeMemberInProject);
 
 router.route("/create/lead").post(verifyJWT,createLeadAccess, createLead);
 router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdmin,  getAllLead);
@@ -100,6 +102,7 @@ router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadTo
 router.route("/add/member/lead").post(verifyJWT,createAddMember, AddMemberInLead);
 router.route("/update/lead/data").put(verifyJWT,updateLeadAccess, updateLead);
 router.route("/lead/multiple/project").post(verifyJWT, createProjectAccess, leadToMultipleProject);
+router.route("/remove/member/lead").post(verify, removeMemberInlead);
 
 router.route("/create/mom").post(verifyJWT,createMomAccess, createmom);
 router.route("/getall/mom").get(verifyJWT,readMomAccess, getAllMom);

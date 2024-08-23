@@ -242,12 +242,14 @@ export const createLead = async (req, res) => {
 
           })
 
-            const add_project_in_user = await registerModel.findOneAndUpdate(
+          
+
+             await registerModel.findOneAndUpdate(
               { _id: userId },
               {
                 $push: {
                   "data.$[outer].leadData": {
-                    lead_id: lead_id,
+                    lead_id:lead_id,
                     role: check_user.role,
                   }
                 }
