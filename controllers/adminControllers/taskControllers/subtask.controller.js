@@ -470,8 +470,30 @@ export const updateSubTask = async (req, res) => {
                                         }
                                     }
                                 )
+                                
                                 if (sub_task_status === 'Completed' || sub_task_status === 'Cancelled' )
                                 {
+                                    let total_time 
+                                   const find_timer =  await timerModel.findOne({
+                                        task_id: task_id,
+                                        project_id: project_id,
+                                        'subtaskstime.sub_task_id': sub_task_id
+                                    })
+                                   
+                                    for (let i = 0; i < find_timer.subtaskstime.length;i++)
+                                    {
+                                        if (find_timer.subtaskstime[i].sub_task_id === sub_task_id)
+                                        {
+                                          
+                                            total_time = parseInt(find_timer.subtaskstime[i].sub_task_current) + new
+                                                Date().getTime();
+
+                                        }
+                                    }
+                                 
+                                    
+
+
                                      await timerModel.findOneAndUpdate({
                                         task_id: task_id,
                                         project_id: project_id,
@@ -481,6 +503,8 @@ export const updateSubTask = async (req, res) => {
                                             $set: {
                                                
                                                 'subtaskstime.$.sub_task_isrunning': false,
+                                                'subtaskstime.$.sub_task_current':total_time,
+                                                
                                             }
                                         },
                                         { new: true, useFindAndModify: false }

@@ -465,7 +465,7 @@ export const leadToProject = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user_id is required", []);
   }
-  else if (!client_name) {
+  else if (!onlyAlphabetsValidation(client_name)) {
     responseData(res, "", 400, false, "client_name is required", []);
   }
   else if (!onlyEmailValidation(client_email)) {
@@ -489,6 +489,9 @@ export const leadToProject = async (req, res) => {
   else if (!project_status) {
     responseData(res, "", 400, false, "project_status is required", []);
     
+  }
+  else if(!onlyAlphabetsValidation(designer)){
+    responseData(res, "", 400, false, "designer is required", []);
   }
   else {
     try {
