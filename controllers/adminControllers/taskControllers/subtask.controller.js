@@ -483,7 +483,7 @@ export const updateSubTask = async (req, res) => {
                                                 console.log(find_timer.subtaskstime[i].sub_task_isrunning)
                                                 if (find_timer.subtaskstime[i].sub_task_isrunning) {
                                                     current_time = new Date().getTime() - find_timer.subtaskstime[i].sub_task_current;
-                                                    total_time = find_timer.subtaskstime[i].sub_task_current + current_time
+                                                    total_time = find_timer.subtaskstime[i].sub_task_time + current_time
                                                     console.log(current_time)
                                                     console.log(total_time)
                                                     await timerModel.findOneAndUpdate({
@@ -495,8 +495,8 @@ export const updateSubTask = async (req, res) => {
                                                             $set: {
 
                                                                 'subtaskstime.$.sub_task_isrunning': false,
-                                                                'subtaskstime.$.sub_task_current': total_time,
-                                                                'subtaskstime.$.sub_task_time': current_time
+                                                                'subtaskstime.$.sub_task_current':current_time ,
+                                                                'subtaskstime.$.sub_task_time': total_time
 
                                                             }
                                                         },
