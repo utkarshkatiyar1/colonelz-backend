@@ -474,6 +474,7 @@ export const updateSubTask = async (req, res) => {
                                 if (sub_task_status === 'Completed' || sub_task_status === 'Cancelled' )
                                 {
                                     let current_time 
+                                    let total_time
                                    const find_timer =  await timerModel.findOne({
                                         task_id: task_id,
                                         project_id: project_id,
@@ -486,6 +487,7 @@ export const updateSubTask = async (req, res) => {
                                         {
                                           
                                             current_time = new Date().getTime()  - parseInt(find_timer.subtaskstime[i].sub_task_current);
+                                            total_time = parseInt(find_timer.subtaskstime[i].sub_task_current) + current_time
 
                                         }
                                     }
@@ -503,6 +505,7 @@ export const updateSubTask = async (req, res) => {
                                                
                                                 'subtaskstime.$.sub_task_isrunning': false,
                                                 'subtaskstime.$.sub_task_current':current_time,
+                                                'subtaskstime.$.sub_task_time':total_time
                                                 
                                             }
                                         },
