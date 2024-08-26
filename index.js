@@ -108,6 +108,10 @@ const tableFormat = format.printf(({ level, message, meta }) => {
     | Response Time: ${meta.responseTime}ms |
     ------------------------------------------------------------------------
     `;
+  // ------------------------------------------------------------------------
+  //   | Query: ${ JSON.stringify(req.query) } |
+  //   ------------------------------------------------------------------------
+  //   | Headers: ${ JSON.stringify(req.headers, null, 2) } |
 });
 const logger = winston.createLogger({
   format: format.combine(

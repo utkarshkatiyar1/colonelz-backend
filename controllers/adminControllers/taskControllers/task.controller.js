@@ -176,13 +176,15 @@ export const getAllTasks = async (req, res) => {
         const projectUsers = await registerModel.find({
             'data.projectData.project_id': project_id
         });
+        // console.log(projectUsers)
 
         const seniorAdmins = await registerModel.find({
-            role: { $in: ['Senior Architect', 'ADMIN'] }
+            role: { $in: ['Senior Architect', 'ADMIN'] },  status:true
         });
+      
 
         const userList = [...new Set([...projectUsers, ...seniorAdmins].map(user => user.username))];
-
+        
         const response = tasks.map(task => {
             const totalSubtasks = task.subtasks.length;
             const completedSubtasks = task.subtasks.filter(subtask => subtask.sub_task_status === 'Completed').length;
@@ -206,9 +208,11 @@ export const getAllTasks = async (req, res) => {
                 task_createdBy: task.task_createdBy,
                 number_of_subtasks: totalSubtasks,
                 percentage,
-                userList
+                
             };
+            
         });
+     
 
         responseData(res, "Tasks found successfully", 200, true, "", response);
     } catch (err) {
@@ -539,4 +543,6 @@ export const getAllTaskWithData = async (req, res) => {
     }
 
 }
+
+
 
