@@ -439,8 +439,8 @@ export const updateSubTask = async (req, res) => {
                 for (let subtask of find_timer.subtaskstime) {
                     if (subtask.sub_task_id.toString() === sub_task_id.toString() && subtask.sub_task_isrunning) {
                         const current_time = new Date().getTime();
-                        const diff = current_time - subtask.sub_task_current;
-                        const total_time = subtask.sub_task_time + diff;
+                        const diff = parseInt(current_time) - parseInt(subtask.sub_task_current);
+                        const total_time =parseInt(subtask.sub_task_time) + diff;
 
                         await timerModel.findOneAndUpdate(
                             {
