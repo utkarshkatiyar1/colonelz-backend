@@ -103,11 +103,7 @@ const tableFormat = format.printf(({ level, message, meta }) => {
     ------------------------------------------------------------------------
     | Level: ${level} | Method: ${req.method} | Status: ${res.statusCode} |
     ------------------------------------------------------------------------
-    | URL: ${req.originalUrl} |
-    ------------------------------------------------------------------------
-    | Query: ${JSON.stringify(req.query)} |
-    ------------------------------------------------------------------------
-    | Headers: ${JSON.stringify(req.headers, null, 2)} |
+    | URL: ${req.originalUrl} |Query: ${JSON.stringify(req.query)} |
     ------------------------------------------------------------------------
     | Response Time: ${meta.responseTime}ms |
     ------------------------------------------------------------------------
