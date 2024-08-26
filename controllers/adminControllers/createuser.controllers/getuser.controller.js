@@ -44,3 +44,24 @@ export const getUserList = async (req, res) => {
     }
 
 }
+
+
+
+export const userAcessLeadOrProjectList = async(req,res) =>{
+    try{
+        const find_user = await registerModel.find({status:true})
+        for(let i=0;find_user.length;i++){
+            
+        }
+
+
+
+    }
+    catch(err)
+    {
+        console.log(err)
+        responseData(res, "", 500, false, "Invernal  Server Error")
+    }
+}
+
+

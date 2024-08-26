@@ -52,7 +52,7 @@ import { archive, deletearchive, restoreData } from "../../controllers/adminCont
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
-import { getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
+import { getUserList, userAcessLeadOrProjectList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
 import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess,  CreateUserAccess, deleteAddMember, deleteArchiveAccess, deletedFileAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, updateContractAccess, updateLeadAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
@@ -68,6 +68,7 @@ router.route("/get/userlist").get(verifyJWT, getUserList);
 router.route("/archive/user").get(verifyJWT,GetArchiveUser, archiveUser);
 router.route("/restore/user").post(verifyJWT,restoreUser, restoreUser);
 router.route("/delete/archive/user").delete(verifyJWT,deleteUserArchive, deleteUserArchive);
+router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
@@ -94,6 +95,7 @@ router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailable
 router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
 router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
 router.route("/remove/member/project").post(verifyJWT,deleteAddMember, removeMemberInProject);
+
 
 router.route("/create/lead").post(verifyJWT,createLeadAccess, createLead);
 router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdmin,  getAllLead);

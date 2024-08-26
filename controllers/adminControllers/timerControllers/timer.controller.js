@@ -123,6 +123,7 @@ export const GetSingleSubtimerController = async (req, res) => {
             const missingField = !project_id ? "Project id" : !task_id ? "Task id" : "Sub task id";
             return responseData(res, "", 400, false, `${missingField} is required`);
         }
+        console.log(project_id, task_id, sub_task_id)
 
         // Check if task exists
         const check_task = await taskModel.findOne({ task_id, project_id });
@@ -135,12 +136,14 @@ export const GetSingleSubtimerController = async (req, res) => {
         if (!check_subtask) {
             return responseData(res, "", 400, false, "Sub task not found");
         }
+        console.log(check_subtask)
 
         // Find the specific subtask timer
         const subtask = check_subtask.subtaskstime.find(item => item.sub_task_id === sub_task_id);
         if (!subtask) {
             return responseData(res, "", 400, false, "Sub task not found");
         }
+        console.log(subtask)
 
         // Prepare the response
         const response = {
