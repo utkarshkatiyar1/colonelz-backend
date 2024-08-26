@@ -116,56 +116,47 @@ export const UpdateSubtimerController = async (req, res) => {
 
 export const GetSingleSubtimerController = async (req, res) => {
     try {
+        const { project_id, task_id, sub_task_id } = req.query;
 
-        const project_id = req.query.project_id;
-        const task_id = req.query.task_id;
-        const sub_task_id = req.query.sub_task_id;
-
-
-        if (!project_id) {
-            return responseData(res, "", 400, false, "Project id is required")
-        }
-        else if (!task_id) {
-            return responseData(res, "", 400, false, "Task id is required")
-        }
-        else if (!sub_task_id) {
-            return responseData(res, "", 400, false, "Sub task id is required")
+        // Validate required fields
+        if (!project_id || !task_id || !sub_task_id) {
+            const missingField = !project_id ? "Project id" : !task_id ? "Task id" : "Sub task id";
+            return responseData(res, "", 400, false, `${missingField} is required`);
         }
 
-        else {
-            const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
-            if (!check_task) {
-                return responseData(res, "", 400, false, "Task not found")
-            }
-            else {
-                const check_subtask = await timerModel.findOne({ task_id: task_id, project_id: project_id, 'subtaskstime.sub_task_id': sub_task_id })
-                if (!check_subtask) {
-                    return responseData(res, "", 400, false, "Sub task not found")
-                }
-                else {
-
-                    const subtask = check_subtask.subtaskstime.find((item) => item.sub_task_id === sub_task_id);
-                    if (subtask) {
-                        const response = {
-                            time: subtask.sub_task_time,
-                            isrunning: subtask.sub_task_isrunning,
-                            total_time: subtask.sub_task_totalTime,
-                            current: subtask.sub_task_current,
-                        }
-                        return responseData(res, "Sub task timer found", 200, true, "", response)
-                    } else {
-                        return responseData(res, "", 400, false, "Sub task not found")
-                    }
-
-                }
-
-            }
+        // Check if task exists
+        const check_task = await taskModel.findOne({ task_id, project_id });
+        if (!check_task) {
+            return responseData(res, "", 400, false, "Task not found");
         }
+
+        // Check if subtask exists in timer model
+        const check_subtask = await timerModel.findOne({ task_id, project_id, 'subtaskstime.sub_task_id': sub_task_id });
+        if (!check_subtask) {
+            return responseData(res, "", 400, false, "Sub task not found");
+        }
+
+        // Find the specific subtask timer
+        const subtask = check_subtask.subtaskstime.find(item => item.sub_task_id === sub_task_id);
+        if (!subtask) {
+            return responseData(res, "", 400, false, "Sub task not found");
+        }
+
+        // Prepare the response
+        const response = {
+            time: subtask.sub_task_time,
+            isrunning: subtask.sub_task_isrunning,
+            total_time: subtask.sub_task_totalTime,
+            current: subtask.sub_task_current,
+        };
+
+        return responseData(res, "Sub task timer found", 200, true, "", response);
+
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error", err);
     }
-    catch (err) {
-        console.log(err)
-        responseData(res, "", 500, false, "Internal Server Error", err)
-    }
-}
+};
+
 
 
