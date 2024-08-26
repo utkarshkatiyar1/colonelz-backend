@@ -150,117 +150,73 @@ export const createTask = async (req, res) => {
 
 }
 export const getAllTasks = async (req, res) => {
-
     try {
-        const user_id = req.query.user_id;
-        const project_id = req.query.project_id;
-        if (!user_id) {
-            responseData(res, "", 404, false, "User Id required", [])
-        }
-        else if (!project_id) {
-            responseData(res, "", 404, false, "Project Id required", [])
+        const { user_id, project_id } = req.query;
+
+        if (!user_id || !project_id) {
+            const missingField = !user_id ? "User Id" : "Project Id";
+            return responseData(res, "", 404, false, `${missingField} required`, []);
         }
 
-        else {
-            const check_user = await registerModel.findById({ _id: user_id })
-            if (!check_user) {
-                responseData(res, "", 404, false, "User not found", [])
-            }
-            else {
-                const check_project = await projectModel.findOne({ project_id: project_id })
-                if (!check_project) {
-                    responseData(res, "", 404, false, "Project not found", [])
-                }
-                else {
-                    const tasks = await taskModel.find({ project_id: project_id })
-                    if (tasks.length < 1) {
-                        responseData(res, "Tasks not found", 200, false, "", [])
-
-                    }
-                    if (tasks.length > 0) {
-                        let response = []
-                       let userList = []
-
-                    const finduser = await registerModel.find({
-                        'data.projectData.project_id':project_id
-                    })
-                    if(finduser.length > 0)
-                    {
-                        for(let i =0;i<finduser.length;i++)
-                        {
-                            userList.push(finduser[i].username)
-
-                        }
-                       
-
-                    }
-                    const findSeniorAdmin = await registerModel.find({})
-                    if(findSeniorAdmin.length > 0)
-                    {
-                        for(let i=0;i<findSeniorAdmin.length;i++)
-                        {
-                            if (findSeniorAdmin[i].role === 'Senior Architect' || findSeniorAdmin[i].role ==='ADMIN')
-                            {
-                                userList.push(findSeniorAdmin[i].username
-                                
-                            )
-                        }
-                    }
-                }
-                    
-                        
-                        
-                        for (let i = 0; i < tasks.length; i++) {
-                            let count = 0;
-                            let percentage;
-                            let total_length = tasks[i].subtasks.length;
-                            for (let j = 0; j < tasks[i].subtasks.length; j++) {
-
-                                if (tasks[i].subtasks[j].sub_task_status === 'Completed') {
-                                    count++;
-                                }
-                                if (tasks[i].subtasks[j].sub_task_status === 'Cancelled') {
-                                    total_length--;
-                                }
-                            }
-                            percentage = (count / total_length) * 100;
-
-                            response.push({
-                                project_id: tasks[i].project_id,
-                                task_id: tasks[i].task_id,
-                                task_name: tasks[i].task_name,
-                                task_description: tasks[i].task_description,
-                                actual_task_start_date: tasks[i].actual_task_start_date,
-                                actual_task_end_date: tasks[i].actual_task_end_date,
-                                estimated_task_end_date: tasks[i].estimated_task_end_date,
-                                estimated_task_start_date: tasks[i].estimated_task_start_date,
-                                task_status: tasks[i].task_status,
-                                task_priority: tasks[i].task_priority,
-                                task_createdOn: tasks[i].task_createdOn,
-                                reporter: tasks[i].reporter,
-                                task_assignee: tasks[i].task_assignee,
-                                task_createdBy: tasks[i].task_createdBy,
-                                number_of_subtasks: tasks[i].subtasks.length,
-                                percentage: percentage,
-                                userList
-
-
-                            })
-                        }
-
-                        responseData(res, "Tasks found successfully", 200, true, "", response)
-                    }
-                }
-            }
+        const check_user = await registerModel.findById(user_id);
+        if (!check_user) {
+            return responseData(res, "", 404, false, "User not found", []);
         }
 
+        const check_project = await projectModel.findOne({ project_id });
+        if (!check_project) {
+            return responseData(res, "", 404, false, "Project not found", []);
+        }
 
-    }
-    catch (err) {
-        console.log(err)
-        res.send(err)
+        const tasks = await taskModel.find({ project_id });
+        if (!tasks.length) {
+            return responseData(res, "Tasks not found", 200, false, "", []);
+        }
+
+        const projectUsers = await registerModel.find({
+            'data.projectData.project_id': project_id
+        });
+
+        const seniorAdmins = await registerModel.find({
+            role: { $in: ['Senior Architect', 'ADMIN'] }
+        });
+
+        const userList = [...new Set([...projectUsers, ...seniorAdmins].map(user => user.username))];
+
+        const response = tasks.map(task => {
+            const totalSubtasks = task.subtasks.length;
+            const completedSubtasks = task.subtasks.filter(subtask => subtask.sub_task_status === 'Completed').length;
+            const activeSubtasks = totalSubtasks - task.subtasks.filter(subtask => subtask.sub_task_status === 'Cancelled').length;
+            const percentage = (completedSubtasks / activeSubtasks) * 100;
+
+            return {
+                project_id: task.project_id,
+                task_id: task.task_id,
+                task_name: task.task_name,
+                task_description: task.task_description,
+                actual_task_start_date: task.actual_task_start_date,
+                actual_task_end_date: task.actual_task_end_date,
+                estimated_task_end_date: task.estimated_task_end_date,
+                estimated_task_start_date: task.estimated_task_start_date,
+                task_status: task.task_status,
+                task_priority: task.task_priority,
+                task_createdOn: task.task_createdOn,
+                reporter: task.reporter,
+                task_assignee: task.task_assignee,
+                task_createdBy: task.task_createdBy,
+                number_of_subtasks: totalSubtasks,
+                percentage,
+                userList
+            };
+        });
+
+        responseData(res, "Tasks found successfully", 200, true, "", response);
+    } catch (err) {
+        console.error(err);
+        res.send(err);
     }
 }
+
 
 
 export const getSingleTask = async (req, res) => {
