@@ -14,6 +14,8 @@ import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
 import session from "express-session";
+import expressWinston from "express-winston"
+import winston from "winston";
 
 dotenv.config();
 
@@ -102,6 +104,15 @@ app.use(limiter);
 //   }
 // };
 
+app.use(expressWinston.logger({
+  transports: [
+    new winston.transports.Console()
+  ],
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.json()
+  )
+}));
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
