@@ -152,9 +152,8 @@ export const GetSingleSubtimerController = async (req, res) => {
             total_time: subtask.sub_task_totalTime,
             current: subtask.sub_task_current,
         };
-
+        console.log(response)
         return responseData(res, "Sub task timer found", 200, true, "", response);
-
     } catch (err) {
         console.error(err);
         return responseData(res, "", 500, false, "Internal Server Error", err);
