@@ -483,7 +483,7 @@ export const leadToProject = async (req, res) => {
   else if (!project_type) {
     responseData(res, "", 400, false, "project_type is required", []);
   }
-  else if (!project_name) {
+  else if (!onlyAlphabetsValidation(project_name)) {
     responseData(res, "", 400, false, "project_name is required", []);
   }
   else if (!project_status) {
