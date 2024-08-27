@@ -153,8 +153,16 @@ export const createLead = async (req, res) => {
   } else if (!userId) {
     responseData(res, "", 401, false, "userId is required.")
   }
-  else if (!validator.isEmail(email) && email.length > 5) {
-    responseData(res, "", 401, false, "email is invalid.");
+  else if (!onlyEmailValidation(email)) {
+    const [localPart, domainPart] = email.split('@');
+
+    // Check if the local part is too short or the domain part is too short
+    if (localPart.length < 3 || domainPart.length < 3) {
+      responseData(res, "", 401, false, "email is invalid.");
+    } else {
+      // Further checks (like disposable email checks) can be added here
+      responseData(res, "", 200, true, "email is valid.");
+    }
   } else if (!onlyPhoneNumberValidation(phone)) {
     responseData(res, "", 401, false, "phone number  is  invalid.");
   } else if (!location) {
