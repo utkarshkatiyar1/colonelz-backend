@@ -12,6 +12,7 @@ import {
 import registerModel from "../../../models/usersModels/register.model.js";
 import AWS from "aws-sdk";
 
+import validator from "validator";
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY,
@@ -152,7 +153,7 @@ export const createLead = async (req, res) => {
   } else if (!userId) {
     responseData(res, "", 401, false, "userId is required.")
   }
-  else if (!onlyEmailValidation(email) && email.length > 5) {
+  else if (!validator.isEmail(email) && email.length > 5) {
     responseData(res, "", 401, false, "email is invalid.");
   } else if (!onlyPhoneNumberValidation(phone)) {
     responseData(res, "", 401, false, "phone number  is  invalid.");
