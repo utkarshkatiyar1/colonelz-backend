@@ -105,8 +105,10 @@ export const createSubTask = async (req, res) => {
         if (check_task.task_status === 'Cancelled') return responseData(res, "", 400, false, "The task has been canceled", []);
 
         // Ensure user is authorized
-        if ([check_task.task_assignee, check_task.task_createdBy, "ADMIN", "SUPERADMIN"].includes(check_user.username))
+        if ([check_task.task_assignee, check_task.task_createdBy].includes(check_user.username) ||
+            ["ADMIN", "SUPERADMIN"].includes(check_user.role)) {
             return responseData(res, "", 400, false, "You are not authorized to create this subtask", []);
+        }
 
         // Check if subtask assignee exists
         const check_assignee = await registerModel.findOne({ username: sub_task_assignee, status: true });
