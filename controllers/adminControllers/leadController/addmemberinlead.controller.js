@@ -177,7 +177,7 @@ export const listUserInLead = async (req, res) => {
 
         const response = findUser.map(user => ({
             user_name: user.username,
-            role:user.user.role,
+            role:user.role,
             lead_name: findlead.name,
             lead_id: findlead.lead_id,
             user_id: user._id,
