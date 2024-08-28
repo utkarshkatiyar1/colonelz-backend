@@ -153,3 +153,42 @@ export const removeMemberInlead = async (req, res) => {
         responseData(res, "", 500, false, "Invernal  Server Error")
     }
 }
+
+export const listUserInLead = async (req, res) => {
+    try {
+        const lead_id = req.query.lead_id;
+
+        if (!lead_id) {
+            return responseData(res, "", 400, false, "Lead ID is required");
+        }
+          const leadId = parseInt(lead_id)
+        const [findlead, findUser] = await Promise.all([
+            leadModel.findOne({lead_id:lead_id }).lean(),
+            registerModel.find({ 'data.leadData.lead_id': leadId }).lean(),
+        ]);
+
+        if (!findlead) {
+            return responseData(res, "", 404, false, "Lead not found");
+        }
+
+        if (!findUser.length) {
+            return responseData(res, "", 404, false, "User not found");
+        }
+
+        const response = findUser.map(user => ({
+            user_name: user.username,
+            lead_name: findlead.name,
+            lead_id: findlead.lead_id,
+            user_id: user._id,
+            lead_created_date: findlead.date,
+            lead_status: findlead.lead_status,
+            lead_manager: findlead.lead_manager,
+        }));
+
+        return responseData(res, "Found Data", 200, true, "", response);
+
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+};

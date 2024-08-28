@@ -148,3 +148,44 @@ export const removeMemberInProject = async (req, res) => {
     }
 }
 
+export const listUserInProject = async (req, res) => {
+    try {
+        const project_id = req.query.project_id;
+
+        if (!project_id) {
+            return responseData(res, "", 400, false, "Project ID is required");
+        }
+
+        const [findProject, findUser] = await Promise.all([
+            projectModel.findOne({ project_id }).lean(),
+            registerModel.find({ 'data.projectData.project_id': project_id }).lean(),
+        ]);
+
+        if (!findProject) {
+            return responseData(res, "", 404, false, "Project not found");
+        }
+
+        if (!findUser.length) {
+            return responseData(res, "", 404, false, "User not found");
+        }
+
+        const response = findUser.map(user => ({
+            user_name: user.username,
+            project_name: findProject.project_name,
+            project_id: findProject.project_id,
+            user_id: user._id,
+            project_enddate: findProject.timeline_date,
+            project_type: findProject.project_type,
+            project_status: findProject.project_status,
+            project_incharge: findProject.designer,
+        }));
+
+        return responseData(res, "Found Data", 200, true, "", response);
+
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+};
+
+

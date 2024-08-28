@@ -300,16 +300,14 @@ export const createLead = async (req, res) => {
 
 export const getAllLead = async (req, res) => {
   try {
-    const leads = await leadModel.find({}).sort({ createdAt: -1 });
-    const response = {
-      leads: leads
-    }
+    const leads = await leadModel.find({}).sort({ createdAt: -1 }).lean();
 
-    responseData(res, "All Lead Data", 200, true, "", response);
+    responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
-    responseData(res, 500, error.message);
+    responseData(res, "", 500, false, error.message);
   }
 };
+
 
 export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
@@ -493,7 +491,7 @@ export const leadToProject = async (req, res) => {
     responseData(res, "", 400, false, "project_type is required", []);
   }
   else if (!onlyAlphabetsValidation(project_name)) {
-    responseData(res, "", 400, false, "project_name should be character", []);
+    responseData(res, "", 400, false, "project_name should be", []);
   }
   else if (!project_status) {
     responseData(res, "", 400, false, "project_status is required", []);

@@ -53,79 +53,73 @@ function isProjectOlderThan6Months(createdDate) {
 export const getAllProject = async (req, res) => {
   try {
     const id = req.query.id;
+
     if (!id) {
-      responseData(res, "", 400, false, "user id is required");
-    } else {
-      const check_role = await registerModel.find({ _id: id });
-      if (check_role.length > 0) {
-
-        let execution = [];
-        let design = [];
-        let completed = [];
-        let archive = [];
-        let projects = [];
-        const project = await projectModel.find({}).sort({ createdAt: -1 });
-
-        for (let i = 0; i < project.length; i++) {
-          if (project[i].project_status == "executing") {
-            execution.push(project[i]);
-          }
-          if (project[i].project_status == "designing") {
-            design.push(project[i]);
-          }
-          if (project[i].project_status == "completed") {
-            completed.push(project[i]);
-            const createdDate = project[i].project_end_date;
-            const isOlderThan6Months = isProjectOlderThan6Months(createdDate);
-            if (isOlderThan6Months) {
-              archive.push(isOlderThan6Months);
-            }
-          }
-
-          projects.push({
-            project_id: project[i].project_id,
-            project_name: project[i].project_name,
-            project_status: project[i].project_status,
-            project_start_date: project[i].project_start_date,
-            project_end_date: project[i].project_end_date,
-            project_description: project[i].project_description,
-            project_image: project[i].project_image,
-            project_budget: project[i].project_budget,
-            client_name: project[i].client[0].client_name,
-            project_type: project[i].project_type,
-            designer: project[i].designer,
-            client: project[i].client
-
-          });
-        }
-
-        const response = {
-          total_Project: projects.length,
-          Execution_Phase: execution.length,
-          Design_Phase: design.length,
-          completed: completed.length,
-          archive: archive.length,
-          active_Project: projects.length - completed.length,
-          projects,
-        };
-        responseData(
-          res,
-          "projects fetched successfully",
-          200,
-          true,
-          "",
-          response
-        );
-
-      }
-      if (check_role.length < 1) {
-        responseData(res, "", 404, false, " User not found.", []);
-      }
+      return responseData(res, "", 400, false, "User ID is required");
     }
+
+    const user = await registerModel.findById(id);
+
+    if (!user) {
+      return responseData(res, "", 404, false, "User not found");
+    }
+
+    const projects = await projectModel.find({}).sort({ createdAt: -1 });
+
+    const projectData = projects.map((project) => {
+      const {
+        project_id,
+        project_name,
+        project_status,
+        project_start_date,
+        project_end_date,
+        project_description,
+        project_image,
+        project_budget,
+        project_type,
+        designer,
+        client,
+      } = project;
+
+      return {
+        project_id,
+        project_name,
+        project_status,
+        project_start_date,
+        project_end_date,
+        project_description,
+        project_image,
+        project_budget,
+        client_name: client[0]?.client_name || "",
+        project_type,
+        designer,
+        client,
+      };
+    });
+
+    const execution = projectData.filter((p) => p.project_status === "executing");
+    const design = projectData.filter((p) => p.project_status === "designing");
+    const completed = projectData.filter((p) => p.project_status === "completed");
+    const archive = completed.filter((p) =>
+      isProjectOlderThan6Months(p.project_end_date)
+    );
+
+    const response = {
+      total_Project: projectData.length,
+      Execution_Phase: execution.length,
+      Design_Phase: design.length,
+      completed: completed.length,
+      archive: archive.length,
+      active_Project: projectData.length - completed.length,
+      projects: projectData,
+    };
+
+    responseData(res, "Projects fetched successfully", 200, true, "", response);
   } catch (error) {
-    responseData(res, "", 500, false, "error in fetching projects");
+    responseData(res, "", 500, false, "Error in fetching projects");
   }
 };
+
 
 export const getSingleProject = async (req, res) => {
   const project_ID = req.query.project_id;
