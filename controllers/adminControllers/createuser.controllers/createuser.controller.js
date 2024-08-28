@@ -209,17 +209,28 @@ export const getUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         const user_id = req.query.userId;
+        const id = req.query.id;
+        
         if (!user_id) {
             return responseData(res, "", 400, false, "User Id is required");
         }
+        else if(!id)
+        {
+            return responseData(res, "", 400, false, "Id is required");
+        }
         else {
+            if (id === user_id) {
+                return responseData(res, "", 400, false, "You are not delete self");
+            }
+
             const user = await registerModel.findOne({ _id: user_id, status: true })
             if (!user) {
                 return responseData(res, "", 404, false, "User Not Found");
             }
             else {
+                
                 const deletedUser = await registerModel.findOneAndUpdate({ _id: user_id }, { status: false }, { new: true })
-                const deleteUserFormLongin = await loginModel.deleteMany({ userID: user_id })
+                await loginModel.deleteMany({ userID: user_id })
                 return responseData(res, "User Deleted Successfully", 200, true, "");
             }
         }
