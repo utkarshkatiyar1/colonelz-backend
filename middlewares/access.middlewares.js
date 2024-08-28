@@ -1633,7 +1633,7 @@ export const GetArchiveUser = async (req, res, next) => {
         return responseData(res, "", 401, false, "Unauthorized: Invalid token");
     }
 }
-export const restoreUser = async (req, res, next) => {
+export const restoreUserAccess = async (req, res, next) => {
     try {
         const token = req.cookies?.auth ||
             req.header("Authorization")?.replace("Bearer", "").trim();
