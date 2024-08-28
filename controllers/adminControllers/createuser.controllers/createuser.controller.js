@@ -170,41 +170,37 @@ export const createUser = async (req, res) => {
 export const getUser = async (req, res) => {
     try {
         const userId = req.query.id;
+
         if (!userId) {
             return responseData(res, "", 400, false, "User Id is required");
         }
-        else {
-            const check_user = await registerModel.findById(userId);
-            if (check_user) {
-                const users = await registerModel.find({ $and: [{ status: true }, { organization: check_user.organization }] })
 
-                if (users) {
-                    const filteredUsers = users.reduce((acc, user) => {
-                        if (user) {
-                            acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
-                        }
-                        return acc;
-                    }, []);
+        const check_user = await registerModel.findById(userId);
 
-
-                    return responseData(res, "all user found", 200, true, "", filteredUsers);
-
-                }
-                else {
-                    return responseData(res, "", 404, false, "No User Found");
-                }
-            }
-            else {
-                return responseData(res, "", 400, false, "You are not allowed to perform this action");
-            }
+        if (!check_user) {
+            return responseData(res, "", 400, false, "You are not allowed to perform this action");
         }
 
-    }
-    catch (err) {
+        const users = await registerModel.find({ status: true, organization: check_user.organization }).select('username role email _id');
+
+        if (!users.length) {
+            return responseData(res, "", 404, false, "No User Found");
+        }
+
+        const filteredUsers = users.map(user => ({
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            UserId: user._id,
+        }));
+
+        return responseData(res, "All users found", 200, true, "", filteredUsers);
+
+    } catch (err) {
         return responseData(res, "", 500, false, err.message);
     }
+};
 
-}
 
 export const deleteUser = async (req, res) => {
     try {
