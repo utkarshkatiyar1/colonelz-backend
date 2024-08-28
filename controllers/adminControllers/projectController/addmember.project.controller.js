@@ -171,6 +171,7 @@ export const listUserInProject = async (req, res) => {
 
         const response = findUser.map(user => ({
             user_name: user.username,
+            role:user.role,
             project_name: findProject.project_name,
             project_id: findProject.project_id,
             user_id: user._id,
