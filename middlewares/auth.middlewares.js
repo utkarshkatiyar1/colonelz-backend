@@ -1,54 +1,14 @@
-
 import jwt from "jsonwebtoken";
 import { responseData } from "../utils/respounse.js";
 import registerModel from "../models/usersModels/register.model.js";
 import projectModel from "../models/adminModels/project.model.js";
 import fileuploadModel from "../models/adminModels/fileuploadModel.js";
-import { notificationForUser ,getNotification} from "../controllers/notification/notification.controller.js";
+import { notificationForUser } from "../controllers/notification/notification.controller.js";
 import cron from "node-cron";
 import leadModel from "../models/adminModels/leadModel.js";
 
-
+// Middleware to verify JWT and set user in req
 export const verifyJWT = async (req, res, next) => {
-  try {
-    const token = req.cookies?.auth ||
-      req.header("Authorization")?.replace("Bearer", "").trim();
-    
-    ;
-    if (!token) {
-      return responseData(
-        res,
-        "",
-        401,
-        false,
-        "Unauthorized: No token provided"
-      );
-    }
-
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
- 
-    const user = await registerModel.findById(decodedToken?.id);
-
-
-
-    if (!user) {
-      return responseData(res, "", 401, false, "Unauthorized: User not found");
-    }
-    
-req.user = user
-if(user.status===false)
-{
-  return responseData(res, "", 401, false, "Unauthorized: User is not active");
-}
-    next(); // Proceed to the next 
-  
-  } catch (err) {
-   
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
-  }
-};
-
-export const checkAvailableUserIsAdmin = async (req, res, next) => {
   try {
     const token = req.cookies?.auth || req.header("Authorization")?.replace("Bearer", "").trim();
     if (!token) {
@@ -56,11 +16,28 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    const user = await registerModel.findById(decodedToken?.id).lean();
+    const user = await registerModel.findById(decodedToken?.id);
 
     if (!user) {
       return responseData(res, "", 401, false, "Unauthorized: User not found");
     }
+
+    if (user.status === false) {
+      return responseData(res, "", 401, false, "Unauthorized: User is not active");
+    }
+
+    req.user = user; // Store user in req object
+    next(); // Proceed to the next middleware
+  } catch (err) {
+    console.error("Error in verifyJWT:", err);
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+};
+
+// Middleware to check if the user is an admin
+export const checkAvailableUserIsAdmin = async (req, res, next) => {
+  try {
+    const user = req.user; // Access user from req object
 
     if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
       return next();
@@ -80,15 +57,23 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
     const projectIds = user.data[0].projectData.map(item => item.project_id);
     const leadIds = user.data[0].leadData.map(item => item.lead_id);
 
-    const projects = await projectModel.find({ project_id: { $in: projectIds } }).lean();
-    const files = await fileuploadModel.find({ project_id: { $in: projectIds } }).lean();
-    const leads = await leadModel.find({ lead_id: { $in: leadIds } }).lean();
-    const leadFiles = await fileuploadModel.find({ lead_id: { $in: leadIds } }).lean();
+    const [projects, files, leads, leadFiles] = await Promise.all([
+      projectModel.find({ project_id: { $in: projectIds } }).lean(),
+      fileuploadModel.find({ project_id: { $in: projectIds } }).lean(),
+      leadModel.find({ lead_id: { $in: leadIds } }).lean(),
+      fileuploadModel.find({ lead_id: { $in: leadIds } }).lean()
+    ]);
 
-    // Prepare project data
-    const projectData = projects.map(project => {
+    // Prepare project data and MomData in a single pass
+    const projectData = [];
+    const MomData = [];
+    const execution = [];
+    const design = [];
+    const completed = [];
+
+    projects.forEach(project => {
       const projectFiles = files.find(file => file.project_id === project.project_id);
-      return {
+      const projectItem = {
         project_name: project.project_name,
         project_id: project.project_id,
         client_name: project.client[0]?.client_name,
@@ -96,26 +81,30 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
         project_status: project.project_status,
         files: projectFiles?.files || []
       };
+      projectData.push(projectItem);
+
+      project.mom.forEach(mom => {
+        MomData.push({
+          project_id: project.project_id,
+          project_name: project.project_name,
+          mom_id: mom.mom_id,
+          client_name: project.client[0]?.client_name,
+          location: mom.location,
+          meetingDate: mom.meetingdate,
+        });
+      });
+
+      // Categorize projects by status
+      if (project.project_status === "executing") {
+        execution.push(projectItem);
+      } else if (project.project_status === "designing") {
+        design.push(projectItem);
+      } else if (project.project_status === "completed") {
+        completed.push(projectItem);
+      }
     });
 
-    // Prepare MOM data
-    const MomData = projects.flatMap(project =>
-      project.mom.map(mom => ({
-        project_id: project.project_id,
-        project_name: project.project_name,
-        mom_id: mom.mom_id,
-        client_name: project.client[0]?.client_name,
-        location: mom.location,
-        meetingDate: mom.meetingdate,
-      }))
-    );
-
-    // Categorize projects by status
-    const execution = projects.filter(project => project.project_status === "executing");
-    const design = projects.filter(project => project.project_status === "designing");
-    const completed = projects.filter(project => project.project_status === "completed");
-
-    // Prepare lead data
+    // Prepare lead data in a single pass
     const leadData = leads.map(lead => {
       const leadFile = leadFiles.find(file => file.lead_id === lead.lead_id);
       return {
@@ -146,65 +135,23 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
 
     return responseData(res, "User data found", 200, true, "", response);
   } catch (err) {
-    console.error(err);
+    console.error("Error in checkAvailableUserIsAdmin:", err);
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
   }
 };
 
-export const isAdmin = async(req,res,next) =>{
-
+// Middleware to check if the user has an admin role
+export const isAdmin = (req, res, next) => {
   try {
-    const token = req.cookies?.auth ||
-      req.header("Authorization")?.replace("Bearer", "").trim();
-    ;
-    if (!token) {
-      return responseData(
-        res,
-        "",
-        401,
-        false,
-        "Unauthorized: No token provided"
-      );
+    const user = req.user; // Access user from req object
+
+    if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
+      return next(); // Proceed to the next middleware
+    } else {
+      return responseData(res, "", 401, false, "Unauthorized: You are not able to access");
     }
-
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-
-    const user = await registerModel.findById(decodedToken?.id);
-
-
-    if (!user) {
-      return responseData(res, "", 401, false, "Unauthorized: User not found");
-    }
-
-    if (user.role === "ADMIN" || user.role === "Senior Architect" || user.role ==='ORGADMIN' || user.role === 'SUPERADMIN' )
-  {
-    next(); // Proceed to the next 
-  }
-  else{
-    return responseData(res, "", 401, false, "Unauthorized: You are not  able to access");
-  }
-   
   } catch (err) {
-   
+    console.error("Error in isAdmin:", err);
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
   }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+};
