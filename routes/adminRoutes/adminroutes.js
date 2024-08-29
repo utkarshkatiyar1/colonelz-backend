@@ -42,7 +42,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember, listUserInProject, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, isAdmin } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, isAdmin } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -59,10 +59,65 @@ import { verify } from "crypto";
 
 // router.use(checkAvailableUserIsAdmin)
 
-
+/**
+ * @swagger
+ * /admin/create/user:
+ *   post:
+ *     summary: Create a new user
+ *     tags: [User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       description: Data for creating a user
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
 router.route("/create/user").post(verifyJWT, CreateUserAccess, createUser);
+
 router.route("/add/member").post(verifyJWT,createAddMember, addMember);
+/**
+ * @swagger
+ * /admin/get/alluser:
+ *   get:
+ *     summary: all active user
+ *     tags: [User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "64c9e9f9c125f2a9a5b5d2d1"
+ *         description: The unique identifier of the user
+ *     responses:
+ *       200:
+ *         description: User fetched  successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
 router.route("/get/alluser").get(verifyJWT, GetUser, getUser);
+
 router.route("/delete/user").delete(verifyJWT,  deleteUserAccess, deleteUser);
 router.route("/get/userlist").get(verifyJWT, getUserList);
 router.route("/archive/user").get(verifyJWT,GetArchiveUser, archiveUser);
@@ -72,7 +127,7 @@ router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
-router.route("/getfile").get(verifyJWT, readFileAccess, checkAvailableUserIsAdmin,  getFileData);
+router.route("/getfile").get(verifyJWT, readFileAccess, checkAvailableUserIsAdminInFile,  getFileData);
 router.route("/get/onefile").get(verifyJWT, readFileAccess, getSingleFileData);
 router.route("/lead/getfile").get(verifyJWT,readLeadAccess, getleadData);
 router.route("/project/getfile").get(verifyJWT,readProjectAccess, getprojectData);
@@ -91,7 +146,7 @@ router.route("/get/companyData").get(verifyJWT,readFileCompanyDataAccess, getCom
 
 
 
-router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmin,  getAllProject);
+router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmininProject,  getAllProject);
 router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
 router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
 router.route("/remove/member/project").post(verifyJWT,deleteAddMember, removeMemberInProject);
@@ -100,7 +155,7 @@ router.route("/get/userlist/project/").get(verifyJWT, listUserInProject);
 
 
 router.route("/create/lead").post(verifyJWT,createLeadAccess, createLead);
-router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdmin,  getAllLead);
+router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIsAdminInLead,  getAllLead);
 router.route("/getsingle/lead").get(verifyJWT, readLeadAccess, getSingleLead);
 router.route("/update/lead").put(verifyJWT, updateLeadAccess, updateFollowLead);
 router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadToProject);
@@ -113,7 +168,7 @@ router.route("/get/userlist/lead").get(verifyJWT, listUserInLead);
 router.route("/create/mom").post(verifyJWT,createMomAccess, createmom);
 router.route("/getall/mom").get(verifyJWT,readMomAccess, getAllMom);
 router.route("/getsingle/mom").get(verifyJWT,readMomAccess, getSingleMom);
-router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailableUserIsAdmin, getAllProjectMom);
+router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailableUserIsAdminInMom, getAllProjectMom);
 router.route("/send/momdata").post(verifyJWT, sendPdf);
 router.route("/update/mom").put(verifyJWT, updateMom);
 

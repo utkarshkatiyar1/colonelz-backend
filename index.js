@@ -17,6 +17,9 @@ import session from "express-session";
 import expressWinston from "express-winston"
 import winston, { format } from "winston";
 
+import setupSwaggerDocs from "./swagger.js";
+
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -133,9 +136,11 @@ app.use(expressWinston.logger({
   expressFormat: false, // Use the default express/morgan style formatting
 }));
 
+
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
+setupSwaggerDocs(app);
 server.listen(8000, async () => {
   await connect();
   console.log("Connected to backend");

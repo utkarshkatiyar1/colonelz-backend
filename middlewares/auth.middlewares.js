@@ -53,6 +53,31 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
       }
     });
 
+
+    // Prepare response data
+    const response = {
+      
+      NotificationData: user.data[0].notificationData || [],
+     
+    };
+
+    return responseData(res, "User data found", 200, true, "", response);
+  } catch (err) {
+    console.error("Error in checkAvailableUserIsAdmin:", err);
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+};
+export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
+  try {
+    const user = req.user; // Access user from req object
+
+    if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
+      return next();
+    }
+
+    // Schedule a cron job to send a notification at midnight
+ 
+
     // Collect user-related data
     const projectIds = user.data[0].projectData.map(item => item.project_id);
     const leadIds = user.data[0].leadData.map(item => item.lead_id);
@@ -65,11 +90,7 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
     ]);
 
     // Prepare project data and MomData in a single pass
-    const projectData = [];
-    const MomData = [];
-    const execution = [];
-    const design = [];
-    const completed = [];
+
 
     projects.forEach(project => {
       const projectFiles = files.find(file => file.project_id === project.project_id);
@@ -83,25 +104,6 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
       };
       projectData.push(projectItem);
 
-      project.mom.forEach(mom => {
-        MomData.push({
-          project_id: project.project_id,
-          project_name: project.project_name,
-          mom_id: mom.mom_id,
-          client_name: project.client[0]?.client_name,
-          location: mom.location,
-          meetingDate: mom.meetingdate,
-        });
-      });
-
-      // Categorize projects by status
-      if (project.project_status === "executing") {
-        execution.push(projectItem);
-      } else if (project.project_status === "designing") {
-        design.push(projectItem);
-      } else if (project.project_status === "completed") {
-        completed.push(projectItem);
-      }
     });
 
     // Prepare lead data in a single pass
@@ -120,17 +122,9 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
 
     // Prepare response data
     const response = {
-      total_Project: projects.length,
-      Execution_Phase: execution.length,
-      Design_Phase: design.length,
-      completed: completed.length,
-      active_Project: projects.length - completed.length,
-      projects,
       projectData,
-      NotificationData: user.data[0].notificationData || [],
-      MomData,
       leadData,
-      leads,
+    
     };
 
     return responseData(res, "User data found", 200, true, "", response);
@@ -140,6 +134,140 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
   }
 };
 
+
+export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
+  try {
+    const user = req.user; // Access user from req object
+    
+
+    if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
+      return next();
+    }
+
+ 
+
+    // Collect user-related data
+    
+    const leadIds = user.data[0].leadData.map(item => item.lead_id);
+
+    const [ leads] = await Promise.all([
+      leadModel.find({ lead_id: { $in: leadIds } }).lean(),
+ 
+    ]);
+
+    const response = {
+      leads
+    };
+
+    return responseData(res, "User data found", 200, true, "", response);
+  } catch (err) {
+    console.error("Error in checkAvailableUserIsAdmin:", err);
+    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+  }
+};
+
+
+export const checkAvailableUserIsAdmininProject = async(req, res, next) =>{
+  try{
+    const user = req.user;
+    if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
+      return next();
+    }
+    const projectIds = user.data[0].projectData.map(item => item.project_id);
+    const [projects] = await Promise.all([
+      projectModel.find({ project_id: { $in: projectIds } }).lean(),
+    ]);
+
+    const execution = [];
+    const design = [];
+    const completed = [];
+
+    projects.forEach(project => {
+      
+      const projectItem = {
+        project_name: project.project_name,
+        project_id: project.project_id,
+        client_name: project.client[0]?.client_name,
+        project_type: project.project_type,
+        project_status: project.project_status,
+      
+      };
+      
+
+
+      // Categorize projects by status
+      if (project.project_status === "executing") {
+        execution.push(projectItem);
+      } else if (project.project_status === "designing") {
+        design.push(projectItem);
+      } else if (project.project_status === "completed") {
+        completed.push(projectItem);
+      }
+    });
+
+    const response = {
+      total_Project: projects.length,
+      Execution_Phase: execution.length,
+      Design_Phase: design.length,
+      completed: completed.length,
+      active_Project: projects.length - completed.length,
+      projects,
+   
+   
+    
+    };
+    return responseData(res, "User data found", 200, true, "", response);
+  }
+  catch(err)
+  {
+    console.error("Error in checkAvailableUserIsAdmin:", err);
+    responseData(res, "", 500, false, "Internal Server Error")
+  }
+
+}
+
+export const checkAvailableUserIsAdminInMom = async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
+      return next();
+    }
+    const projectIds = user.data[0].projectData.map(item => item.project_id);
+    const [projects] = await Promise.all([
+      projectModel.find({ project_id: { $in: projectIds } }).lean(),
+    ]);
+
+    const MomData = [];
+
+
+    projects.forEach(project => {
+      const projectFiles = files.find(file => file.project_id === project.project_id);
+      
+
+      project.mom.forEach(mom => {
+        MomData.push({
+          project_id: project.project_id,
+          project_name: project.project_name,
+          mom_id: mom.mom_id,
+          client_name: project.client[0]?.client_name,
+          location: mom.location,
+          meetingDate: mom.meetingdate,
+        });
+      });
+    });
+
+    const response = {
+      MomData,
+
+    };
+    return responseData(res, "User data found", 200, true, "", response);
+  }
+  catch (err) {
+    console.error("Error in checkAvailableUserIsAdmin:", err);
+    responseData(res, "", 500, false, "Internal Server Error")
+  }
+
+}
 // Middleware to check if the user has an admin role
 export const isAdmin = (req, res, next) => {
   try {
