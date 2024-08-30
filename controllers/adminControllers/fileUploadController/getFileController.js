@@ -67,123 +67,85 @@ export const getFileData = async (req, res) => {
 };
 
 
-export const getleadData = async(req,res)=>{
-        try {
-           const lead_id = req.query.lead_id;
-          const data = await fileuploadModel.find({lead_id:lead_id});
-          if(data.length>0)
-          {
-            
+export const getleadData = async (req, res) => {
+  try {
+    const { lead_id } = req.query;
+    const { user } = req;
+    const data = await fileuploadModel.findOne({ lead_id }).lean();
 
-            let files = []
-            for (let i = 0; i < data[0].files.length; i++) {
-              
-              if(data[0].files[i].files.length>0)
-              {
-                files.push({
-                  folder_name: data[0].files[i].folder_name,
-                  updated_date: data[0].files[i].updated_date,
-                  total_files: data[0].files[i].files.length,
-                  files: data[0].files[i].files
-                })
-              }
-              else{
-                files.push({
-                  folder_name: data[0].files[i].folder_name,
-                  updated_date: data[0].files[i].updated_date,
-                  total_files: 0,
-                  files: []
-                })
-              }
-             
-
-            }
-            responseData(
-              res,
-              `Get File  Data Successfully !`,
-              200,
-              true,
-              "",
-              files
-            );
-          }
-          if(data.length<1)
-          {
-            responseData(
-              res,
-              "Data Not Found! ",
-              200,
-              true,
-              "",
-
-            );
-          }
-          
-        }
-        catch(error)
-        {
-responseData(res,"",500,false,"Internal Server Error",error)
-        }
-}
-
-export const getprojectData = async(req,res)=>{
-try{
-  const project_id = req.query.project_id;
-  const data = await fileuploadModel.find({project_id:project_id});
-  if(data.length>0)
-  {
-    
-    let files =[]
-    for(let i=0;i<data[0].files.length;i++)
-    {
-      if(data[0].files[i].files.length>0)
-      {
-        files.push({
-          folder_name: data[0].files[i].folder_name,
-          updated_date: data[0].files[i].updated_date,
-          total_files: data[0].files[i].files.length,
-          files: data[0].files[i].files
-        })
-      }
-      else{
-        files.push({
-          folder_name: data[0].files[i].folder_name,
-          updated_date: data[0].files[i].updated_date,
-          total_files: 0,
-          files: []
-        })
-      }
-     
-
+    if (!data || data.files.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
     }
-    responseData(
-      res,
-      `Get File  Data Successfully !`,
-      200,
-      true,
-      "",
-      files
-    );
+
+    const files = data.files.map(file => {
+      const foldername = file.folder_name.toLowerCase();
+
+      
+      if (foldername === 'contract') {
+        if (!user.access?.contract || !user.access.contract.includes('read')) {
+          return null;
+        }
+      }
+
+      return {
+        folder_name: file.folder_name,
+        updated_date: file.updated_date,
+        total_files: file.files.length,
+        files: file.files
+      };
+    }).filter(file => file !== null);
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", files);
+
+  } catch (error) {
+    console.error(error);
+    responseData(res, "", 500, false, "Internal Server Error", error);
   }
-  if(data.length<1)
-  {
-    responseData(
-      res,
-      "Data Not Found!",
-      200,
-      true,
-      " ",
+};
 
-    );
+
+
+export const getprojectData = async (req, res) => {
+  try {
+    const project_id = req.query.project_id;
+    const { user } = req;
+    const data = await fileuploadModel.findOne({ project_id }).lean();
+
+    if (!data || data.files.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
+    }
+
+    const files = data.files.map(file => {
+      const foldername = file.folder_name.toLowerCase();
+
+
+      if (foldername === 'contract') {
+        if (!user.access?.contract || !user.access.contract.includes('read')) {
+          return null;
+        }
+      }
+      if (foldername === 'quotation') {
+        if (!user.access?.quotation || !user.access.quotation.includes('read')) {
+          return null;
+        }
+      }
+
+      return {
+        folder_name: file.folder_name,
+        updated_date: file.updated_date,
+        total_files: file.files.length,
+        files: file.files
+      };
+    }).filter(file => file !== null);
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", files);
+
+  } catch (error) {
+    console.error(error);
+    responseData(res, "", 500, false, "Internal Server Error", error);
   }
+};
 
-}
-catch(error)
-{
-responseData(res,"",500,false,"Internal Server Error",error)
-}
-
-}
 
 export const getCompanyData = async(req,res) =>{
   try {
