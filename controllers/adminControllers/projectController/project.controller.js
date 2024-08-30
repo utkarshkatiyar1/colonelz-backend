@@ -227,6 +227,7 @@ export const updateProjectDetails = async (req, res) => {
   const description = req.body.description;
   const designer = req.body.designer;
   const user_id = req.body.user_id;
+  const client_email = req.body.client_email;
 
   if (!project_ID) {
     responseData(res, "", 400, false, " Project ID is required.", []);
@@ -243,6 +244,10 @@ export const updateProjectDetails = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user id is required.", []);
   }
+  else if(!onlyEmailValidation(client_email) && client_email.length >5)
+  {
+    responseData(res, "", 400, false, "client email is invalid", []);
+  }
 
   //  *********** add other validation **********//
   else {
@@ -256,7 +261,7 @@ export const updateProjectDetails = async (req, res) => {
       const project_find = await projectModel.find({ project_id: project_ID });
       if (project_find.length > 0) {
         const project_update = await projectModel.findOneAndUpdate(
-          { project_id: project_ID },
+          { project_id: project_ID, 'client.client_email': project_find[0].client[0].client_email },
           {
             $set: {
               project_budget: project_budget,
@@ -264,7 +269,8 @@ export const updateProjectDetails = async (req, res) => {
               timeline_date: timeline_date,
               project_end_date: timeline_date,
               description: description,
-              designer: designer
+              designer: designer,
+              'client.$.client_email':client_email
             },
 
             $push: {

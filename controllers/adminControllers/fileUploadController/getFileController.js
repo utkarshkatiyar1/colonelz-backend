@@ -86,6 +86,11 @@ export const getleadData = async (req, res) => {
           return null;
         }
       }
+      if (foldername === 'quotation') {
+        if (!user.access?.quotation || !user.access.quotation.includes('read')) {
+          return null;
+        }
+      }
 
       return {
         folder_name: file.folder_name,
@@ -124,7 +129,7 @@ export const getprojectData = async (req, res) => {
           return null;
         }
       }
-      if (foldername === 'quotation') {
+      if (foldername === 'quotation' || foldername === 'procurement data') {
         if (!user.access?.quotation || !user.access.quotation.includes('read')) {
           return null;
         }
