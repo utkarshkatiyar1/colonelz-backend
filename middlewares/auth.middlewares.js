@@ -112,7 +112,7 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
     // Prepare lead data
     const leadData = leads.map(lead => ({
       lead_id: lead.lead_id,
-      lead_Name: lead.name,
+      lead_name: lead.name,
       lead_email: lead.email,
       lead_status: lead.status,
       lead_date: lead.date,
