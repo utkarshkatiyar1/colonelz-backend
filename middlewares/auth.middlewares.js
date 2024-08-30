@@ -106,7 +106,7 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
       client_name: project.client[0]?.client_name,
       project_type: project.project_type,
       project_status: project.project_status,
-      files: projectFilesMap.get(project.project_id) || [],
+    
     }));
 
     // Prepare lead data
@@ -114,10 +114,9 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
       lead_id: lead.lead_id,
       lead_Name: lead.name,
       lead_email: lead.email,
-      lead_phone: lead.phone,
       lead_status: lead.status,
       lead_date: lead.date,
-      files: leadFilesMap.get(lead.lead_id) || [],
+     
     }));
 
     // Prepare and send response data
@@ -149,9 +148,18 @@ export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
 
     // Fetch the leads in a single query
     const leads = await leadModel.find({ lead_id: { $in: leadIds } }).lean();
+    const formattedLeads = leads.map(lead => ({
+      name: lead.name,
+      lead_id: lead.lead_id,
+      email: lead.email,
+      phone: lead.phone,
+      location: lead.location,
+      status: lead.status,
+      date: lead.date
+    }));
 
     // Return the leads in the response
-    return responseData(res, "User data found", 200, true, "", { leads });
+    return responseData(res, "User data found", 200, true, "", { leads: formattedLeads });
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdminInLead:", err);
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
@@ -173,10 +181,34 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
     const projectIds = data?.[0]?.projectData.map(item => item.project_id) || [];
 
     // Fetch projects in a single query
-    const projects = await projectModel.find({ project_id: { $in: projectIds } }).lean();
+    const projects1 = await projectModel.find({ project_id: { $in: projectIds } }).lean();
 
+    const projectData = projects1.map((project) => {
+      const {
+        project_id,
+        project_name,
+        project_status,
+        project_start_date,
+        project_end_date,
+        project_type,
+        designer,
+        client,
+      } = project;
+
+      return {
+        project_id,
+        project_name,
+        project_status,
+        project_start_date,
+        project_end_date,
+        client_name: client[0]?.client_name || "",
+        project_type,
+        designer,
+        client,
+      };
+    });
     // Categorize projects by status
-    const categorizedProjects = projects.reduce(
+    const categorizedProjects = projects1.reduce(
       (acc, project) => {
         const projectItem = {
           project_name: project.project_name,
@@ -205,7 +237,7 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
       { execution: [], design: [], completed: [] }
     );
 
-    const totalProjects = projects.length;
+    const totalProjects = projects1.length;
     const completedProjects = categorizedProjects.completed.length;
     const response = {
       total_Project: totalProjects,
@@ -213,7 +245,7 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
       Design_Phase: categorizedProjects.design.length,
       completed: completedProjects,
       active_Project: totalProjects - completedProjects,
-      projects,
+      projects: projectData,
     };
 
     return responseData(res, "User data found", 200, true, "", response);

@@ -33,7 +33,7 @@ export const getFileData = async (req, res) => {
             client_name: check_project.client[0]?.client_name,
             project_type: check_project.project_type,
             project_status: check_project.project_status,
-            files: element.files,
+          
           });
         }
       }
@@ -45,10 +45,9 @@ export const getFileData = async (req, res) => {
             lead_id: element.lead_id,
             lead_name: element.lead_name,
             lead_email: check_lead.email,
-            lead_phone: check_lead.phone,
             lead_status: check_lead.status,
             lead_date: check_lead.date,
-            files: element.files,
+           
           });
         }
       }

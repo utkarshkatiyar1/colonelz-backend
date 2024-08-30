@@ -302,11 +302,22 @@ export const getAllLead = async (req, res) => {
   try {
     const leads = await leadModel.find({}).sort({ createdAt: -1 }).lean();
 
-    responseData(res, "All Lead Data", 200, true, "", { leads });
+    const formattedLeads = leads.map(lead => ({
+      name: lead.name,
+      lead_id: lead.lead_id,
+      email: lead.email,
+      phone: lead.phone,
+      location: lead.location,
+      status: lead.status,
+      date: lead.date
+    }));
+
+    responseData(res, "All Lead Data", 200, true, "", { leads: formattedLeads });
   } catch (error) {
     responseData(res, "", 500, false, error.message);
   }
 };
+
 
 
 export const getSingleLead = async (req, res) => {
