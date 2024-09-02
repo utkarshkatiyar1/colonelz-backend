@@ -216,7 +216,7 @@ export const deleteUser = async (req, res) => {
         }
         else {
             if (id === user_id) {
-                return responseData(res, "", 400, false, "You are not delete self");
+                return responseData(res, "", 400, false, "You can not delete yourself");
             }
 
             const user = await registerModel.findOne({ _id: user_id, status: true })

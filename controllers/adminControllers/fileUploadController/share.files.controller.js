@@ -91,14 +91,14 @@ export const shareFile = async (req, res) => {
             }
 
             const mailOptions = {
-                from:check_user.email,
+                from:"info@colonelz.com",
                 to:email, 
                 cc: cc,
                 bcc: bcc,
                 subject: subject,
                 html: body,
                 attachments: attachments,
-                replyTo: check_user.email 
+                replyTo: "info@colonelz.com" 
             };
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
