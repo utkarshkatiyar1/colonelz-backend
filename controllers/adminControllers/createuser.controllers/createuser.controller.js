@@ -239,29 +239,31 @@ export const deleteUser = async (req, res) => {
 }
 
 
-export const archiveUser = async(req,res) =>{
-    try{
-       const findDeleteUser = await registerModel.find({status: false})
-       if(findDeleteUser.length<1)
-       {
-           return responseData(res, "", 404, false, "No User Found");
-       }
-       else{
-           const filteredUsers = findDeleteUser.reduce((acc, user) => {
-               if (user) {
-                   acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id, access:user.access });
-               }
-               return acc;
-           }, []);
-           return responseData(res, "User Found", 200, true, "", filteredUsers);
-       }
+export const archiveUser = async (req, res) => {
+    try {
+        // Fetch users with status: false and project only the necessary fields
+        const users = await registerModel.find({ status: false }, 'username role email _id access').lean();
+
+        if (users.length === 0) {
+            return responseData(res, "", 404, false, "No User Found");
+        }
+
+        // Transform users data into the desired structure
+        const filteredUsers = users.map(user => ({
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            UserId: user._id,
+            access: user.access
+        }));
+
+        return responseData(res, "User Found", 200, true, "", filteredUsers);
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
     }
-    catch(err)
-    {
-        console.log(err)
-        return responseData(res, "", 500, false, `${err}`);
-    }
-} 
+};
+
 
 export const restoreUser = async(req,res) =>{
     try{

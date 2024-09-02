@@ -8,7 +8,7 @@ const options = {
         info: {
             title: 'API Documentation',
             version: '1.0.0',
-            description: 'API documentation for the project',
+            description: 'API documentation for the Colonelz Project',
         },
     },
     // apis: ['./routes/**/*.js'],

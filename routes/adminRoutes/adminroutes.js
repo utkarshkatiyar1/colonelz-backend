@@ -61,7 +61,7 @@ import { verify } from "crypto";
 
 /**
  * @swagger
- * /admin/create/user:
+ * /v1/api/admin/create/user:
  *   post:
  *     summary: Create a new user
  *     tags: [User Management]
@@ -94,7 +94,7 @@ router.route("/create/user").post(verifyJWT, CreateUserAccess, createUser);
 router.route("/add/member").post(verifyJWT,createAddMember, addMember);
 /**
  * @swagger
- * /admin/get/alluser:
+ * /v1/api/admin/get/alluser:
  *   get:
  *     summary: all active user
  *     tags: [User Management]
@@ -117,12 +117,110 @@ router.route("/add/member").post(verifyJWT,createAddMember, addMember);
  *         description: Unauthorized
  */
 router.route("/get/alluser").get(verifyJWT, GetUser, getUser);
+/**
+ * @swagger
+ * /v1/api/admin/delete/user:
+ *   delete:
+ *     summary: Soft delete a user and store in archive
+ *     tags: [User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "64c9e9f9c125f2a9a5b5d2d1"
+ *         description: The unique identifier of the user to be deleted
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
 
 router.route("/delete/user").delete(verifyJWT,  deleteUserAccess, deleteUser);
+
 router.route("/get/userlist").get(verifyJWT, getUserList);
+/**
+ * @swagger
+ * /v1/api/admin/archive/user:
+ *   get:
+ *     summary: all archive user
+ *     tags: [User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User fetched  successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
 router.route("/archive/user").get(verifyJWT,GetArchiveUser, archiveUser);
+/**
+ * @swagger
+ * /v1/api/admin/restore/user:
+ *   post:
+ *     summary: restore user from archive
+ *     tags: [User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       description: restore user from archive
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: string
+ *                 example: "64c9e9f9c125f2a9a5b5d2d1"
+ 
+ *     responses:
+ *       200:
+ *         description: User restore successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
 router.route("/restore/user").post(verifyJWT,restoreUserAccess, restoreUser);
+/**
+ * @swagger
+ * /v1/api/admin/delete/archive/user:
+ *   delete:
+ *     summary:  delete a user from archive
+ *     tags: [User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "64c9e9f9c125f2a9a5b5d2d1"
+ *         description: The unique identifier of the user to be deleted
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
 router.route("/delete/archive/user").delete(verifyJWT, deleteArchiveUserAccess, deleteUserArchive);
+
 router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
 
 
@@ -145,9 +243,65 @@ router.route("/get/companyData").get(verifyJWT,readFileCompanyDataAccess, getCom
 
 
 
-
+/**
+ * @swagger
+ * /v1/api/admin/getall/project:
+ *   get:
+ *     summary: all project Details
+ *     tags: [Project Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "64c9e9f9c125f2a9a5b5d2d1"
+ *         description: The unique identifier of the user
+ *     responses:
+ *       200:
+ *         description: Project data fetched  successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
 router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmininProject,  getAllProject);
+/**
+ * @swagger
+ * /v1/api/admin/getsingle/project:
+ *   get:
+ *     summary: Get single project details
+ *     tags: [Project Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "64c9e9f9c125f2a9a5b5d2d1"
+ *         description: The unique identifier of the user
+ *       - in: query
+ *         name: project_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "COLP-123456"
+ *         description: The unique identifier of the project
+ *     responses:
+ *       200:
+ *         description: Project details fetched successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
+
 router.route("/getsingle/project").get(verifyJWT,readProjectAccess, getSingleProject);
+
 router.route("/update/project").put(verifyJWT,updateProjectAccess, updateProjectDetails);
 router.route("/remove/member/project").post(verifyJWT,deleteAddMember, removeMemberInProject);
 router.route("/get/user/project").get(verifyJWT, getProjectUser);
