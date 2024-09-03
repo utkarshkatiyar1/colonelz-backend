@@ -11,7 +11,7 @@ function generateStrongPassword() {
     const length = 6;
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
     let password = "";
-    for (let i = 0; i < length; ++i) {
+    for (let i = 0; i < length; i++) {
         const randomIndex = Math.floor(Math.random() * charset.length);
         password += charset[randomIndex];
     }
@@ -57,6 +57,7 @@ export const createUser = async (req, res) => {
 
 
                         const password = generateStrongPassword();
+                       
                      
 
                         bcrypt.hash(password, 10, async function (err, hash) {
@@ -169,56 +170,63 @@ export const createUser = async (req, res) => {
 export const getUser = async (req, res) => {
     try {
         const userId = req.query.id;
+
         if (!userId) {
             return responseData(res, "", 400, false, "User Id is required");
         }
-        else {
-            const check_user = await registerModel.findById(userId);
-            if (check_user) {
-                const users = await registerModel.find({ $and: [{ status: true }, { organization: check_user.organization }] })
 
-                if (users) {
-                    const filteredUsers = users.reduce((acc, user) => {
-                        if (user) {
-                            acc.push({ username: user.username, role: user.role, email: user.email, UserId: user._id });
-                        }
-                        return acc;
-                    }, []);
+        const check_user = await registerModel.findById(userId);
 
-
-                    return responseData(res, "all user found", 200, true, "", filteredUsers);
-
-                }
-                else {
-                    return responseData(res, "", 404, false, "No User Found");
-                }
-            }
-            else {
-                return responseData(res, "", 400, false, "You are not allowed to perform this action");
-            }
+        if (!check_user) {
+            return responseData(res, "", 400, false, "You are not allowed to perform this action");
         }
 
-    }
-    catch (err) {
+        const users = await registerModel.find({ status: true, organization: check_user.organization }).select('username role email _id');
+
+        if (!users.length) {
+            return responseData(res, "", 404, false, "No User Found");
+        }
+
+        const filteredUsers = users.map(user => ({
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            UserId: user._id,
+        }));
+
+        return responseData(res, "All users found", 200, true, "", filteredUsers);
+
+    } catch (err) {
         return responseData(res, "", 500, false, err.message);
     }
+};
 
-}
 
 export const deleteUser = async (req, res) => {
     try {
         const user_id = req.query.userId;
+        const id = req.query.id;
+        
         if (!user_id) {
             return responseData(res, "", 400, false, "User Id is required");
         }
+        else if(!id)
+        {
+            return responseData(res, "", 400, false, "Id is required");
+        }
         else {
+            if (id === user_id) {
+                return responseData(res, "", 400, false, "You can not delete yourself");
+            }
+
             const user = await registerModel.findOne({ _id: user_id, status: true })
             if (!user) {
                 return responseData(res, "", 404, false, "User Not Found");
             }
             else {
+                
                 const deletedUser = await registerModel.findOneAndUpdate({ _id: user_id }, { status: false }, { new: true })
-                const deleteUserFormLongin = await loginModel.deleteMany({ userID: user_id })
+                await loginModel.deleteMany({ userID: user_id })
                 return responseData(res, "User Deleted Successfully", 200, true, "");
             }
         }
@@ -228,4 +236,82 @@ export const deleteUser = async (req, res) => {
     catch (err) {
         return responseData(res, "", 500, false, err.message);
     }
+}
+
+
+export const archiveUser = async (req, res) => {
+    try {
+        // Fetch users with status: false and project only the necessary fields
+        const users = await registerModel.find({ status: false }, 'username role email _id access').lean();
+
+        if (users.length === 0) {
+            return responseData(res, "", 404, false, "No User Found");
+        }
+
+        // Transform users data into the desired structure
+        const filteredUsers = users.map(user => ({
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            UserId: user._id,
+            access: user.access
+        }));
+
+        return responseData(res, "User Found", 200, true, "", filteredUsers);
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+};
+
+
+export const restoreUser = async(req,res) =>{
+    try{
+        const user_id = req.body.user_id;
+        if(!user_id)
+        {
+            return responseData(res, "", 400, false, "User Id is required");
+        }
+        else{
+            const user = await registerModel.findOne({ _id: user_id, status: false })
+            if (!user) {
+                return responseData(res, "", 404, false, "User Not Found");
+            }
+            else {
+             await registerModel.findOneAndUpdate({ _id: user_id }, { status: true }, { new: true })
+             return responseData(res, "User Restored Successfully", 200, true, "");
+              
+        }
+    }
+    }
+    catch(err)
+    {
+        console.log(err)
+        return responseData(res, "", 500, false, `${err}`);
+    }
+}
+
+export const deleteUserArchive = async(req,res) =>{
+    try{
+        const user_id = req.body.user_id;
+        if(!user_id)
+        {
+            return responseData(res, "", 400, false, "User Id is required");
+        }
+        else{
+            const user = await registerModel.findOne({ _id: user_id, status: false })
+            if (!user) {
+                return responseData(res, "", 404, false, "User Not Found");
+            }
+            else {
+             await registerModel.findOneAndDelete({ _id: user_id })
+             return responseData(res, "User Deleted Successfully", 200, true, "");
+             }
+}
+}
+catch(err)
+{
+        console.log(err)
+        return responseData(res, "", 500, false, `${err}`);   
+}
 }

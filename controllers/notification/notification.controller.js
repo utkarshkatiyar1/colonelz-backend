@@ -262,43 +262,41 @@ cron.schedule(" 0 0 */14 * *", async () => {
 
 
 export const getNotification = async (req, res) => {
-
-
   try {
     const userId = req.query.userId;
-    const find_user = await registerModel.findOne({ _id: userId })
-    if (find_user) {
 
-      if (find_user.role === "ADMIN" || find_user.role === "Senior Architect") {
-        const find_notification = await notificationModel.find({})
-        if (find_notification.length > 0) {
-          const response = {
-            NotificationData: find_notification.reverse()
-          }
-          responseData(res, "notification Data", 200, true, "", response)
-        }
-        else {
-          responseData(res, "", 404, false, "No notification found")
-        }
-      }
-    }
-    else {
-      responseData(res, "", 404, false, "User not found")
+    // Validate userId
+    if (!userId) {
+      return responseData(res, "", 400, false, "Bad Request: User ID is required");
     }
 
-  }
-  catch (error) {
+    // Fetch the user using a lean query
+    const find_user = await registerModel.findById(userId).lean();
+
+    if (!find_user) {
+      return responseData(res, "", 404, false, "User not found");
+    }
+
+    // Fetch notifications
+    const find_notification = await notificationModel.find({}).lean();
+
+    if (!find_notification.length) {
+      return responseData(res, "", 404, false, "No notification found");
+    }
+
+    // Prepare and return the response
+    const response = {
+      NotificationData: find_notification.reverse(),
+    };
+
+    return responseData(res, "Notification Data", 200, true, "", response);
+
+  } catch (error) {
     console.error("Error fetching notification data:", error);
-    responseData(
-      res,
-      "",
-      500,
-      false,
-      "Error fetching notification data"
-    );
+    return responseData(res, "", 500, false, "Error fetching notification data");
   }
+};
 
-}
 
 export const updateNotification = async (req, res) => {
   try {

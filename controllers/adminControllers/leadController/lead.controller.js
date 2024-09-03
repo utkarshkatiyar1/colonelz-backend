@@ -7,10 +7,12 @@ import {
   onlyAlphabetsValidation,
   onlyEmailValidation,
   onlyPhoneNumberValidation,
+  validateOnlyNumbers,
 } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import AWS from "aws-sdk";
 
+import validator from "validator";
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY,
@@ -145,14 +147,22 @@ export const createLead = async (req, res) => {
       "",
       401,
       false,
-      "name should be greater than 3 characters."
+      "name should be greater than 3 characters And number and special characters not allow"
     );
 
   } else if (!userId) {
     responseData(res, "", 401, false, "userId is required.")
   }
-  else if (!onlyEmailValidation(email) && email.length > 5) {
-    responseData(res, "", 401, false, "email is invalid.");
+  else if (!onlyEmailValidation(email)) {
+    const [localPart, domainPart] = email.split('@');
+
+    // Check if the local part is too short or the domain part is too short
+    if (localPart.length < 3 || domainPart.length < 3) {
+      responseData(res, "", 401, false, "email is invalid.");
+    } else {
+      // Further checks (like disposable email checks) can be added here
+      responseData(res, "", 200, true, "email is valid.");
+    }
   } else if (!onlyPhoneNumberValidation(phone)) {
     responseData(res, "", 401, false, "phone number  is  invalid.");
   } else if (!location) {
@@ -168,7 +178,7 @@ export const createLead = async (req, res) => {
       "",
       401,
       false,
-      "lead manager should be greater than 3 characters."
+      "lead manager should be greater than 3 characters And number and special characters not allow"
     )
 
   }
@@ -182,7 +192,7 @@ export const createLead = async (req, res) => {
       if (check_email.length < 1) {
         const lead_id = generateSixDigitNumber();
         const check_user = await registerModel.findById(userId)
-        if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect' || check_user.role === 'SUPERADMIN') {
+        if (check_user) {
 
           let fileUrls = []
           const lead = new leadModel({
@@ -240,13 +250,15 @@ export const createLead = async (req, res) => {
             ]
 
           })
-          if (check_user.role === 'Project Architect') {
-            const add_project_in_user = await registerModel.findOneAndUpdate(
+
+          
+
+             await registerModel.findOneAndUpdate(
               { _id: userId },
               {
                 $push: {
                   "data.$[outer].leadData": {
-                    lead_id: lead_id,
+                    lead_id:lead_id,
                     role: check_user.role,
                   }
                 }
@@ -255,7 +267,7 @@ export const createLead = async (req, res) => {
                 arrayFilters: [{ "outer.leadData": { $exists: true } }]
               }
             );
-          }
+          
 
 
           const lead_data = await lead.save();
@@ -271,10 +283,10 @@ export const createLead = async (req, res) => {
         else {
           responseData(
             res,
-            "You have not access to create lead",
+            "",
             400,
             false,
-            "",
+            "You have not access to create lead",
           );
         }
       }
@@ -288,16 +300,25 @@ export const createLead = async (req, res) => {
 
 export const getAllLead = async (req, res) => {
   try {
-    const leads = await leadModel.find({}).sort({ createdAt: -1 });
-    const response = {
-      leads: leads
-    }
+    const leads = await leadModel.find({}).sort({ createdAt: -1 }).lean();
 
-    responseData(res, "All Lead Data", 200, true, "", response);
+    const formattedLeads = leads.map(lead => ({
+      name: lead.name,
+      lead_id: lead.lead_id,
+      email: lead.email,
+      phone: lead.phone,
+      location: lead.location,
+      status: lead.status,
+      date: lead.date
+    }));
+
+    responseData(res, "All Lead Data", 200, true, "", { leads: formattedLeads });
   } catch (error) {
-    responseData(res, 500, error.message);
+    responseData(res, "", 500, false, error.message);
   }
 };
+
+
 
 export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
@@ -462,6 +483,34 @@ export const leadToProject = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user_id is required", []);
   }
+  else if (!onlyAlphabetsValidation(client_name)) {
+    responseData(res, "", 400, false, "client_name should be cgaracters", []);
+  }
+  else if (!onlyEmailValidation(client_email)) {
+    responseData(res, "", 400, false, "client_email is required", []);
+  }
+  else if (!onlyPhoneNumberValidation(client_contact)) {
+    responseData(res, "", 400, false, "client_contact should be  10 digit number", []);
+  }
+  else if (!location) {
+    responseData(res, "", 400, false, "location is required", []);
+  }
+  else if (!validateOnlyNumbers(project_budget)) {
+    responseData(res, "", 400, false, "project_budget should be number", []);
+  }
+  else if (!project_type) {
+    responseData(res, "", 400, false, "project_type is required", []);
+  }
+  else if (!project_name) {
+    responseData(res, "", 400, false, "project_name should be required", []);
+  }
+  else if (!project_status) {
+    responseData(res, "", 400, false, "project_status is required", []);
+    
+  }
+  else if(!onlyAlphabetsValidation(designer)){
+    responseData(res, "", 400, false, "designer  should be characters ", []);
+  }
   else {
     try {
       const check_user = await registerModel.findById(user_id)
@@ -563,6 +612,20 @@ export const leadToProject = async (req, res) => {
                       }
                     }
                   )
+                  await registerModel.findOneAndUpdate(
+                    { _id: user_id },
+                    {
+                      $push: {
+                        "data.$[outer].projectData": {
+                          project_id: projectID,
+                          role: check_user.role,
+                        }
+                      }
+                    },
+                    {
+                      arrayFilters: [{ "outer.projectData": { $exists: true } }]
+                    }
+                  );
                   responseData(
                     res,
                     "project created successfully",
@@ -669,6 +732,20 @@ export const leadToProject = async (req, res) => {
                     }
                   }
                 )
+                await registerModel.findOneAndUpdate(
+                  { _id: user_id },
+                  {
+                    $push: {
+                      "data.$[outer].projectData": {
+                        project_id: projectID,
+                        role: check_user.role,
+                      }
+                    }
+                  },
+                  {
+                    arrayFilters: [{ "outer.projectData": { $exists: true } }]
+                  }
+                );
                 responseData(
                   res,
                   "project created successfully",
@@ -729,7 +806,7 @@ export const leadToMultipleProject = async (req, res) => {
           responseData(res, "", 400, false, " Invalid user Id", []);
         }
         else {
-          if (check_user.role === 'ADMIN' || check_user.role === 'Senior Architect' || check_user.role === 'Project Architect') {
+          if (check_user) {
             const check_lead = await leadModel.findOne({ lead_id: lead_id })
             if (!check_lead) {
               responseData(res, "", 404, false, "lead not found", []);
@@ -763,24 +840,6 @@ export const leadToMultipleProject = async (req, res) => {
                 ]
 
               })
-              if (check_user.role === 'Project Architect') {
-                const add_project_in_user = await registerModel.findOneAndUpdate(
-                  { _id: user_id },
-                  {
-                    $push: {
-                      "data.$[outer].leadData": {
-                        lead_id: lead_id,
-                        role: check_user.role,
-                      }
-                    }
-                  },
-                  {
-                    arrayFilters: [{ "outer.leadData": { $exists: true } }]
-                  }
-                );
-              }
-
-
               await leadModel.findOneAndUpdate(
                 { lead_id: lead_id },
                 {
@@ -807,10 +866,10 @@ export const leadToMultipleProject = async (req, res) => {
           else {
             responseData(
               res,
-              "You have not access to activate lead  for another project",
+              "",
               400,
               false,
-              "",
+              "You have not access to activate lead  for another project",
             );
           }
         }
@@ -819,10 +878,10 @@ export const leadToMultipleProject = async (req, res) => {
       else {
         responseData(
           res,
-          "lead already activate",
+          "",
           400,
           false,
-          "",
+          "lead already activate",
         );
       }
     }

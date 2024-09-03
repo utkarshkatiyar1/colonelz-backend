@@ -1,3 +1,4 @@
+
 import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
@@ -14,6 +15,11 @@ import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import nodemailer from "nodemailer";
 import session from "express-session";
+import expressWinston from "express-winston"
+import winston, { format } from "winston";
+
+import setupSwaggerDocs from "./swagger.js";
+
 
 dotenv.config();
 
@@ -91,21 +97,54 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-// const isAuthenticated = (req, res, next) => {
-//   console.log(req.session)
-//   if (req.session.user) {
 
-//     next();
-//   } else {
 
-//     res.status(401).send('Unauthorized');
-//   }
-// };
+const tableFormat = format.printf(({ level, message, meta }) => {
+  const req = meta.req;
+  const res = meta.res;
+
+  return `
+    ------------------------------------------------------------------------
+    | Level: ${level} | Method: ${req.method} | Status: ${res.statusCode} |
+    ------------------------------------------------------------------------
+    | URL: ${req.originalUrl} |Query: ${JSON.stringify(req.query)} |
+    ------------------------------------------------------------------------
+    | Response Time: ${meta.responseTime}ms |
+    ------------------------------------------------------------------------
+    `;
+  // ------------------------------------------------------------------------
+  //   | Query: ${ JSON.stringify(req.query) } |
+  //   ------------------------------------------------------------------------
+  //   | Headers: ${ JSON.stringify(req.headers, null, 2) } |
+});
+const logger = winston.createLogger({
+  format: format.combine(
+    format.colorize(),
+    format.timestamp(),
+    tableFormat
+  ),
+  transports: [
+    new winston.transports.Console()
+  ]
+});
+
+
+app.use(expressWinston.logger({
+  winstonInstance: logger,
+  meta: true, // Whether to log the metadata about the request (default: true)
+  msg: "HTTP {{req.method}} {{req.url}}", // Custom message
+  colorize: true, // Colorize the output (default: false)
+  expressFormat: false, // Use the default express/morgan style formatting
+}));
+
 
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
+setupSwaggerDocs(app);
 server.listen(8000, async () => {
   await connect();
   console.log("Connected to backend");
 });
+
+

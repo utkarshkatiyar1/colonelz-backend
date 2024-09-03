@@ -34,7 +34,7 @@ export const archive = async (req, res) => {
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
-            if (check_user.role === "ADMIN" || check_user.role === "Senior Architect") {
+             else if (check_user) {
                 const archive = await arvhiveModel.find({})
                 if (archive.length < 1) {
                     responseData(res, "No data found", 200, false, "", []);
@@ -152,7 +152,7 @@ export const deletearchive = async (req, res) => {
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
-            if (check_user.role === "ADMIN") {
+            if (check_user) {
                 let data;
                 if (type === "template") {
                     const folder_name = req.body.folder_name

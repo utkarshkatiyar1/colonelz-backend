@@ -93,3 +93,100 @@ export const addMember = async (req, res) => {
     }
 }
 
+export const removeMemberInProject = async (req, res) => {
+    try {
+
+
+        const project_id = req.body.project_id;
+        const username = req.body.username;
+
+        if (!project_id) {
+            responseData(res, "", 400, false, "Project id is required");
+        }
+        else if (!username) {
+            responseData(res, "", 400, false, "Username is required");
+        }
+        else {
+            const find_lead = await projectModel.findOne({ project_id: project_id });
+            if (find_lead) {
+                const find_user = await registerModel.findOne({ username: username });
+                // console.log(find_user)
+                if (find_user) {
+                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.projectData.project_id":project_id });
+                    if (find_user_in_lead) {
+                        const remove_lead_in_user = await registerModel.findOneAndUpdate(
+                            { username: username },
+                            {
+                                $pull: {
+                                    "data.$[outer].projectData": {
+                                        project_id: project_id,
+                                    }
+                                }
+                            },
+                            { arrayFilters: [{ "outer.projectData": { $exists: true } }] }
+                        );
+                        if (remove_lead_in_user) {
+                            responseData(res, "Member removed successfully", 200, true, "");
+                        } else {
+                            responseData(res, "", 404, false, "Member not found");
+                        }
+                    } else {
+                        responseData(res, "", 404, false, "Member not found");
+                    }
+                } else {
+                    responseData(res, "", 404, false, "User not found");
+                }
+            } else {
+                responseData(res, "", 404, false, "Project not found");
+            }
+
+        }
+    }
+    catch (err) {
+        console.log(err)
+        responseData(res, "", 500, false, "Invernal  Server Error")
+    }
+}
+
+export const listUserInProject = async (req, res) => {
+    try {
+        const project_id = req.query.project_id;
+
+        if (!project_id) {
+            return responseData(res, "", 400, false, "Project ID is required");
+        }
+
+        const [findProject, findUser] = await Promise.all([
+            projectModel.findOne({ project_id }).lean(),
+            registerModel.find({ 'data.projectData.project_id': project_id }).lean(),
+        ]);
+
+        if (!findProject) {
+            return responseData(res, "", 404, false, "Project not found");
+        }
+
+        if (!findUser.length) {
+            return responseData(res, "", 404, false, "User not found");
+        }
+
+        const response = findUser.map(user => ({
+            user_name: user.username,
+            role:user.role,
+            project_name: findProject.project_name,
+            project_id: findProject.project_id,
+            user_id: user._id,
+            project_enddate: findProject.timeline_date,
+            project_type: findProject.project_type,
+            project_status: findProject.project_status,
+            project_incharge: findProject.designer,
+        }));
+
+        return responseData(res, "Found Data", 200, true, "", response);
+
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+};
+
+

@@ -44,3 +44,56 @@ export const getUserList = async (req, res) => {
     }
 
 }
+
+
+
+export const userAcessLeadOrProjectList = async(req,res) =>{
+    try{
+        const find_user = await registerModel.find({status:true})
+        for(let i=0;find_user.length;i++){
+
+        }
+
+
+
+    }
+    catch(err)
+    {
+        console.log(err)
+        responseData(res, "", 500, false, "Invernal  Server Error")
+    }
+}
+
+
+export const getProjectUser = async(req,res) =>{
+    try{
+        const  project_id = req.query.project_id;
+
+        if ( !project_id) {
+            return responseData(res, "", 404, false, `project id  required`, []);
+        }
+        
+        const projectUsers = await registerModel.find({
+            'data.projectData.project_id': project_id
+        });
+       
+
+        const seniorAdmins = await registerModel.find({
+            role: { $in: ['Senior Architect', 'ADMIN'] }, status: true
+        });
+
+
+        const userList = [...new Set([...projectUsers, ...seniorAdmins].map(user => user.username))];
+
+        responseData(res, "List of User in Project", 200, true, "", userList)
+
+    }
+    catch(err)
+    {
+        console.log(err)
+        responseData(res, "", 500, false, "Internal Server Error")
+
+    }
+}
+
+
