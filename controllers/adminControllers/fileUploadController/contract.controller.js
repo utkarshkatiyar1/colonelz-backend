@@ -189,7 +189,8 @@ export const contractShare = async (req, res) => {
               await leadModel.findOneAndUpdate({ lead_id: lead_id },
                 {
                   $set: {
-                    lead_status: "contract"
+                    lead_status: "contract",
+                    contract_Status:true
                   },
                   $push: {
                     lead_update_track: {

@@ -9,6 +9,7 @@ import { profileupload } from "../../controllers/usersControllers/profile.image.
 import { updateStatus, updateStatusClient } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { updateStatusAdmin } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js"
 import { resetPassword } from "../../controllers/usersControllers/reset.password.controller.js";
+import { refreshAccessToken } from "../../controllers/usersControllers/refreshToken.controller.js";
 const router = Router();
 
 /**
@@ -263,6 +264,84 @@ router.route("/profileurl").post(verifyJWT, profileupload)
 // router.route("/").get(checkAvailableUserIsAdmin)
 router.route("/approval/admin").post(updateStatus)
 router.route("/approval/client").post(updateStatusClient)
+
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/users/refresh-token:
+ *     post:
+ *       tags:
+ *         - Users
+ *       summary: Refresh access token
+ *       description: Generates a new access token using the provided refresh token. The refresh token can be sent in a cookie or in the request body.
+ *       requestBody:
+ *         description: Refresh token details
+ *         required: false
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 refreshToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   description: The refresh token sent in the request body
+ *       responses:
+ *         '200':
+ *           description: New access token generated successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   accessToken:
+ *                     type: string
+ *                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   refreshToken:
+ *                     type: string
+ *                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *         '400':
+ *           description: Bad request, possibly due to a missing or invalid refresh token
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid refresh token"
+ *         '401':
+ *           description: Unauthorized access due to invalid or expired refresh token
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Unauthorized"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
+ */
+
+router.route("/refresh-token").post(refreshAccessToken)
 
 
 export default router;

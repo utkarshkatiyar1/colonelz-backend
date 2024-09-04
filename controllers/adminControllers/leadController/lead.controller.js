@@ -225,6 +225,7 @@ export const createLead = async (req, res) => {
               }
             ],
             lead_status: status,
+            contract_Status:false,
 
           });
 
@@ -360,7 +361,8 @@ export const getSingleLead = async (req, res) => {
           lead_update_track: lead[i].lead_update_track,
           lead_status: lead[i].lead_status,
           createdAt: lead[i].createdAt,
-          project: project
+          project: project,
+          contract_Status: lead[i].contract_Status
         })
       }
 
@@ -515,7 +517,7 @@ export const leadToProject = async (req, res) => {
     try {
       const check_user = await registerModel.findById(user_id)
       if (check_user) {
-        const find_lead = await leadModel.find({ lead_id: lead_id });
+        const find_lead = await leadModel.find({ lead_id: lead_id , contract_Status:true});
         if (find_lead.length > 0) {
           const find_project = await projectModel.find({ lead_id: lead_id })
 

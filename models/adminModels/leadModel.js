@@ -75,6 +75,10 @@ const lead = new mongoose.Schema({
   lead_status: {
     type: String,
   },
+  contract_Status:{
+    type: Boolean,
+    
+  },
   createdAt: {
     type: Date,
     default: Date.now,
