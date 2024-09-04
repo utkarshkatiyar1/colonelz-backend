@@ -54,7 +54,7 @@ router.route("/register").post(registerUser);
  *   /logout:
  *     post:
  *       tags: 
- *         - Authentication
+ *       - Users
  *       summary: Logout a user
  *       description: Logs out a user by invalidating their session or token.
  *       requestBody:
