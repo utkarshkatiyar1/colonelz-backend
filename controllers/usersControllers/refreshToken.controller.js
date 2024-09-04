@@ -5,14 +5,14 @@ import Jwt from "jsonwebtoken";
 // Generate Access Token
 const generateAccessToken = (userId) => {
     return Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+        expiresIn: "7d",
     });
 };
 
 // Generate Refresh Token
 const generateRefreshToken = (userId) => {
     return Jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+        expiresIn: "10d",
     });
 };
 
