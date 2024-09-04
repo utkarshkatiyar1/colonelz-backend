@@ -50,31 +50,67 @@ router.route("/register").post(registerUser);
 
 /**
  * @swagger
- * /v1/api/users/logout:
- *   post:
- *     tags:
- *       - Users
- *     summary: Log out a user
- *     requestBody:
- *       description: User logout
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *                 example: ds23425ythgre3456uyhtgre435
- *               token:
- *                 type: string
- *                 example: 2345ytjhgfddewq2345y6ujhgfdewr45ty6ujhngbfddewr45y6ujghfdsertr5ytu
- *     responses:
- *       '200':
- *         description: Logout successful
- *       '401':
- *         description: Unauthorized
+ * paths:
+ *   /logout:
+ *     post:
+ *       tags: 
+ *         - Authentication
+ *       summary: Logout a user
+ *       description: Logs out a user by invalidating their session or token.
+ *       requestBody:
+ *         description: User ID for logging out
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userId:
+ *                   type: string
+ *                   example: "64c9e9f9c125f2a9a5b5d2d1"
+ *                   description: The unique identifier of the user logging out
+ *       responses:
+ *         '200':
+ *           description: User logged out successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   message:
+ *                     type: string
+ *                     example: "User logged out successfully"
+ *         '400':
+ *           description: Bad request, possibly due to missing or invalid parameters
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid input data"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
  */
+
 router.route("/logout").post(logout)
 /**
  * @swagger
