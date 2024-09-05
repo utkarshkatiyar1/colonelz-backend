@@ -27,7 +27,7 @@ const uploadImage = async (req, filePath, lead_id, fileName) => {
   }
   let response = s3
     .upload({
-      Bucket: `collegemanage/${lead_id}/contract`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/contract`,
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',

@@ -23,7 +23,7 @@ function generateSixDigitNumber() {
 const uploadFile = async (file, fileName, lead_id, folder_name) => {
   return s3
     .upload({
-      Bucket: `collegemanage/${lead_id}/${folder_name}`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
