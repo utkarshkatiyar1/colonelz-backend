@@ -5,26 +5,33 @@ import bcrypt from "bcrypt";
 import Jwt from "jsonwebtoken";
 
 const generateToken = (userId) => {
-  return Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d" });
+  const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d"});
+  const refreshToken = Jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "10d" })
+  return ( {accessToken, refreshToken});
 };
 
 const insertLogInData = async (res, user) => {
   try {
-    const token = generateToken(user._id);
-
+    const tokens = generateToken(user._id);
+    const token = tokens.accessToken
+    const refreshToken = tokens.refreshToken
     res.cookie("auth", token, { maxAge: 604800000, httpOnly: true });
+    res.cookie("refreshToken", refreshToken, { maxAge: 604800000, httpOnly: true });
 
-    const loginUserData = new loginModel({
-      userID: user._id,
-      token,
-      logInDate: new Date(),
-    });
-
-    await loginUserData.save();
+    // const loginUserData = new loginModel({
+    //   userID: user._id,
+    //   token,
+    //   logInDate: new Date(),
+    // });
+    await registerModel.findByIdAndUpdate(user._id, {
+      $set: { refreshToken: refreshToken },
+    })
+    // await loginUserData.save();
 
     responseData(res, "Login successfully", 200, true, "", {
       userID: user._id,
       token,
+      refreshToken,
       role: user.role,
     });
   } catch (error) {

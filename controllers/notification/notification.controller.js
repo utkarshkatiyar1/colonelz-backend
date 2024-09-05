@@ -281,7 +281,7 @@ export const getNotification = async (req, res) => {
     const find_notification = await notificationModel.find({}).lean();
 
     if (!find_notification.length) {
-      return responseData(res, "", 404, false, "No notification found");
+      return responseData(res, "No notification found", 200, false, "");
     }
 
     // Prepare and return the response

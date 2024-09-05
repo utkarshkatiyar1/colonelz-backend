@@ -82,7 +82,7 @@ const uploadImage = async (req, file, lead_id, fileName) => {
     // console.log(file)
     let response = s3
         .upload({
-            Bucket: `collegemanage/${lead_id}/quotation`,
+            Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/quotation`,
             Key: fileName,
             Body: file.data,
             ContentType: file.mimetype,

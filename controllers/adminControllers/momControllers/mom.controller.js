@@ -27,7 +27,7 @@ const s3 = new AWS.S3({
 const uploadFile = async (file, fileName, project_id, mom_id) => {
   return s3
     .upload({
-      Bucket: `collegemanage/${project_id}/MOM/`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${project_id}/MOM/`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
@@ -68,7 +68,7 @@ const saveFileUploadData = async (
             "files.$.updated_date": existingFileUploadData.updated_Date,
           },
           $push: {
-           
+
             "files.$.files": { $each: existingFileUploadData.files },
           },
         },
@@ -174,11 +174,10 @@ export const createmom = async (req, res) => {
         .status(400)
         .send({ status: false, message: "project_id is required" });
     }
-    else if(!user_id)
-      {
-        responseData(res,"",400,false, "User Id required");
-      }
-     else if (!meetingDate) {
+    else if (!user_id) {
+      responseData(res, "", 400, false, "User Id required");
+    }
+    else if (!meetingDate) {
       return res
         .status(400)
         .send({ status: false, message: "meetingDate is required" });
@@ -187,16 +186,15 @@ export const createmom = async (req, res) => {
         .status(400)
         .send({ status: false, message: "location is required" });
     } else if (!client_name && !onlyAlphabetsValidation(client_name)) {
-    }  else if (!organisor && !onlyAlphabetsValidation(organisor)) {
+    } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
       return res
         .status(400)
         .send({ status: false, message: "organiser is required" });
     } else {
-      const check_user = await registerModel.findOne({_id:user_id})
-      if(!check_user)
-        {
-            responseData(res,"",400,false, "User Not Found");
-        }
+      const check_user = await registerModel.findOne({ _id: user_id })
+      if (!check_user) {
+        responseData(res, "", 400, false, "User Not Found");
+      }
       const check_project = await projectModel.find({ project_id: project_id });
       if (check_project.length > 0) {
         const mom_id = `COl-M-${generateSixDigitNumber()}`; // generate meeting id
@@ -412,11 +410,11 @@ export const getSingleMom = async (req, res) => {
       const check_mom = check_project[0].mom.filter(
         (mom) => mom.mom_id.toString() === mom_id
       );
-     
-      const response =[
+
+      const response = [
         {
           client_name: check_mom[0].attendees.client_name,
-          mom_id:check_mom[0].mom_id,
+          mom_id: check_mom[0].mom_id,
           meetingdate: check_mom[0].meetingdate,
           location: check_mom[0].location,
           attendees: check_mom[0].attendees,
@@ -432,10 +430,10 @@ export const getSingleMom = async (req, res) => {
     }
     if (check_project.length < 1) {
       responseData(res, "", 404, false, "Project Not Found");
-    
 
-      }
-     
+
+    }
+
   } catch (error) {
     responseData(res, "", 400, false, error.message, []);
   }
@@ -476,10 +474,10 @@ export const sendPdf = async (req, res) => {
           const mailOptions = {
             from: 'info@colonelz.com',
             to: [check_project[0].client[0].client_email, client_email],
-            cc:cc,
-            bcc:bcc,
+            cc: cc,
+            bcc: bcc,
             subject: subject,
-            html:body,
+            html: body,
             attachments: [
               {
                 filename: mom_pdf.name,
@@ -530,53 +528,49 @@ const transporter = nodemailer.createTransport({
 });
 
 
-export const updateMom = async(req,res) =>{
-  try{
+export const updateMom = async (req, res) => {
+  try {
     const project_id = req.query.project_id;
     const mom_id = req.query.mom_id;
     const description = req.body.remark;
-    if(!project_id)
-    {
+    if (!project_id) {
       responseData(res, "", 404, false, "Project Id is required");
     }
-   else if(!mom_id)
-    {
+    else if (!mom_id) {
       responseData(res, "", 404, false, "MOM Id is required");
     }
-    else{
+    else {
       const check_project = await projectModel.findOne({ project_id: project_id });
       if (check_project) {
         const check_mom = check_project.mom.filter(
           (mom) => mom.mom_id.toString() === mom_id
         );
-        if(check_mom)
-        {
-        await projectModel.findOneAndUpdate({
-            project_id:project_id,
-            'mom.mom_id':mom_id
-          },{
-            $set:{
-              'mom.$.remark':description
+        if (check_mom) {
+          await projectModel.findOneAndUpdate({
+            project_id: project_id,
+            'mom.mom_id': mom_id
+          }, {
+            $set: {
+              'mom.$.remark': description
             }
           },
-          { new: true }
-            
-        )
+            { new: true }
+
+          )
           responseData(res, "MOM Updated Successfully", 200, true, "");
 
         }
-        else{
+        else {
           responseData(res, "", 404, false, "MOM Not Found");
-        } 
+        }
       }
-      else{
+      else {
         responseData(res, "", 404, false, "Project Not Found");
       }
     }
 
   }
-  catch(err)
-  {
+  catch (err) {
     console.log(err);
     responseData(res, "", 500, false, "Internal server Error");
 

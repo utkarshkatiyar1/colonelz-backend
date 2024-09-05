@@ -36,7 +36,7 @@ function generateSixDigitNumber() {
 const uploadFile = async (file, fileName, lead_id, folder_name) => {
   let response = s3
     .upload({
-      Bucket: `collegemanage/${lead_id}/${folder_name}`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
@@ -225,6 +225,7 @@ export const createLead = async (req, res) => {
               }
             ],
             lead_status: status,
+            contract_Status: false,
 
           });
 
@@ -251,23 +252,23 @@ export const createLead = async (req, res) => {
 
           })
 
-          
 
-             await registerModel.findOneAndUpdate(
-              { _id: userId },
-              {
-                $push: {
-                  "data.$[outer].leadData": {
-                    lead_id:lead_id,
-                    role: check_user.role,
-                  }
+
+          await registerModel.findOneAndUpdate(
+            { _id: userId },
+            {
+              $push: {
+                "data.$[outer].leadData": {
+                  lead_id: lead_id,
+                  role: check_user.role,
                 }
-              },
-              {
-                arrayFilters: [{ "outer.leadData": { $exists: true } }]
               }
-            );
-          
+            },
+            {
+              arrayFilters: [{ "outer.leadData": { $exists: true } }]
+            }
+          );
+
 
 
           const lead_data = await lead.save();
@@ -360,7 +361,8 @@ export const getSingleLead = async (req, res) => {
           lead_update_track: lead[i].lead_update_track,
           lead_status: lead[i].lead_status,
           createdAt: lead[i].createdAt,
-          project: project
+          project: project,
+          contract_Status: lead[i].contract_Status
         })
       }
 
@@ -506,16 +508,16 @@ export const leadToProject = async (req, res) => {
   }
   else if (!project_status) {
     responseData(res, "", 400, false, "project_status is required", []);
-    
+
   }
-  else if(!onlyAlphabetsValidation(designer)){
+  else if (!onlyAlphabetsValidation(designer)) {
     responseData(res, "", 400, false, "designer  should be characters ", []);
   }
   else {
     try {
       const check_user = await registerModel.findById(user_id)
       if (check_user) {
-        const find_lead = await leadModel.find({ lead_id: lead_id });
+        const find_lead = await leadModel.find({ lead_id: lead_id, contract_Status: true });
         if (find_lead.length > 0) {
           const find_project = await projectModel.find({ lead_id: lead_id })
 

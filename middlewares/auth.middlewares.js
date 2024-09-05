@@ -228,13 +228,25 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
           case "completed":
             acc.completed.push(projectItem);
             break;
+          case "design & execution":
+            acc.design_execution.push(projectItem);  
+          default:
+            break;
+        }
+        switch (project.project_type) {
+          case "residential":
+            acc.residential.push(projectItem);
+            break;
+          case "commercial":
+            acc.commercial.push(projectItem);
+            break;
           default:
             break;
         }
 
         return acc;
       },
-      { execution: [], design: [], completed: [] }
+      { execution: [], design: [], completed: [],residential:[], commercial:[], design_execution:[]}
     );
 
     const totalProjects = projects1.length;
@@ -243,6 +255,9 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
       total_Project: totalProjects,
       Execution_Phase: categorizedProjects.execution.length,
       Design_Phase: categorizedProjects.design.length,
+      Design_Execution: categorizedProjects.design_execution.length,
+      residential: ((categorizedProjects.residential.length / totalProjects) * 100).toFixed(2),
+      commercial: ((categorizedProjects.commercial.length / totalProjects) * 100).toFixed(2),
       completed: completedProjects,
       active_Project: totalProjects - completedProjects,
       projects: projectData,

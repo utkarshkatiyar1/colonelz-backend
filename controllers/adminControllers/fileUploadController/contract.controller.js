@@ -27,7 +27,7 @@ const uploadImage = async (req, filePath, lead_id, fileName) => {
   }
   let response = s3
     .upload({
-      Bucket: `collegemanage/${lead_id}/contract`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/contract`,
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',
@@ -189,7 +189,8 @@ export const contractShare = async (req, res) => {
               await leadModel.findOneAndUpdate({ lead_id: lead_id },
                 {
                   $set: {
-                    lead_status: "contract"
+                    lead_status: "contract",
+                    contract_Status:true
                   },
                   $push: {
                     lead_update_track: {

@@ -9,6 +9,7 @@ import { profileupload } from "../../controllers/usersControllers/profile.image.
 import { updateStatus, updateStatusClient } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { updateStatusAdmin } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js"
 import { resetPassword } from "../../controllers/usersControllers/reset.password.controller.js";
+import { refreshAccessToken } from "../../controllers/usersControllers/refreshToken.controller.js";
 const router = Router();
 
 /**
@@ -49,31 +50,67 @@ router.route("/register").post(registerUser);
 
 /**
  * @swagger
- * /v1/api/users/logout:
- *   post:
- *     tags:
+ * paths:
+ *   /logout:
+ *     post:
+ *       tags: 
  *       - Users
- *     summary: Log out a user
- *     requestBody:
- *       description: User logout
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: string
- *                 example: ds23425ythgre3456uyhtgre435
- *               token:
- *                 type: string
- *                 example: 2345ytjhgfddewq2345y6ujhgfdewr45ty6ujhngbfddewr45y6ujghfdsertr5ytu
- *     responses:
- *       '200':
- *         description: Logout successful
- *       '401':
- *         description: Unauthorized
+ *       summary: Logout a user
+ *       description: Logs out a user by invalidating their session or token.
+ *       requestBody:
+ *         description: User ID for logging out
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userId:
+ *                   type: string
+ *                   example: "64c9e9f9c125f2a9a5b5d2d1"
+ *                   description: The unique identifier of the user logging out
+ *       responses:
+ *         '200':
+ *           description: User logged out successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   message:
+ *                     type: string
+ *                     example: "User logged out successfully"
+ *         '400':
+ *           description: Bad request, possibly due to missing or invalid parameters
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid input data"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
  */
+
 router.route("/logout").post(logout)
 /**
  * @swagger
@@ -263,6 +300,84 @@ router.route("/profileurl").post(verifyJWT, profileupload)
 // router.route("/").get(checkAvailableUserIsAdmin)
 router.route("/approval/admin").post(updateStatus)
 router.route("/approval/client").post(updateStatusClient)
+
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/users/refresh-token:
+ *     post:
+ *       tags:
+ *         - Users
+ *       summary: Refresh access token
+ *       description: Generates a new access token using the provided refresh token. The refresh token can be sent in a cookie or in the request body.
+ *       requestBody:
+ *         description: Refresh token details
+ *         required: false
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 refreshToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   description: The refresh token sent in the request body
+ *       responses:
+ *         '200':
+ *           description: New access token generated successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   accessToken:
+ *                     type: string
+ *                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   refreshToken:
+ *                     type: string
+ *                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *         '400':
+ *           description: Bad request, possibly due to a missing or invalid refresh token
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid refresh token"
+ *         '401':
+ *           description: Unauthorized access due to invalid or expired refresh token
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Unauthorized"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
+ */
+
+router.route("/refresh-token").post(refreshAccessToken)
 
 
 export default router;
