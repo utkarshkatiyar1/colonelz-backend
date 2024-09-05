@@ -93,7 +93,10 @@ export const getAllProject = async (req, res) => {
 
     const execution = projectData.filter((p) => p.project_status === "executing");
     const design = projectData.filter((p) => p.project_status === "designing");
+    const designandexecution = projectData.filter((p) => p.project_status === "design & execution");
     const completed = projectData.filter((p) => p.project_status === "completed");
+    const commercial = projectData.filter((p) => p.project_type === "commercial");
+    const residential = projectData.filter((p) => p.project_type === "residential");
     const archive = completed.filter((p) =>
       isProjectOlderThan6Months(p.project_end_date)
     );
@@ -102,7 +105,10 @@ export const getAllProject = async (req, res) => {
       total_Project: projectData.length,
       Execution_Phase: execution.length,
       Design_Phase: design.length,
+      Design_Execution: designandexecution.length,
       completed: completed.length,
+      commercial: commercial.length,
+      residential: residential.length,
       archive: archive.length,
       active_Project: projectData.length - completed.length,
       projects: projectData,
