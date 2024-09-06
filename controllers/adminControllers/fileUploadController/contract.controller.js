@@ -1,6 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import nodemailer from "nodemailer";
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/s3.js"
 import fs from "fs";
 import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
@@ -14,11 +14,6 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
 
 const uploadImage = async (req, filePath, lead_id, fileName) => {
 
@@ -31,7 +26,7 @@ const uploadImage = async (req, filePath, lead_id, fileName) => {
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',
-      // ACL: "public-read",
+      ACL: "public-read",
     })
     .promise();
   return response
@@ -190,7 +185,7 @@ export const contractShare = async (req, res) => {
                 {
                   $set: {
                     lead_status: "contract",
-                    contract_Status:true
+                    contract_Status: true
                   },
                   $push: {
                     lead_update_track: {

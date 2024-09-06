@@ -1,6 +1,6 @@
 import projectModel from "../../../models/adminModels/project.model.js";
 import { responseData } from "../../../utils/respounse.js";
-import AWS from "aws-sdk";
+
 import dotenv from "dotenv";
 import registerModel from "../../../models/usersModels/register.model.js";
 import {
@@ -12,11 +12,7 @@ import notificationModel from "../../../models/adminModels/notification.model.js
 import taskModel from "../../../models/adminModels/task.model.js";
 dotenv.config();
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -164,27 +160,25 @@ export const getSingleProject = async (req, res) => {
               project_end_date: find_project[0].project_end_date,
               project_location: find_project[0].project_location,
               project_updated_by: find_project[0].project_updated_by,
-              percentage:0
+              percentage: 0
             })
           }
           if (check_task.length > 0) {
-            let count =0;
+            let count = 0;
             let total_task_length = check_task.length;
             let percentage;
 
             for (let i = 0; i < check_task.length; i++) {
-              if(check_task[i].task_status === 'Completed')
-                {
-                  count = count + 1;
+              if (check_task[i].task_status === 'Completed') {
+                count = count + 1;
 
-                }
-                if(check_task.task_status ==='Cancelled')
-                  {
-                    total_task_length--;
-                  }
+              }
+              if (check_task.task_status === 'Cancelled') {
+                total_task_length--;
+              }
             }
-            percentage = (count / total_task_length)*100;
-           
+            percentage = (count / total_task_length) * 100;
+
             response.push({
               project_id: project_ID,
               project_name: find_project[0].project_name,
@@ -205,11 +199,11 @@ export const getSingleProject = async (req, res) => {
               project_end_date: find_project[0].project_end_date,
               project_location: find_project[0].project_location,
               project_updated_by: find_project[0].project_updated_by,
-              percentage:percentage
+              percentage: percentage
             })
 
-            }
-         
+          }
+
 
           responseData(res, "project found", 200, true, "", response);
         }
@@ -250,8 +244,7 @@ export const updateProjectDetails = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user id is required.", []);
   }
-  else if(!onlyEmailValidation(client_email) && client_email.length >5)
-  {
+  else if (!onlyEmailValidation(client_email) && client_email.length > 5) {
     responseData(res, "", 400, false, "client email is invalid", []);
   }
 
@@ -276,13 +269,13 @@ export const updateProjectDetails = async (req, res) => {
               project_end_date: timeline_date,
               description: description,
               designer: designer,
-              'client.$.client_email':client_email
+              'client.$.client_email': client_email
             },
 
             $push: {
               project_updated_by: {
                 username: find_user[0].username,
-                role:find_user[0].role,
+                role: find_user[0].role,
                 project_budget: project_budget,
                 project_status: project_status,
                 timeline_date: timeline_date,

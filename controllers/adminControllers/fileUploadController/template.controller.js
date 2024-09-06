@@ -1,15 +1,11 @@
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/s3.js"
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const s3 = new AWS.S3({
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-    region: "ap-south-1",
-});
+
 
 function generateSixDigitNumber() {
     const min = 100000;
@@ -24,6 +20,7 @@ const uploadFile = async (file, fileName, folder_name, sub_folder_name_first, su
         Key: fileName,
         Body: file.data,
         ContentType: file.mimetype,
+        ACL: 'public-read'
     }).promise();
 };
 

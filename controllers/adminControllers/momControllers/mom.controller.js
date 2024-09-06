@@ -1,6 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/s3.js"
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import nodemailer from "nodemailer";
 import fs from "fs";
@@ -18,11 +18,6 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
 
 const uploadFile = async (file, fileName, project_id, mom_id) => {
   return s3
@@ -31,7 +26,7 @@ const uploadFile = async (file, fileName, project_id, mom_id) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      // ACL: 'public-read'
+      ACL: 'public-read'
     })
     .promise();
 };

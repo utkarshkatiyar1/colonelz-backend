@@ -10,17 +10,7 @@ import {
   validateOnlyNumbers,
 } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
-import AWS from "aws-sdk";
-
-import validator from "validator";
-
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
-
-
+import { s3 } from "../../../utils/s3.js"
 
 
 function generateSixDigitNumber() {
@@ -40,7 +30,7 @@ const uploadFile = async (file, fileName, lead_id, folder_name) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      // ACL: 'public-read'
+      ACL: 'public-read'
     })
     .promise()
   return response
@@ -847,7 +837,8 @@ export const leadToMultipleProject = async (req, res) => {
                 {
                   $set: {
                     lead_status: "Follow Up",
-                    lead_update_track: []
+                    lead_update_track: [],
+                    contract_Status:false
                   }
                 }
               )

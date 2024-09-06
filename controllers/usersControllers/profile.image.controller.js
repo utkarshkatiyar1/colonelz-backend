@@ -1,17 +1,13 @@
-import AWS from "aws-sdk";
+import {s3} from "../../utils/s3.js"
 import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+
 
 const uploadImage = async (req, fileName, userId, key) => {
   let response = s3
     .upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${userId}`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${userId}/profile`,
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
