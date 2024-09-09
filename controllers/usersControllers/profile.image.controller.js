@@ -1,4 +1,4 @@
-import {s3} from "../../utils/s3.js"
+import { s3 } from "../../utils/function.js"
 import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
 
@@ -11,7 +11,7 @@ const uploadImage = async (req, fileName, userId, key) => {
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
-      //   ACL: "public-read",
+        // ACL: "public-read",
     })
     .promise();
   return response

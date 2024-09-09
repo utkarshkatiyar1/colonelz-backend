@@ -1,4 +1,4 @@
-import { s3 } from "../../../utils/s3.js"
+import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import projectModel from "../../../models/adminModels/project.model.js";

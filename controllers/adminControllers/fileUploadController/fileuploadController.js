@@ -1,4 +1,4 @@
-import { s3 } from "../../../utils/s3.js"
+import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
@@ -23,7 +23,7 @@ const uploadFile = async (file, fileName, lead_id, folder_name) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      ACL: 'public-read'
+      // ACL: 'public-read'
     })
     .promise();
 };

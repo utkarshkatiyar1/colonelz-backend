@@ -6,7 +6,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 // import projectModel from "../../../models/adminModels/project.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { onlyAlphabetsValidation, onlyEmailValidation } from "../../../utils/validation.js";
-import { s3 } from "../../../utils/s3.js"
+import { s3 } from "../../../utils/function.js"
 function generatedigitnumber() {
     const length = 6;
     const charset = "0123456789";
@@ -80,7 +80,7 @@ const uploadImage = async (req, file, lead_id, fileName) => {
             Key: fileName,
             Body: file.data,
             ContentType: file.mimetype,
-            ACL: "public-read",
+            // ACL: "public-read",
         })
         .promise();
 

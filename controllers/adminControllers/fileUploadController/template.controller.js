@@ -1,6 +1,6 @@
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
-import { s3 } from "../../../utils/s3.js"
+import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
 
 dotenv.config();

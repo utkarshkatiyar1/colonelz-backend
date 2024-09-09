@@ -1,6 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
-import { s3 } from "../../../utils/s3.js"
+import { s3 } from "../../../utils/function.js"
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import nodemailer from "nodemailer";
 import fs from "fs";
@@ -26,7 +26,7 @@ const uploadFile = async (file, fileName, project_id, mom_id) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      ACL: 'public-read'
+      // ACL: 'public-read'
     })
     .promise();
 };

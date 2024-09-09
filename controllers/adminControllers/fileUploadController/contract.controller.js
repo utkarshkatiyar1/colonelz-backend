@@ -1,6 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import nodemailer from "nodemailer";
-import { s3 } from "../../../utils/s3.js"
+import { s3 } from "../../../utils/function.js"
 import fs from "fs";
 import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
@@ -26,7 +26,7 @@ const uploadImage = async (req, filePath, lead_id, fileName) => {
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',
-      ACL: "public-read",
+      // ACL: "public-read",
     })
     .promise();
   return response

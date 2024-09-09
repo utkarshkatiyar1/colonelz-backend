@@ -3,7 +3,6 @@ import projectModel from "../../../models/adminModels/project.model.js";
 import taskModel from "../../../models/adminModels/task.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
-import { assign } from "nodemailer/lib/shared/index.js";
 import timerModel from "../../../models/adminModels/timer.Model.js";
 
 
@@ -113,7 +112,7 @@ export const createTask = async (req, res) => {
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
             await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
-        } 
+        }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
@@ -121,7 +120,7 @@ export const createTask = async (req, res) => {
             if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
 
             await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
-        } 
+        }
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
             const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
@@ -129,7 +128,7 @@ export const createTask = async (req, res) => {
 
 
             await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
-        } 
+        }
 
         else {
             // Check project association for assignee and reporter
@@ -168,58 +167,62 @@ export const getAllTasks = async (req, res) => {
             return responseData(res, "", 404, false, "Project not found", []);
         }
 
+        // Fetch tasks
         const tasks = await taskModel.find({ project_id });
         if (!tasks.length) {
             return responseData(res, "Tasks not found", 200, false, "", []);
         }
 
-        const projectUsers = await registerModel.find({
-            'data.projectData.project_id': project_id
-        });
-        // console.log(projectUsers)
-
-        const seniorAdmins = await registerModel.find({
-            role: { $in: ['Senior Architect', 'ADMIN'] },  status:true
-        });
-      
-
-        const userList = [...new Set([...projectUsers, ...seniorAdmins].map(user => user.username))];
-        
-        const response = tasks.map(task => {
-            const totalSubtasks = task.subtasks.length;
-            const completedSubtasks = task.subtasks.filter(subtask => subtask.sub_task_status === 'Completed').length;
-            const activeSubtasks = totalSubtasks - task.subtasks.filter(subtask => subtask.sub_task_status === 'Cancelled').length;
-            const percentage = (completedSubtasks / activeSubtasks) * 100;
-
-            return {
-                project_id: task.project_id,
-                task_id: task.task_id,
-                task_name: task.task_name,
-                task_description: task.task_description,
-                actual_task_start_date: task.actual_task_start_date,
-                actual_task_end_date: task.actual_task_end_date,
-                estimated_task_end_date: task.estimated_task_end_date,
-                estimated_task_start_date: task.estimated_task_start_date,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_createdOn: task.task_createdOn,
-                reporter: task.reporter,
-                task_assignee: task.task_assignee,
-                task_createdBy: task.task_createdBy,
-                number_of_subtasks: totalSubtasks,
-                percentage,
-                
-            };
+        // Process each task and update status if necessary
+        for (let task of tasks) {
+            const { subtasks } = task;
             
-        });
-     
+            // Skip tasks with no subtasks
+            if (!subtasks.length) {
+                continue;
+            }
+
+            // Determine if all subtasks are completed or cancelled
+            const allSubtasksCompleted = subtasks.every(subtask =>
+                subtask.sub_task_status === 'Completed' || subtask.sub_task_status === 'Cancelled'
+            );
+
+            if (allSubtasksCompleted) {
+                // Update task status to completed
+                await taskModel.findOneAndUpdate(
+                    { task_id: task.task_id },
+                    { $set: { task_status: "Completed",
+                        actual_task_end_date: new Date()
+                     } },
+                    { new: true } // Ensure the updated task is returned
+                );
+            }
+        }
+
+        // Fetch the updated tasks
+        const updatedTasks = await taskModel.find({ project_id });
+
+        // Construct response
+        const response = updatedTasks.map(task => ({
+            project_id: task.project_id,
+            task_id: task.task_id,
+            task_name: task.task_name,
+            actual_task_start_date: task.actual_task_start_date,
+            actual_task_end_date: task.actual_task_end_date,
+            estimated_task_end_date: task.estimated_task_end_date,
+            estimated_task_start_date: task.estimated_task_start_date,
+            task_status: task.task_status,
+            task_priority: task.task_priority,
+        }));
 
         responseData(res, "Tasks found successfully", 200, true, "", response);
     } catch (err) {
         console.error(err);
-        res.send(err);
+        res.status(500).send({ error: 'Internal server error' });
     }
-}
+};
+
+
 
 
 
@@ -246,20 +249,6 @@ export const getSingleTask = async (req, res) => {
                 }
                 else {
                     let response = []
-                    let percentage;
-
-                    let count = 0;
-                    let total_length = check_task.subtasks.length;
-                    for (let j = 0; j < check_task.subtasks.length; j++) {
-
-                        if (check_task.subtasks[j].sub_task_status === 'Completed') {
-                            count++;
-                        }
-                        if (check_task.subtasks[j].sub_task_status === 'Cancelled') {
-                            total_length--;
-                        }
-                    }
-                    percentage = (count / total_length) * 100;
 
                     response.push({
                         project_id: check_task.project_id,
@@ -277,8 +266,6 @@ export const getSingleTask = async (req, res) => {
                         task_assignee: check_task.task_assignee,
                         task_createdBy: check_task.task_createdBy,
                         number_of_subtasks: check_task.subtasks.length,
-                        percentage: percentage,
-
 
                     })
 
@@ -333,10 +320,10 @@ export const updateTask = async (req, res) => {
             responseData(res, "", 404, false, "task priority required", [])
 
         }
-        else if ( !estimated_task_start_date) {
+        else if (!estimated_task_start_date) {
             responseData(res, "", 404, false, "Task start date  required", [])
         }
-        else if ( !estimated_task_end_date) {
+        else if (!estimated_task_end_date) {
             responseData(res, "", 404, false, "Task end date required", [])
         }
         else if (!task_status) {
