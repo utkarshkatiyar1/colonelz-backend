@@ -176,24 +176,43 @@ export const getAllTasks = async (req, res) => {
         // Process each task and update status if necessary
         for (let task of tasks) {
             const { subtasks } = task;
-            
+
             // Skip tasks with no subtasks
             if (!subtasks.length) {
                 continue;
             }
 
-            // Determine if all subtasks are completed or cancelled
+            // Determine the status of all subtasks
             const allSubtasksCompleted = subtasks.every(subtask =>
                 subtask.sub_task_status === 'Completed' || subtask.sub_task_status === 'Cancelled'
             );
 
-            if (allSubtasksCompleted) {
-                // Update task status to completed
+            const allSubtasksCancelled = subtasks.every(subtask =>
+                subtask.sub_task_status === 'Cancelled'
+            );
+
+            let newTaskStatus;
+            if (allSubtasksCancelled) {
+                // If all subtasks are canceled, set the task status to InProgress
+                newTaskStatus = 'In Progress';
+            } else if (allSubtasksCompleted) {
+                // If all subtasks are completed, set the task status to Completed
+                newTaskStatus = 'Completed';
+            } else {
+                // If some subtasks are completed and some are canceled, set the task status to Completed
+                newTaskStatus = 'Completed';
+            }
+
+            if (newTaskStatus !== task.task_status) {
+                // Update task status if it has changed
                 await taskModel.findOneAndUpdate(
                     { task_id: task.task_id },
-                    { $set: { task_status: "Completed",
-                        actual_task_end_date: new Date()
-                     } },
+                    {
+                        $set: {
+                            task_status: newTaskStatus,
+                            actual_task_end_date: newTaskStatus === 'Completed' ? new Date() : task.actual_task_end_date
+                        }
+                    },
                     { new: true } // Ensure the updated task is returned
                 );
             }
@@ -221,6 +240,7 @@ export const getAllTasks = async (req, res) => {
         res.status(500).send({ error: 'Internal server error' });
     }
 };
+
 
 
 
