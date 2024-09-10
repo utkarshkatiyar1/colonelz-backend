@@ -63,7 +63,7 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Error occured while storing contract");
+        return responseData(res, "", 403, false, "Error occured while storing contract");
     }
 
 }

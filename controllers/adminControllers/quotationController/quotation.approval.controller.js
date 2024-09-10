@@ -141,30 +141,29 @@ export const shareQuotation = async (req, res) => {
         const client_email = req.body.client_email;
         const client_name = req.body.client_name;
         const type = req.body.type;
-        if (!type || !file_id || !project_id || ! user_id) {
+        if (!type || !file_id || !project_id || !user_id) {
             return responseData(res, "", 400, false, "Missing required fields");
         }
 
-        const check_user = await registerModel.findOne({_id:user_id})
-        if(!check_user)
-            {
-                return responseData(res, "", 400, false, "User not found");
-            }
+        const check_user = await registerModel.findOne({ _id: user_id })
+        if (!check_user) {
+            return responseData(res, "", 400, false, "User not found");
+        }
         if (type === "Client") {
             if (!onlyEmailValidation(client_email) || !client_name) {
                 return responseData(res, "", 400, false, "Invalid client email or missing client name");
             }
             const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id });
             if (!findQuotation) {
-                return responseData(res, "", 401, false, "Quotation file not found");
+                return responseData(res, "", 403, false, "Quotation file not found");
             }
             const findProject = await projectModel.findOne({ project_id: project_id });
             if (!findProject) {
-                return responseData(res, "", 401, false, "Project not found");
+                return responseData(res, "", 403, false, "Project not found");
             }
             const findFile = findQuotation.files.find(folder => folder.folder_name === folder_name)?.files.find(file => file.fileId === file_id);
             if (!findFile) {
-                return responseData(res, "", 401, false, "File not found in the specified folder");
+                return responseData(res, "", 403, false, "File not found in the specified folder");
             }
             const mailOptions = {
                 from: "info@colonelz.com",
@@ -265,8 +264,8 @@ export const shareQuotation = async (req, res) => {
                     }
 
                 }
-                
-              
+
+
 
                 if (check_status == 0) {
                     transporter.sendMail(mailOptions, async (error, info) => {
@@ -344,25 +343,25 @@ export const shareQuotation = async (req, res) => {
 
 
             });
-           
+
             if (!check_status) {
                 const user = await registerModel.findOne({ username: user_name });
-              
+
                 if (!user) {
-                    return responseData(res, "", 401, false, "User not found");
+                    return responseData(res, "", 403, false, "User not found");
                 }
                 const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id });
                 if (!findQuotation) {
-                    return responseData(res, "", 401, false, "Quotation file not found");
+                    return responseData(res, "", 403, false, "Quotation file not found");
                 }
                 const findProject = await projectModel.findOne({ project_id: project_id });
                 if (!findProject) {
-                    return responseData(res, "", 401, false, "Project not found");
+                    return responseData(res, "", 403, false, "Project not found");
                 }
-              
+
                 const findFile = findQuotation.files.find(folder => folder.folder_name === folder_name)?.files.find(file => file.fileId === file_id);
                 if (!findFile) {
-                    return responseData(res, "", 401, false, "File not found in the specified folder");
+                    return responseData(res, "", 403, false, "File not found in the specified folder");
                 }
 
 
@@ -591,7 +590,7 @@ export const updateStatus = async (req, res) => {
                                 $set: {
                                     "quotation.$[elem].admin_status": status,
                                     "quotation.$[elem].remark": remark,
-                                    
+
 
                                 }
                             },
@@ -600,7 +599,7 @@ export const updateStatus = async (req, res) => {
                                 new: true
                             }
                         );
-                      
+
                         responseData(res, "Quotation rejected successfully!", 200, true, "")
                     }
                 }
@@ -653,7 +652,7 @@ export const updateStatusClient = async (req, res) => {
 
                         );
                         res.send('');
-                        responseData(res, "Quotation approved successfully!", 200, true,"")
+                        responseData(res, "Quotation approved successfully!", 200, true, "")
                     } if (status === 'rejected') {
                         if (!remark) {
                             return responseData(res, "", 400, false, "Please enter the remark");
@@ -666,7 +665,7 @@ export const updateStatusClient = async (req, res) => {
                             {
                                 $set: {
                                     "quotation.$[elem].client_status": status,
-                                    "quotation.$[elem].client_remark":remark,
+                                    "quotation.$[elem].client_remark": remark,
 
                                 }
                             },
@@ -679,10 +678,9 @@ export const updateStatusClient = async (req, res) => {
                         responseData(res, "Quotation rejected Successfully", 200, true, "")
                     }
                     if (status === 'amended') {
-                        if(!remark)
-                            {
-                                return responseData(res, "", 400, false, "Please enter the remark");
-                            }
+                        if (!remark) {
+                            return responseData(res, "", 400, false, "Please enter the remark");
+                        }
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,

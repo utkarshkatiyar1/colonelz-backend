@@ -13,7 +13,7 @@ export const createLeadAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -24,7 +24,7 @@ export const createLeadAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         // Check if the user has access to create a lead
@@ -34,14 +34,14 @@ export const createLeadAccess = async (req, res, next) => {
         else if (!user.access?.lead?.includes('create')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to create leads");
         }
-else{
+        else {
             next();
-}
-        
+        }
+
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readLeadAccess = async (req, res, next) => {
@@ -53,7 +53,7 @@ export const readLeadAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -64,7 +64,7 @@ export const readLeadAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
@@ -72,7 +72,7 @@ export const readLeadAccess = async (req, res, next) => {
 
         // Check if the user has access to create a lead
 
-       else if (!user.access?.lead?.includes('read')) {
+        else if (!user.access?.lead?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see leads");
         }
 
@@ -82,7 +82,7 @@ export const readLeadAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateLeadAccess = async (req, res, next) => {
@@ -94,7 +94,7 @@ export const updateLeadAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -105,7 +105,7 @@ export const updateLeadAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -113,7 +113,7 @@ export const updateLeadAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.lead?.includes('update')) {
+        else if (!user.access?.lead?.includes('update')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update leads");
         }
 
@@ -123,7 +123,7 @@ export const updateLeadAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteLeadAccess = async (req, res, next) => {
@@ -135,7 +135,7 @@ export const deleteLeadAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -146,7 +146,7 @@ export const deleteLeadAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -154,7 +154,7 @@ export const deleteLeadAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.lead?.includes('delete')) {
+        else if (!user.access?.lead?.includes('delete')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update leads");
         }
         else {
@@ -163,7 +163,7 @@ export const deleteLeadAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -179,7 +179,7 @@ export const createProjectAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -190,14 +190,14 @@ export const createProjectAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
-       else if (!user.access?.project?.includes('create')) {
+        else if (!user.access?.project?.includes('create')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to create project");
         }
 
@@ -207,7 +207,7 @@ export const createProjectAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readProjectAccess = async (req, res, next) => {
@@ -219,7 +219,7 @@ export const readProjectAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -230,14 +230,14 @@ export const readProjectAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.project?.includes('read')) {
+        else if (!user.access?.project?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see project");
         }
         else {
@@ -246,7 +246,7 @@ export const readProjectAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateProjectAccess = async (req, res, next) => {
@@ -258,7 +258,7 @@ export const updateProjectAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -269,7 +269,7 @@ export const updateProjectAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -277,7 +277,7 @@ export const updateProjectAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.project?.includes('update')) {
+        else if (!user.access?.project?.includes('update')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update project");
         }
 
@@ -286,7 +286,7 @@ export const updateProjectAccess = async (req, res, next) => {
         }
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteProjectAccess = async (req, res, next) => {
@@ -298,7 +298,7 @@ export const deleteProjectAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -309,7 +309,7 @@ export const deleteProjectAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -317,7 +317,7 @@ export const deleteProjectAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.project?.includes('delete')) {
+        else if (!user.access?.project?.includes('delete')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to delete project");
         }
         else {
@@ -326,7 +326,7 @@ export const deleteProjectAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -341,7 +341,7 @@ export const createMomAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -352,7 +352,7 @@ export const createMomAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -368,7 +368,7 @@ export const createMomAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readMomAccess = async (req, res, next) => {
@@ -380,7 +380,7 @@ export const readMomAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -391,7 +391,7 @@ export const readMomAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
@@ -408,7 +408,7 @@ export const readMomAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateMomAccess = async (req, res, next) => {
@@ -420,7 +420,7 @@ export const updateMomAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -431,7 +431,7 @@ export const updateMomAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -448,7 +448,7 @@ export const updateMomAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteMomAccess = async (req, res, next) => {
@@ -460,7 +460,7 @@ export const deleteMomAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -471,7 +471,7 @@ export const deleteMomAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -479,7 +479,7 @@ export const deleteMomAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.mom?.includes('delete')) {
+        else if (!user.access?.mom?.includes('delete')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to delete mom");
         }
         else {
@@ -488,7 +488,7 @@ export const deleteMomAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -503,7 +503,7 @@ export const createTaskAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -514,14 +514,14 @@ export const createTaskAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
-       else if (!user.access?.task?.includes('create')) {
+        else if (!user.access?.task?.includes('create')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to create task");
         }
         else {
@@ -529,7 +529,7 @@ export const createTaskAccess = async (req, res, next) => {
         }
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readTaskAccess = async (req, res, next) => {
@@ -541,7 +541,7 @@ export const readTaskAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -552,14 +552,14 @@ export const readTaskAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.task?.includes('read')) {
+        else if (!user.access?.task?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see task");
         }
 
@@ -569,7 +569,7 @@ export const readTaskAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateTaskAccess = async (req, res, next) => {
@@ -581,7 +581,7 @@ export const updateTaskAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -592,7 +592,7 @@ export const updateTaskAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -600,7 +600,7 @@ export const updateTaskAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.task?.includes('update')) {
+        else if (!user.access?.task?.includes('update')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update task");
         }
 
@@ -610,7 +610,7 @@ export const updateTaskAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteTskAccess = async (req, res, next) => {
@@ -622,7 +622,7 @@ export const deleteTskAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -633,7 +633,7 @@ export const deleteTskAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -650,7 +650,7 @@ export const deleteTskAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -666,7 +666,7 @@ export const createContractAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -677,14 +677,14 @@ export const createContractAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
-       else if (!user.access?.contract?.includes('create')) {
+        else if (!user.access?.contract?.includes('create')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to create contract");
         }
 
@@ -694,7 +694,7 @@ export const createContractAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readContractAccess = async (req, res, next) => {
@@ -706,7 +706,7 @@ export const readContractAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -717,14 +717,14 @@ export const readContractAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.contract?.includes('read')) {
+        else if (!user.access?.contract?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see contract");
         }
         else {
@@ -732,7 +732,7 @@ export const readContractAccess = async (req, res, next) => {
         }
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateContractAccess = async (req, res, next) => {
@@ -744,7 +744,7 @@ export const updateContractAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -755,7 +755,7 @@ export const updateContractAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -773,7 +773,7 @@ export const updateContractAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteContractAccess = async (req, res, next) => {
@@ -785,7 +785,7 @@ export const deleteContractAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -796,7 +796,7 @@ export const deleteContractAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -813,7 +813,7 @@ export const deleteContractAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -830,7 +830,7 @@ export const createQuotationAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -841,14 +841,14 @@ export const createQuotationAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
-       else if (!user.access?.quotation?.includes('create')) {
+        else if (!user.access?.quotation?.includes('create')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to create quotation");
         }
 
@@ -858,7 +858,7 @@ export const createQuotationAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readQuotationAccess = async (req, res, next) => {
@@ -870,7 +870,7 @@ export const readQuotationAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -881,14 +881,14 @@ export const readQuotationAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.quotation?.includes('read')) {
+        else if (!user.access?.quotation?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see quotation");
         }
 
@@ -898,7 +898,7 @@ export const readQuotationAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateQuotationAccess = async (req, res, next) => {
@@ -910,7 +910,7 @@ export const updateQuotationAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -921,7 +921,7 @@ export const updateQuotationAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -929,7 +929,7 @@ export const updateQuotationAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.quotation?.includes('update')) {
+        else if (!user.access?.quotation?.includes('update')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update quotation");
         }
 
@@ -939,7 +939,7 @@ export const updateQuotationAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteQuotationAccess = async (req, res, next) => {
@@ -951,7 +951,7 @@ export const deleteQuotationAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -962,7 +962,7 @@ export const deleteQuotationAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -979,7 +979,7 @@ export const deleteQuotationAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -996,7 +996,7 @@ export const createFileAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1007,14 +1007,14 @@ export const createFileAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
-       else if (!user.access?.file?.includes('create')) {
+        else if (!user.access?.file?.includes('create')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to upload file");
         }
 
@@ -1024,7 +1024,7 @@ export const createFileAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const readFileAccess = async (req, res, next) => {
@@ -1036,7 +1036,7 @@ export const readFileAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1047,14 +1047,14 @@ export const readFileAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.file?.includes('read')) {
+        else if (!user.access?.file?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see files and folders");
         }
 
@@ -1064,7 +1064,7 @@ export const readFileAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateFileAccess = async (req, res, next) => {
@@ -1076,7 +1076,7 @@ export const updateFileAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1087,7 +1087,7 @@ export const updateFileAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1095,7 +1095,7 @@ export const updateFileAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.file?.includes('update')) {
+        else if (!user.access?.file?.includes('update')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update files");
         }
 
@@ -1105,7 +1105,7 @@ export const updateFileAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deletedFileAccess = async (req, res, next) => {
@@ -1117,7 +1117,7 @@ export const deletedFileAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1128,7 +1128,7 @@ export const deletedFileAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1145,7 +1145,7 @@ export const deletedFileAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -1161,7 +1161,7 @@ export const readArchiveAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1172,14 +1172,14 @@ export const readArchiveAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.archive?.includes('read')) {
+        else if (!user.access?.archive?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to see archive");
         }
 
@@ -1189,7 +1189,7 @@ export const readArchiveAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const restoreArchiveAccess = async (req, res, next) => {
@@ -1201,7 +1201,7 @@ export const restoreArchiveAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1212,7 +1212,7 @@ export const restoreArchiveAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1230,7 +1230,7 @@ export const restoreArchiveAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deleteArchiveAccess = async (req, res, next) => {
@@ -1242,7 +1242,7 @@ export const deleteArchiveAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1253,7 +1253,7 @@ export const deleteArchiveAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1261,7 +1261,7 @@ export const deleteArchiveAccess = async (req, res, next) => {
         }
         // Check if the user has access to create a lead
 
-       else if (!user.access?.archive?.includes('delete')) {
+        else if (!user.access?.archive?.includes('delete')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to delete archive");
         }
         else {
@@ -1270,7 +1270,7 @@ export const deleteArchiveAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 
@@ -1292,7 +1292,7 @@ export const createAddMember = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1302,7 +1302,7 @@ export const createAddMember = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1318,7 +1318,7 @@ export const createAddMember = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const GetAddMember = async (req, res, next) => {
@@ -1330,7 +1330,7 @@ export const GetAddMember = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1340,7 +1340,7 @@ export const GetAddMember = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1348,7 +1348,7 @@ export const GetAddMember = async (req, res, next) => {
         }
 
 
-       else if (!user.access?.addMember?.includes('read')) {
+        else if (!user.access?.addMember?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to  Get add member");
         }
         else {
@@ -1356,7 +1356,7 @@ export const GetAddMember = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const updateAddMember = async (req, res, next) => {
@@ -1368,7 +1368,7 @@ export const updateAddMember = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1378,7 +1378,7 @@ export const updateAddMember = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1386,7 +1386,7 @@ export const updateAddMember = async (req, res, next) => {
         }
 
 
-       else if (!user.access?.addMember?.includes('update')) {
+        else if (!user.access?.addMember?.includes('update')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to update add member");
         }
         else {
@@ -1394,7 +1394,7 @@ export const updateAddMember = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const deleteAddMember = async (req, res, next) => {
@@ -1406,7 +1406,7 @@ export const deleteAddMember = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1416,7 +1416,7 @@ export const deleteAddMember = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1424,7 +1424,7 @@ export const deleteAddMember = async (req, res, next) => {
         }
 
 
-       else if (!user.access?.addMember?.includes('delete')) {
+        else if (!user.access?.addMember?.includes('delete')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to  delete add member");
         }
         else {
@@ -1432,7 +1432,7 @@ export const deleteAddMember = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 
@@ -1447,7 +1447,7 @@ export const CreateUserAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1457,7 +1457,7 @@ export const CreateUserAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1470,7 +1470,7 @@ export const CreateUserAccess = async (req, res, next) => {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to create user");
         }
 
-        else{
+        else {
             next();
         }
 
@@ -1478,7 +1478,7 @@ export const CreateUserAccess = async (req, res, next) => {
     }
     catch (err) {
         console.log(err)
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token1");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token1");
     }
 }
 export const GetUser = async (req, res, next) => {
@@ -1490,7 +1490,7 @@ export const GetUser = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1500,7 +1500,7 @@ export const GetUser = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1508,7 +1508,7 @@ export const GetUser = async (req, res, next) => {
         }
 
 
-       else if (!user.access?.user?.includes('read')) {
+        else if (!user.access?.user?.includes('read')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to  Get user");
         }
         else {
@@ -1516,7 +1516,7 @@ export const GetUser = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const updateUser = async (req, res, next) => {
@@ -1528,7 +1528,7 @@ export const updateUser = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1538,7 +1538,7 @@ export const updateUser = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1554,7 +1554,7 @@ export const updateUser = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const deleteUserAccess = async (req, res, next) => {
@@ -1566,7 +1566,7 @@ export const deleteUserAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1576,7 +1576,7 @@ export const deleteUserAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1584,7 +1584,7 @@ export const deleteUserAccess = async (req, res, next) => {
         }
 
 
-      else if (!user.access?.user?.includes('delete')) {
+        else if (!user.access?.user?.includes('delete')) {
             return responseData(res, "", 403, false, "Forbidden: You do not have access to  delete user");
         }
         else {
@@ -1592,7 +1592,7 @@ export const deleteUserAccess = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const GetArchiveUser = async (req, res, next) => {
@@ -1604,7 +1604,7 @@ export const GetArchiveUser = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1614,7 +1614,7 @@ export const GetArchiveUser = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1630,7 +1630,7 @@ export const GetArchiveUser = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const restoreUserAccess = async (req, res, next) => {
@@ -1642,7 +1642,7 @@ export const restoreUserAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1652,7 +1652,7 @@ export const restoreUserAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1668,7 +1668,7 @@ export const restoreUserAccess = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const deleteArchiveUserAccess = async (req, res, next) => {
@@ -1680,7 +1680,7 @@ export const deleteArchiveUserAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1690,7 +1690,7 @@ export const deleteArchiveUserAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1706,7 +1706,7 @@ export const deleteArchiveUserAccess = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 
@@ -1720,7 +1720,7 @@ export const CreateRoleAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1730,7 +1730,7 @@ export const CreateRoleAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1751,7 +1751,7 @@ export const CreateRoleAccess = async (req, res, next) => {
     }
     catch (err) {
         console.log(err)
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token1");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token1");
     }
 }
 export const GetRole = async (req, res, next) => {
@@ -1763,7 +1763,7 @@ export const GetRole = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1773,7 +1773,7 @@ export const GetRole = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1789,7 +1789,7 @@ export const GetRole = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const updateRole = async (req, res, next) => {
@@ -1801,7 +1801,7 @@ export const updateRole = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1811,7 +1811,7 @@ export const updateRole = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1827,7 +1827,7 @@ export const updateRole = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 export const deleteRole = async (req, res, next) => {
@@ -1839,7 +1839,7 @@ export const deleteRole = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1849,7 +1849,7 @@ export const deleteRole = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1865,7 +1865,7 @@ export const deleteRole = async (req, res, next) => {
         }
     }
     catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
 
@@ -1881,7 +1881,7 @@ export const readFileCompanyDataAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1892,7 +1892,7 @@ export const readFileCompanyDataAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
         if (user.role === 'SUPERADMIN') {
             next();
@@ -1909,7 +1909,7 @@ export const readFileCompanyDataAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const updateFilecompanyDataAccess = async (req, res, next) => {
@@ -1921,7 +1921,7 @@ export const updateFilecompanyDataAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1932,7 +1932,7 @@ export const updateFilecompanyDataAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1950,7 +1950,7 @@ export const updateFilecompanyDataAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 export const deletedFilecompanyDataAccess = async (req, res, next) => {
@@ -1962,7 +1962,7 @@ export const deletedFilecompanyDataAccess = async (req, res, next) => {
             return responseData(
                 res,
                 "",
-                401,
+                403,
                 false,
                 "Unauthorized: No token provided"
             );
@@ -1973,7 +1973,7 @@ export const deletedFilecompanyDataAccess = async (req, res, next) => {
         const user = await registerModel.findById(decodedToken?.id);
 
         if (!user) {
-            return responseData(res, "", 401, false, "Unauthorized: User not found");
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
         }
 
         if (user.role === 'SUPERADMIN') {
@@ -1990,7 +1990,7 @@ export const deletedFilecompanyDataAccess = async (req, res, next) => {
 
 
     } catch (err) {
-        return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
 

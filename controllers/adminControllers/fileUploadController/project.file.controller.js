@@ -117,9 +117,9 @@ const projectFileUpload = async (req, res) => {
   const project_id = req.body.project_id;
 
   if (!project_id) {
-    responseData(res, "", 401, false, "project Id required!", []);
+    responseData(res, "", 403, false, "project Id required!", []);
   } else if (!folder_name) {
-    responseData(res, "", 401, false, "folder name required!", []);
+    responseData(res, "", 403, false, "folder name required!", []);
   } else {
     try {
       const find_project = await projectModel.find({ project_id: project_id });

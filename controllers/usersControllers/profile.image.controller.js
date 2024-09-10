@@ -11,7 +11,7 @@ const uploadImage = async (req, fileName, userId, key) => {
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
-        // ACL: "public-read",
+      // ACL: "public-read",
     })
     .promise();
   return response
@@ -54,7 +54,7 @@ const setProfileUrlInDB = async (res, response, userId) => {
       }
     })
     .catch((err) => {
-      responseData(res, "", 401, false, "server problem");
+      responseData(res, "", 403, false, "server problem");
     });
 };
 

@@ -135,38 +135,38 @@ export const createLead = async (req, res) => {
     responseData(
       res,
       "",
-      401,
+      403,
       false,
       "name should be greater than 3 characters And number and special characters not allow"
     );
 
   } else if (!userId) {
-    responseData(res, "", 401, false, "userId is required.")
+    responseData(res, "", 403, false, "userId is required.")
   }
   else if (!onlyEmailValidation(email)) {
     const [localPart, domainPart] = email.split('@');
 
     // Check if the local part is too short or the domain part is too short
     if (localPart.length < 3 || domainPart.length < 3) {
-      responseData(res, "", 401, false, "email is invalid.");
+      responseData(res, "", 403, false, "email is invalid.");
     } else {
       // Further checks (like disposable email checks) can be added here
       responseData(res, "", 200, true, "email is valid.");
     }
   } else if (!onlyPhoneNumberValidation(phone)) {
-    responseData(res, "", 401, false, "phone number  is  invalid.");
+    responseData(res, "", 403, false, "phone number  is  invalid.");
   } else if (!location) {
-    responseData(res, "", 401, false, "location is required.");
+    responseData(res, "", 403, false, "location is required.");
   } else if (!status) {
-    responseData(res, "", 401, false, "status is required.");
+    responseData(res, "", 403, false, "status is required.");
   } else if (!source) {
-    responseData(res, "", 401, false, "source is required.");
+    responseData(res, "", 403, false, "source is required.");
   }
   else if (!onlyAlphabetsValidation(lead_manager) && lead_manager.length >= 3) {
     responseData(
       res,
       "",
-      401,
+      403,
       false,
       "lead manager should be greater than 3 characters And number and special characters not allow"
     )
@@ -177,7 +177,7 @@ export const createLead = async (req, res) => {
     try {
       const check_email = await leadModel.find({ email: email });
       if (check_email.length > 0) {
-        responseData(res, "", 401, false, "email already exist.");
+        responseData(res, "", 403, false, "email already exist.");
       }
       if (check_email.length < 1) {
         const lead_id = generateSixDigitNumber();
@@ -903,31 +903,31 @@ export const updateLead = async (req, res) => {
       responseData(
         res,
         "",
-        401,
+        403,
         false,
         "name should be greater than 3 characters."
       );
 
     } else if (!user_id) {
-      responseData(res, "", 401, false, "userId is required.")
+      responseData(res, "", 403, false, "userId is required.")
     }
     else if (!lead_id) {
-      responseData(res, "", 401, false, "lead Id is required.")
+      responseData(res, "", 403, false, "lead Id is required.")
     }
     else if (!onlyEmailValidation(email) && email.length > 5) {
-      responseData(res, "", 401, false, "email is invalid.");
+      responseData(res, "", 403, false, "email is invalid.");
     } else if (!onlyPhoneNumberValidation(phone)) {
-      responseData(res, "", 401, false, "phone number  is  invalid.");
+      responseData(res, "", 403, false, "phone number  is  invalid.");
     } else if (!location) {
-      responseData(res, "", 401, false, "location is required.");
+      responseData(res, "", 403, false, "location is required.");
     } else if (!source) {
-      responseData(res, "", 401, false, "source is required.");
+      responseData(res, "", 403, false, "source is required.");
     }
     else if (!onlyAlphabetsValidation(lead_manager) && lead_manager.length >= 3) {
       responseData(
         res,
         "",
-        401,
+        403,
         false,
         "lead manager should be greater than 3 characters."
       )
@@ -936,12 +936,12 @@ export const updateLead = async (req, res) => {
     else {
       const check_user = await registerModel.findOne({ _id: user_id })
       if (!check_user) {
-        responseData(res, "", 401, false, "user not found.")
+        responseData(res, "", 403, false, "user not found.")
       }
       else {
         const check_lead = await leadModel.findOne({ lead_id: lead_id })
         if (!check_lead) {
-          responseData(res, "", 401, false, "lead not found.")
+          responseData(res, "", 403, false, "lead not found.")
         }
         else {
           await leadModel.findOneAndUpdate(

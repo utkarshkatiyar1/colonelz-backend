@@ -104,12 +104,12 @@ export const templateFileUpload = async (req, res) => {
     const type = req.body.type;
 
     if (!folder_name || !sub_folder_name_first || !sub_folder_name_second || !type) {
-        responseData(res, "", 401, false, "folder name, sub folder names, and type are required", []);
+        responseData(res, "", 403, false, "folder name, sub folder names, and type are required", []);
         return;
     }
 
     if (type !== "template") {
-        responseData(res, "", 401, false, "Type must be 'template'", []);
+        responseData(res, "", 403, false, "Type must be 'template'", []);
         return;
     }
 

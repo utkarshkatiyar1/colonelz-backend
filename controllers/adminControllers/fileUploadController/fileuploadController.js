@@ -122,10 +122,10 @@ const fileupload = async (req, res) => {
   const lead_id = req.body.lead_id;
 
   if (!lead_id) {
-    responseData(res, "", 401, false, "lead Id required!", []);
+    responseData(res, "", 403, false, "lead Id required!", []);
   }
   else if (!folder_name) {
-    responseData(res, "", 401, false, "folder name required!", []);
+    responseData(res, "", 403, false, "folder name required!", []);
   }
   else {
     try {
