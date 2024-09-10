@@ -232,6 +232,8 @@ export const getAllTasks = async (req, res) => {
             estimated_task_start_date: task.estimated_task_start_date,
             task_status: task.task_status,
             task_priority: task.task_priority,
+            task_createdOn: task.task_createdOn,
+            task_createdBy: task.task_createdBy
         }));
 
         responseData(res, "Tasks found successfully", 200, true, "", response);
