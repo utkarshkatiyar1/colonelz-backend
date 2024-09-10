@@ -77,6 +77,10 @@ export const createTask = async (req, res) => {
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
         const reporter = req.body.reporter;
+        if(task_assignee === reporter)
+        {
+            return responseData(res, "", 404, false, "The task assignee and the person who reported the task should not be the same.", []);
+        }
 
         if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
         if (!project_id) return responseData(res, "", 404, false, "Project Id required", []);
@@ -233,7 +237,11 @@ export const getAllTasks = async (req, res) => {
             task_status: task.task_status,
             task_priority: task.task_priority,
             task_createdOn: task.task_createdOn,
-            task_createdBy: task.task_createdBy
+            task_createdBy: task.task_createdBy,
+            task_assignee: task.task_assignee,
+            reporter: task.reporter,
+            
+
         }));
 
         responseData(res, "Tasks found successfully", 200, true, "", response);

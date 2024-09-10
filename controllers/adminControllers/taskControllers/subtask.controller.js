@@ -79,6 +79,11 @@ export const createSubTask = async (req, res) => {
         const sub_task_assignee = req.body.sub_task_assignee;
         const sub_task_reporter = req.body.sub_task_reporter;
 
+        if(sub_task_assignee === sub_task_reporter)
+        {
+            return responseData(res, "", 404, false, "The  subtask assignee and the person who reported the  subtask should not be the same.", []);
+        }
+
         if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
         if (!project_id) return responseData(res, "", 404, false, "Project Id required", []);
         if (!task_id) return responseData(res, "", 404, false, "Task Id required", []);
@@ -105,8 +110,14 @@ export const createSubTask = async (req, res) => {
         if (check_task.task_status === 'Cancelled') return responseData(res, "", 400, false, "The task has been canceled", []);
 
         // Ensure user is authorized
-        if (![check_task.task_assignee, check_task.task_createdBy].includes(check_user.username) ||
-            !['ADMIN', 'SUPERADMIN'].includes(check_user.role)) {
+        console.log('Username:', check_user.username);
+        console.log('Assignee:', check_task.task_assignee);
+        console.log('Creator:', check_task.task_createdBy);
+        console.log(['ADMIN', 'SUPERADMIN'].includes(check_user.role))
+        const isNotAssigneeOrCreator = ![check_task.task_assignee, check_task.task_createdBy].includes(check_user.username);
+        const isNotAdminOrSuperadmin = !['ADMIN', 'SUPERADMIN'].includes(check_user.role);
+
+        if (isNotAssigneeOrCreator && isNotAdminOrSuperadmin) {
             return responseData(res, "", 400, false, "You are not authorized to create this subtask", []);
         }
 
