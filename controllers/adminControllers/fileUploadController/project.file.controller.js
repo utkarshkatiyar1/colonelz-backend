@@ -23,7 +23,7 @@ const uploadFile = async (file, fileName, lead_id, folder_name) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      ACL: 'public-read'
+      // ACL: 'public-read'/
     })
     .promise();
 };
