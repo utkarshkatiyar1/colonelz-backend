@@ -465,7 +465,7 @@ export const shareQuotation = async (req, res) => {
                                     project_updated_by: {
                                         username: check_user.username,
                                         role: check_user.role,
-                                        message: `has sent the quotation for approval to ${user_name}.`,
+                                        message: `has sent the quotation for approval to ${check_user.username}.`,
                                         updated_date: new Date()
                                     }
                                 }
