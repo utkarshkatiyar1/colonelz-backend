@@ -173,7 +173,7 @@ export const shareContract = async (req, res) => {
         const folder_name = req.body.folder_name;
         const fileId = req.body.file_id;
         const lead_id = req.body.lead_id;
-        const user_name = req.user_name
+        // const user_name = req.user_name
         const type = req.body.type;
         const client_email = req.body.email;
         const client_name = req.body.client_name;
@@ -196,177 +196,174 @@ export const shareContract = async (req, res) => {
                 //     return responseData(res, "", 400, false, "User not found");
                 // }
                 // else {
-                    const check_lead = await leadModel.findOne({ lead_id: lead_id });
-                    if (!check_lead) {
-                        return responseData(res, "", 400, false, "Lead not found");
+                const check_lead = await leadModel.findOne({ lead_id: lead_id });
+                if (!check_lead) {
+                    return responseData(res, "", 400, false, "Lead not found");
+                }
+                else {
+                    // const check_file_in_lead = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId });
+                    // if (check_file_in_lead) {
+                    //     return responseData(res, "", 400, false, "File already exists in lead");
+                    // }
+               
+                    const check_status1 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contract.admin_status": "pending" });
+                    if (check_status1) {
+                        return responseData(res, "", 400, false, "This Contract not  closed yet");
+                    }
+                    const check_status2 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contract.admin_status": "rejected" });
+                    if (check_status2) {       
+                        return responseData(res, "", 400, false, "This Contract rejected");
+                    }
+                    const check_status3 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contracts.admin_status": "approved" });
+                    if (check_status3) {
+                        return responseData(res, "", 400, false, "This Contract approved");
+                    }
+
+
+
+                    const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId });
+                    if (!check_file) {
+                        return responseData(res, "", 400, false, "File not found");
                     }
                     else {
-                        // const check_file_in_lead = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId });
-                        // if (check_file_in_lead) {
-                        //     return responseData(res, "", 400, false, "File already exists in lead");
-                        // }
-                        const check_status1 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contract.admin_status": "pending" });
-                        if (check_status1) {
-                            return responseData(res, "", 400, false, "This Contract not  closed yet");
-                        }
-                        const check_status2 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contract.admin_status": "rejected" });
-                        if (check_status2) {
-                            return responseData(res, "", 400, false, "This Contract rejected");
-                        }
-                        const check_status3 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contracts.admin_status": "approved" });
-                        if (check_status3) {
-                            return responseData(res, "", 400, false, "This Contract approved");
-                        }
 
 
+                        const file_url = check_file.files.find(x => x.folder_name === folder_name)?.files.find(file => file.fileId === fileId);
 
-                        const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId });
-
-                        if (!check_file) {
-                            return responseData(res, "", 400, false, "File not found");
-                        }
-                        else {
-
-
-                            const file_url = check_file.files.find(x => x.folder_name === folder_name)?.files.find(file => file.fileId === fileId);
-
-
-                            const mailOptions = {
-                                from: "info@colonelz.com",
-                                to: check_user.email,
-                                subject: "Contract Share Notification",
-                                html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Contract Share Notification</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                }
-                .container {
-                    width: 80%;
-                    margin: auto;
-                    padding: 20px;
-                }
-                .notification {
-                    background-color: #f0f0f0;
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-                .notification h2 {
-                    margin-top: 0;
-                    color: #333;
-                }
-                .notification p {
-                    margin-bottom: 10px;
-                    color: #555;
-                }
-                .btn {
-                    background-color: #4CAF50;
-                    color: white;
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 5px;
-                    text-decoration: none;
-                    cursor: pointer;
-                }
-                .btn:hover {
-                    background-color: #45a049;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="notification">
-                <h2>Contract Share Notification</h2>
-                <p>Hello ${user_name},</p>
-                <p>A new contract has been shared with you. Please review it and take necessary actions.</p>
-                <p>Lead Name: <strong>${check_lead.name}</strong></p>
-                <p>Contract File ID: <strong>${fileId}</strong></p>
-                <p>File URL: <a href="${file_url.fileUrl}">View File</a></p>
-                  <p >
-                 <a href="${approvalLinkAdmin(lead_id, fileId, 'approved')}">Approve</a> |
-            <a href="${approvalLinkAdmin(lead_id, fileId, 'rejected')}">Reject</a>
+    //                     const mailOptions = {
+    //                         from: "info@colonelz.com",
+    //                         to: check_user.email,
+    //                         subject: "Contract Share Notification",
+    //                         html: `
+    //     <!DOCTYPE html>
+    //     <html lang="en">
+    //     <head>
+    //         <meta charset="UTF-8">
+    //         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    //         <title>Contract Share Notification</title>
+    //         <style>
+    //             body {
+    //                 font-family: Arial, sans-serif;
+    //                 margin: 0;
+    //                 padding: 0;
+    //             }
+    //             .container {
+    //                 width: 80%;
+    //                 margin: auto;
+    //                 padding: 20px;
+    //             }
+    //             .notification {
+    //                 background-color: #f0f0f0;
+    //                 padding: 20px;
+    //                 border-radius: 5px;
+    //                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    //             }
+    //             .notification h2 {
+    //                 margin-top: 0;
+    //                 color: #333;
+    //             }
+    //             .notification p {
+    //                 margin-bottom: 10px;
+    //                 color: #555;
+    //             }
+    //             .btn {
+    //                 background-color: #4CAF50;
+    //                 color: white;
+    //                 padding: 10px 20px;
+    //                 border: none;
+    //                 border-radius: 5px;
+    //                 text-decoration: none;
+    //                 cursor: pointer;
+    //             }
+    //             .btn:hover {
+    //                 background-color: #45a049;
+    //             }
+    //         </style>
+    //     </head>
+    //     <body>
+    //         <div class="notification">
+    //             <h2>Contract Share Notification</h2>
+    //             <p>Hello ${user_name},</p>
+    //             <p>A new contract has been shared with you. Please review it and take necessary actions.</p>
+    //             <p>Lead Name: <strong>${check_lead.name}</strong></p>
+    //             <p>Contract File ID: <strong>${fileId}</strong></p>
+    //             <p>File URL: <a href="${file_url.fileUrl}">View File</a></p>
+    //               <p >
+    //              <a href="${approvalLinkAdmin(lead_id, fileId, 'approved')}">Approve</a> |
+    //         <a href="${approvalLinkAdmin(lead_id, fileId, 'rejected')}">Reject</a>
             
-                    </p>
+    //                 </p>
                
-                <p>Thank you!</p>
-            </div>
-        </body>
-        </html>
-    `
-                            };
+    //             <p>Thank you!</p>
+    //         </div>
+    //     </body>
+    //     </html>
+    // `
+    //                     };
+                        // transporter.sendMail(mailOptions, async (error, info) => {
+                        //     if (error) {
+                        //         return responseData(res, "", 400, false, "Failed to send email");
+                        //     } else {
+                                // await registerModel.updateOne(
+                                //     { username: user_name },
+                                //     {
+                                //         $push: {
+                                //             "data.$[elem].quotationData": {
+                                //                 lead_id: lead_id,
+                                //                 contract_file_id: fileId,
+                                //                 file_url: file_url.fileUrl,
+                                //                 approval_status: "pending"
+                                //             },
+                                //             "data.$[elem].notificationData": {
+                                //                 _id: new mongoose.Types.ObjectId(),
+                                //                 itemId: lead_id,
+                                //                 notification_id: generatedigitnumber(),
+                                //                 type: "contract",
+                                //                 status: false,
+                                //                 message: `Contract file shared with you for review in ${check_lead.name}  . Please check`,
+                                //                 createdAt: new Date()
+                                //             }
+                                //         }
+                                //     },
+                                //     { arrayFilters: [{ "elem.projectData": { $exists: true } }] }
+                                // );
 
+                                const contractData = {
+                                    itemId: fileId,
+                                    admin_status: "pending",
+                                    file_name: file_url.fileName,
+                                    files: file_url,
+                                    remark: "",
 
-                            transporter.sendMail(mailOptions, async (error, info) => {
-                                if (error) {
-                                    return responseData(res, "", 400, false, "Failed to send email");
-                                } else {
-                                    await registerModel.updateOne(
-                                        { username: user_name },
-                                        {
-                                            $push: {
-                                                "data.$[elem].quotationData": {
-                                                    lead_id: lead_id,
-                                                    contract_file_id: fileId,
-                                                    file_url: file_url.fileUrl,
-                                                    approval_status: "pending"
-                                                },
-                                                "data.$[elem].notificationData": {
-                                                    _id: new mongoose.Types.ObjectId(),
-                                                    itemId: lead_id,
-                                                    notification_id: generatedigitnumber(),
-                                                    type: "contract",
-                                                    status: false,
-                                                    message: `Contract file shared with you for review in ${check_lead.name}  . Please check`,
-                                                    createdAt: new Date()
-                                                }
-                                            }
-                                        },
-                                        { arrayFilters: [{ "elem.projectData": { $exists: true } }] }
-                                    );
+                                };
 
-                                    const contractData = {
-                                        itemId: fileId,
-                                        admin_status: "pending",
-                                        file_name: file_url.fileName,
-                                        files: file_url,
-                                        remark: "",
+                                if (check_lead.contract.length < 1) {
 
-                                    };
-
-                                    if (check_lead.contract.length < 1) {
-
-                                        const createObj = {
-                                            lead_id,
-                                            contractData,
-                                        }
-
-                                        await storeOrUpdateContract(res, createObj, true);
+                                    const createObj = {
+                                        lead_id,
+                                        contractData,
                                     }
-                                    else {
-                                        const createObj = {
-                                            lead_id,
-                                            contractData,
 
-
-                                        }
-                                        await storeOrUpdateContract(res, createObj);
-
-                                    }
+                                    await storeOrUpdateContract(res, createObj, true);
                                 }
-                            });
+                                else {
+                                    const createObj = {
+                                        lead_id,
+                                        contractData,
 
 
-                        }
+                                    }
+                                    await storeOrUpdateContract(res, createObj);
+
+                                }
+                        //     }
+                        // });
+
 
                     }
-            // }
+
+                }
+                // }
 
             }
             else if (type === 'Client') {
