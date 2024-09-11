@@ -24,18 +24,18 @@ export const sendotpforgetpassword = async (req, res) => {
 
 
   if (!onlyEmailValidation(email)) {
-    responseData(res, "", 401, false, "Invalid email address");
+    responseData(res, "", 403, false, "Invalid email address");
   }
 
   try {
-    
+
     //checking email is registered or not
-    const user = await registerModel.find({ email:email , status:true});
+    const user = await registerModel.find({ email: email, status: true });
     if (user.length < 1) {
-      return responseData(res,"", 404,false, "Email not registered");
+      return responseData(res, "", 404, false, "Email not registered");
     }
     if (user.length > 0) {
-     const delete_otp = await otpForForgetpassModel.findOneAndDelete({ email:email });
+      const delete_otp = await otpForForgetpassModel.findOneAndDelete({ email: email });
       const OTP = Randomstring.generate({
         length: 6,
         charset: "numeric",
@@ -53,7 +53,7 @@ export const sendotpforgetpassword = async (req, res) => {
             responseData(
               res,
               "",
-              401,
+              403,
               false,
               "Something is wrong OTP hash not generate.Try after sometime."
             );
@@ -89,9 +89,9 @@ export const otpVerification = async (req, res) => {
   const getOtp = req.body.otp;
   const getEmail = req.body.email;
   if (!onlyEmailValidation(getEmail)) {
-    responseData(res, "", 401, false, "Invalid email address");
+    responseData(res, "", 403, false, "Invalid email address");
   } else if (getOtp.length != 6) {
-    responseData(res, "", 401, false, "Please enter six digit OTP.");
+    responseData(res, "", 403, false, "Please enter six digit OTP.");
   } else {
     otpForForgetpassModel
       .find({ email: getEmail })
@@ -104,7 +104,7 @@ export const otpVerification = async (req, res) => {
           if (data[0].status === false) {
             bcrypt.compare(getOtp, data[0].otp, (err, result) => {
               if (!result) {
-                responseData(res, "", 401, false, "OTP not matched");
+                responseData(res, "", 403, false, "OTP not matched");
               }
               if (result) {
                 const Token = Jwt.sign(
@@ -131,7 +131,7 @@ export const otpVerification = async (req, res) => {
               }
             });
           } else {
-            responseData(res, "", 401, false, "enter valid otp");
+            responseData(res, "", 403, false, "enter valid otp");
           }
         }
       })
@@ -160,7 +160,7 @@ async function resetPassword(res, email, token, newPassword, userId) {
       return responseData(
         res,
         "",
-        401,
+        403,
         false,
         "OTP not present in DB for matching"
       );
@@ -187,13 +187,13 @@ async function resetPassword(res, email, token, newPassword, userId) {
           ""
         );
       } else {
-        return responseData(res, "", 401, false, "Enter a strong password");
+        return responseData(res, "", 403, false, "Enter a strong password");
       }
     } else {
       return responseData(
         res,
         "",
-        401,
+        403,
         false,
         "OTP verification status and token not matched"
       );
@@ -203,7 +203,7 @@ async function resetPassword(res, email, token, newPassword, userId) {
     return responseData(
       res,
       "",
-      401,
+      403,
       false,
       "Server problem, OTP matching failed"
     );
@@ -220,7 +220,7 @@ export const changePassController = async (req, res) => {
       .exec()
       .then((result) => {
         if (result.length < 1) {
-          responseData(res, "", 401, false, "user not exist");
+          responseData(res, "", 403, false, "user not exist");
         }
         if (result.length > 0) {
           //// call function for reset password /////////
@@ -229,9 +229,9 @@ export const changePassController = async (req, res) => {
         }
       })
       .catch((err) => {
-        responseData(res, "", 401, false, err);
+        responseData(res, "", 403, false, err);
       });
   } else {
-    responseData(res, "", 401, false, "Invalid email");
+    responseData(res, "", 403, false, "Invalid email");
   }
 };

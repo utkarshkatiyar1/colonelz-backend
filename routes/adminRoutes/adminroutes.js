@@ -86,7 +86,7 @@ import { verify } from "crypto";
  *         description: User created successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  */
 router.route("/create/user").post(verifyJWT, CreateUserAccess, createUser);
@@ -176,7 +176,7 @@ router.route("/create/user").post(verifyJWT, CreateUserAccess, createUser);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -233,7 +233,7 @@ router.route("/add/member").post(verifyJWT, createAddMember, addMember);
  *         description: User fetched  successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  */
 router.route("/get/alluser").get(verifyJWT, GetUser, getUser);
@@ -258,7 +258,7 @@ router.route("/get/alluser").get(verifyJWT, GetUser, getUser);
  *         description: User deleted successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  *       404:
  *         description: User not found
@@ -280,7 +280,7 @@ router.route("/get/userlist").get(verifyJWT, getUserList);
  *         description: User fetched  successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  */
 router.route("/archive/user").get(verifyJWT, GetArchiveUser, archiveUser);
@@ -309,7 +309,7 @@ router.route("/archive/user").get(verifyJWT, GetArchiveUser, archiveUser);
  *         description: User restore successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  */
 router.route("/restore/user").post(verifyJWT, restoreUserAccess, restoreUser);
@@ -334,7 +334,7 @@ router.route("/restore/user").post(verifyJWT, restoreUserAccess, restoreUser);
  *         description: User deleted successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  *       404:
  *         description: User not found
@@ -384,7 +384,7 @@ router.route("/get/companyData").get(verifyJWT, readFileCompanyDataAccess, getCo
  *         description: Project data fetched  successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  */
 router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmininProject, getAllProject);
@@ -416,7 +416,7 @@ router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailable
  *         description: Project details fetched successfully
  *       400:
  *         description: Bad request
- *       401:
+ *       403:
  *         description: Unauthorized
  */
 
@@ -536,7 +536,7 @@ router.route("/getsingle/project").get(verifyJWT, readProjectAccess, getSinglePr
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -625,7 +625,7 @@ router.route("/update/project").put(verifyJWT, updateProjectAccess, updateProjec
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -722,7 +722,7 @@ router.route("/get/user/project").get(verifyJWT, getProjectUser);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -892,7 +892,7 @@ router.route("/get/userlist/project/").get(verifyJWT, listUserInProject);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1005,7 +1005,7 @@ router.route("/create/lead").post(verifyJWT, createLeadAccess, createLead);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1137,7 +1137,7 @@ router.route("/getall/lead").get(verifyJWT, readLeadAccess, checkAvailableUserIs
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1292,7 +1292,7 @@ router.route("/getsingle/lead").get(verifyJWT, readLeadAccess, getSingleLead);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1509,7 +1509,7 @@ router.route("/update/lead").put(verifyJWT, updateLeadAccess, updateFollowLead);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1636,7 +1636,7 @@ router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadTo
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1799,7 +1799,7 @@ router.route("/add/member/lead").post(verifyJWT, createAddMember, AddMemberInLea
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -1918,7 +1918,7 @@ router.route("/update/lead/data").put(verifyJWT, updateLeadAccess, updateLead);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2030,7 +2030,7 @@ router.route("/lead/multiple/project").post(verifyJWT, createProjectAccess, lead
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2138,7 +2138,7 @@ router.route("/remove/member/lead").post(verify, deleteAddMember, removeMemberIn
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2300,7 +2300,7 @@ router.route("/get/userlist/lead").get(verifyJWT, listUserInLead);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2426,7 +2426,7 @@ router.route("/create/mom").post(verifyJWT, createMomAccess, createmom);
  *                   message:
  *                     type: string
  *                     example: "Invalid query parameters"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2558,7 +2558,7 @@ router.route("/getall/mom").get(verifyJWT, readMomAccess, getAllMom);
  *                   message:
  *                     type: string
  *                     example: "Invalid query parameters"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2685,7 +2685,7 @@ router.route("/getsingle/mom").get(verifyJWT, readMomAccess, getSingleMom);
  *                   message:
  *                     type: string
  *                     example: "Invalid query parameters"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2812,7 +2812,7 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:
@@ -2970,7 +2970,7 @@ router.route("/update/mom").put(verifyJWT, updateMom);
  *                   message:
  *                     type: string
  *                     example: "Invalid input data"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to missing or invalid JWT
  *           content:
  *             application/json:

@@ -5,9 +5,9 @@ import bcrypt from "bcrypt";
 import Jwt from "jsonwebtoken";
 
 const generateToken = (userId) => {
-  const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d"});
+  const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d" });
   const refreshToken = Jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "10d" })
-  return ( {accessToken, refreshToken});
+  return ({ accessToken, refreshToken });
 };
 
 const insertLogInData = async (res, user) => {
@@ -57,7 +57,7 @@ export const login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return responseData(res, "", 401, false, "Username or password does not match");
+      return responseData(res, "", 403, false, "Username or password does not match");
     }
 
     await insertLogInData(res, user);

@@ -36,7 +36,7 @@ const router = Router();
  *     responses:
  *       '200':
  *         description: Login successful
- *       '401':
+ *       '403':
  *         description: Unauthorized
  */
 
@@ -349,7 +349,7 @@ router.route("/approval/client").post(updateStatusClient)
  *                   message:
  *                     type: string
  *                     example: "Invalid refresh token"
- *         '401':
+ *         '403':
  *           description: Unauthorized access due to invalid or expired refresh token
  *           content:
  *             application/json:

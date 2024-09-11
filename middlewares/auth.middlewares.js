@@ -62,7 +62,7 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
     return responseData(res, "User data found", 200, true, "", response);
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdmin:", err);
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    return responseData(res, "", 403, false, "Unauthorized: Invalid token");
   }
 };
 
@@ -106,7 +106,7 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
       client_name: project.client[0]?.client_name,
       project_type: project.project_type,
       project_status: project.project_status,
-    
+
     }));
 
     // Prepare lead data
@@ -116,7 +116,7 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
       lead_email: lead.email,
       lead_status: lead.status,
       lead_date: lead.date,
-     
+
     }));
 
     // Prepare and send response data
@@ -128,7 +128,7 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
     return responseData(res, "User data found", 200, true, "", response);
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdminInFile:", err);
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    return responseData(res, "", 403, false, "Unauthorized: Invalid token");
   }
 };
 
@@ -162,7 +162,7 @@ export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
     return responseData(res, "User data found", 200, true, "", { leads: formattedLeads });
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdminInLead:", err);
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    return responseData(res, "", 403, false, "Unauthorized: Invalid token");
   }
 };
 
@@ -229,7 +229,7 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
             acc.completed.push(projectItem);
             break;
           case "design & execution":
-            acc.design_execution.push(projectItem);  
+            acc.design_execution.push(projectItem);
           default:
             break;
         }
@@ -246,7 +246,7 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
 
         return acc;
       },
-      { execution: [], design: [], completed: [],residential:[], commercial:[], design_execution:[]}
+      { execution: [], design: [], completed: [], residential: [], commercial: [], design_execution: [] }
     );
 
     const totalProjects = projects1.length;
@@ -315,10 +315,10 @@ export const isAdmin = (req, res, next) => {
     if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
       return next(); // Proceed to the next middleware
     } else {
-      return responseData(res, "", 401, false, "Unauthorized: You are not able to access");
+      return responseData(res, "", 403, false, "Unauthorized: You are not able to access");
     }
   } catch (err) {
     console.error("Error in isAdmin:", err);
-    return responseData(res, "", 401, false, "Unauthorized: Invalid token");
+    return responseData(res, "", 403, false, "Unauthorized: Invalid token");
   }
 };

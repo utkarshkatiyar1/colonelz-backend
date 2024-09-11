@@ -1,6 +1,6 @@
 import projectModel from "../../../models/adminModels/project.model.js";
 import { responseData } from "../../../utils/respounse.js";
-import AWS from "aws-sdk";
+
 import dotenv from "dotenv";
 import registerModel from "../../../models/usersModels/register.model.js";
 import {
@@ -11,12 +11,14 @@ import {
 import notificationModel from "../../../models/adminModels/notification.model.js";
 import taskModel from "../../../models/adminModels/task.model.js";
 dotenv.config();
+function generateSixDigitNumber() {
+  const min = 100000;
+  const max = 999999;
+  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+  return randomNumber;
+}
+
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -26,13 +28,7 @@ function formatDate(dateString) {
   return `${day}-${month}-${year}`;
 }
 
-function generateSixDigitNumber() {
-  const min = 100000;
-  const max = 999999;
-  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
 
-  return randomNumber;
-}
 
 // Function to check if the project is older than 6 months
 function isProjectOlderThan6Months(createdDate) {
@@ -122,108 +118,66 @@ export const getAllProject = async (req, res) => {
 
 
 export const getSingleProject = async (req, res) => {
-  const project_ID = req.query.project_id;
-  const id = req.query.id;
+  const { project_id, id } = req.query;
 
-  if (!project_ID) {
-    responseData(res, "", 404, false, " Project ID is required.", []);
-  } else if (!id) {
-    responseData(res, "", 404, false, " User ID is required.", []);
-  } else {
-    try {
-      const check_role = await registerModel.find({ _id: id });
-      if (check_role.length < 1) {
-        responseData(res, "", 404, false, " User not found.", []);
-      }
-      if (check_role.length > 0) {
+  if (!project_id) {
+    return responseData(res, "", 404, false, "Project ID is required.", []);
+  }
 
-        const find_project = await projectModel.find({
-          project_id: project_ID,
-        });
-        if (find_project.length > 0) {
-          let response = []
-          const check_task = await taskModel.find({ project_id: project_ID })
-          if (check_task.length < 1) {
-            response.push({
-              project_id: project_ID,
-              project_name: find_project[0].project_name,
-              project_type: find_project[0].project_type,
-              project_status: find_project[0].project_status,
-              timeline_date: find_project[0].timeline_date,
-              project_budget: find_project[0].project_budget,
-              description: find_project[0].description,
-              designer: find_project[0].designer,
-              task: [],
-              client: find_project[0].client,
-              lead_id: find_project[0].lead_id,
-              mom: find_project[0].mom,
-              quotation: find_project[0].quotation,
-              visualizer: find_project[0].visualizer,
-              leadmanager: find_project[0].leadmanager,
-              project_start_date: find_project[0].project_start_date,
-              project_end_date: find_project[0].project_end_date,
-              project_location: find_project[0].project_location,
-              project_updated_by: find_project[0].project_updated_by,
-              percentage:0
-            })
-          }
-          if (check_task.length > 0) {
-            let count =0;
-            let total_task_length = check_task.length;
-            let percentage;
+  if (!id) {
+    return responseData(res, "", 404, false, "User ID is required.", []);
+  }
 
-            for (let i = 0; i < check_task.length; i++) {
-              if(check_task[i].task_status === 'Completed')
-                {
-                  count = count + 1;
-
-                }
-                if(check_task.task_status ==='Cancelled')
-                  {
-                    total_task_length--;
-                  }
-            }
-            percentage = (count / total_task_length)*100;
-           
-            response.push({
-              project_id: project_ID,
-              project_name: find_project[0].project_name,
-              project_type: find_project[0].project_type,
-              project_status: find_project[0].project_status,
-              timeline_date: find_project[0].timeline_date,
-              project_budget: find_project[0].project_budget,
-              description: find_project[0].description,
-              designer: find_project[0].designer,
-              task: check_task,
-              client: find_project[0].client,
-              lead_id: find_project[0].lead_id,
-              mom: find_project[0].mom,
-              quotation: find_project[0].quotation,
-              visualizer: find_project[0].visualizer,
-              leadmanager: find_project[0].leadmanager,
-              project_start_date: find_project[0].project_start_date,
-              project_end_date: find_project[0].project_end_date,
-              project_location: find_project[0].project_location,
-              project_updated_by: find_project[0].project_updated_by,
-              percentage:percentage
-            })
-
-            }
-         
-
-          responseData(res, "project found", 200, true, "", response);
-        }
-        if (find_project < 1) {
-          responseData(res, "", 404, false, "project not found", []);
-        }
-
-      }
-    } catch (err) {
-      responseData(res, "", 500, false, "error in fetching projects", err);
-      console.log(err);
+  try {
+    // Fetch the user
+    const user = await registerModel.findById(id);
+    if (!user) {
+      return responseData(res, "", 404, false, "User not found.", []);
     }
+
+    // Fetch the project
+    const project = await projectModel.findOne({ project_id });
+    if (!project) {
+      return responseData(res, "", 404, false, "Project not found.", []);
+    }
+
+    // Fetch tasks associated with the project
+    const tasks = await taskModel.find({ project_id });
+
+    // Calculate task completion percentage
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(task => task.task_status === 'Completed').length;
+    const cancelledTasks = tasks.filter(task => task.task_status === 'Cancelled').length;
+    const percentage = totalTasks > 0 ? (completedTasks / (totalTasks - cancelledTasks)) * 100 : 0;
+
+    // Construct response
+    const response = {
+      project_id: project.project_id,
+      project_name: project.project_name,
+      project_type: project.project_type,
+      project_status: project.project_status,
+      timeline_date: project.timeline_date,
+      project_budget: project.project_budget,
+      description: project.description,
+      designer: project.designer,
+      client: project.client,
+      lead_id: project.lead_id,
+      visualizer: project.visualizer,
+      leadmanager: project.leadmanager,
+      project_start_date: project.project_start_date,
+      project_end_date: project.project_end_date,
+      project_location: project.project_location,
+      project_updated_by: project.project_updated_by,
+      percentage: percentage
+    };
+
+    responseData(res, "Project found", 200, true, "", [response]);
+  } catch (err) {
+    responseData(res, "", 500, false, "Error fetching project", err);
+    console.error(err);
   }
 };
+
 
 export const updateProjectDetails = async (req, res) => {
   const project_ID = req.body.project_id;
@@ -250,8 +204,7 @@ export const updateProjectDetails = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user id is required.", []);
   }
-  else if(!onlyEmailValidation(client_email) && client_email.length >5)
-  {
+  else if (!onlyEmailValidation(client_email) && client_email.length > 5) {
     responseData(res, "", 400, false, "client email is invalid", []);
   }
 
@@ -276,13 +229,13 @@ export const updateProjectDetails = async (req, res) => {
               project_end_date: timeline_date,
               description: description,
               designer: designer,
-              'client.$.client_email':client_email
+              'client.$.client_email': client_email
             },
 
             $push: {
               project_updated_by: {
                 username: find_user[0].username,
-                role:find_user[0].role,
+                role: find_user[0].role,
                 project_budget: project_budget,
                 project_status: project_status,
                 timeline_date: timeline_date,

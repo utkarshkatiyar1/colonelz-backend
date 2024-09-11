@@ -1,4 +1,4 @@
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
@@ -6,11 +6,7 @@ import { responseData } from "../../../utils/respounse.js";
 
 dotenv.config();
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+
 
 function generateSixDigitNumber() {
   const min = 100000;
@@ -126,10 +122,10 @@ const fileupload = async (req, res) => {
   const lead_id = req.body.lead_id;
 
   if (!lead_id) {
-    responseData(res, "", 401, false, "lead Id required!", []);
+    responseData(res, "", 403, false, "lead Id required!", []);
   }
   else if (!folder_name) {
-    responseData(res, "", 401, false, "folder name required!", []);
+    responseData(res, "", 403, false, "folder name required!", []);
   }
   else {
     try {

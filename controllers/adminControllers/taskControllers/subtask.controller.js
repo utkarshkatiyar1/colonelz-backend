@@ -79,6 +79,11 @@ export const createSubTask = async (req, res) => {
         const sub_task_assignee = req.body.sub_task_assignee;
         const sub_task_reporter = req.body.sub_task_reporter;
 
+        if(sub_task_assignee === sub_task_reporter)
+        {
+            return responseData(res, "", 404, false, "The  subtask assignee and the person who reported the  subtask should not be the same.", []);
+        }
+
         if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
         if (!project_id) return responseData(res, "", 404, false, "Project Id required", []);
         if (!task_id) return responseData(res, "", 404, false, "Task Id required", []);
@@ -105,11 +110,14 @@ export const createSubTask = async (req, res) => {
         if (check_task.task_status === 'Cancelled') return responseData(res, "", 400, false, "The task has been canceled", []);
 
         // Ensure user is authorized
-        console.log(check_user.role)
-        console.log([check_task.task_assignee, check_task.task_createdBy].includes(check_user.username))
-        console.log(["ADMIN", "SUPERADMIN"].includes(check_user.role))
-        if (![check_task.task_assignee, check_task.task_createdBy].includes(check_user.username) ||
-            !['ADMIN', 'SUPERADMIN'].includes(check_user.role)) {
+        console.log('Username:', check_user.username);
+        console.log('Assignee:', check_task.task_assignee);
+        console.log('Creator:', check_task.task_createdBy);
+        console.log(['ADMIN', 'SUPERADMIN'].includes(check_user.role))
+        const isNotAssigneeOrCreator = ![check_task.task_assignee, check_task.task_createdBy].includes(check_user.username);
+        const isNotAdminOrSuperadmin = !['ADMIN', 'SUPERADMIN'].includes(check_user.role);
+
+        if (isNotAssigneeOrCreator && isNotAdminOrSuperadmin) {
             return responseData(res, "", 400, false, "You are not authorized to create this subtask", []);
         }
 
@@ -375,6 +383,15 @@ export const updateSubTask = async (req, res) => {
         if (!isAuthorized) {
             return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
         }
+        
+
+        // Use ternary operator to set `date` based on the conditions
+        let date = (sub_task_status === 'Completed' && (actual_sub_task_end_date === '' || actual_sub_task_end_date == null))
+            ? new Date()
+            : actual_sub_task_end_date;
+
+      
+
 
         const updateFields = {
             "subtasks.$.sub_task_name": sub_task_name,
@@ -382,7 +399,7 @@ export const updateSubTask = async (req, res) => {
             "subtasks.$.estimated_sub_task_start_date": estimated_sub_task_start_date,
             "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
             "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
-            "subtasks.$.actual_sub_task_end_date": actual_sub_task_end_date,
+            "subtasks.$.actual_sub_task_end_date": date,
             "subtasks.$.sub_task_status": sub_task_status,
             "subtasks.$.sub_task_priority": sub_task_priority,
             "subtasks.$.sub_task_assignee": sub_task_assignee,

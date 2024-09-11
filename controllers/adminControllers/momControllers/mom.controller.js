@@ -1,7 +1,7 @@
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
-import AWS from "aws-sdk";
-import { onlyAlphabetsValidation } from "../../../utils/validation.js";
+import { s3 } from "../../../utils/function.js"
+import { onlyAlphabetsValidation, onlyMomClientsValidation } from "../../../utils/validation.js";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path"
@@ -18,11 +18,6 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
 
 const uploadFile = async (file, fileName, project_id, mom_id) => {
   return s3
@@ -167,29 +162,24 @@ export const createmom = async (req, res) => {
     const attendees = req.body.attendees;
     const remark = req.body.remark;
 
-
+console.log(client_name)
+  
     // write here validation ///
     if (!project_id) {
-      return res
-        .status(400)
-        .send({ status: false, message: "project_id is required" });
+      responseData(res, "", 400, false, "project_id is required");
     }
     else if (!user_id) {
       responseData(res, "", 400, false, "User Id required");
     }
     else if (!meetingDate) {
-      return res
-        .status(400)
-        .send({ status: false, message: "meetingDate is required" });
+      responseData(res, "", 400, false, "meetingDate is required");
     } else if (!location) {
-      return res
-        .status(400)
-        .send({ status: false, message: "location is required" });
-    } else if (!client_name && !onlyAlphabetsValidation(client_name)) {
-    } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "organiser is required" });
+      responseData(res, "", 400, false, "location is required");
+    } 
+    else if (!client_name || !onlyMomClientsValidation(client_name)) {
+      responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
+    } else if (!organisor || !onlyMomClientsValidation(organisor)) {
+      responseData(res, "", 400, false, "organiser is required");
     } else {
       const check_user = await registerModel.findOne({ _id: user_id })
       if (!check_user) {

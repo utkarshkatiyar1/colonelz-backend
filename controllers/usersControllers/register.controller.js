@@ -205,7 +205,7 @@ export const verifyOtp = async (req, res) => {
       if (otpdata.length > 0) {
         let otpCheck = bcrypt.compare(otp, otpdata[0].otp);
         if (!otpCheck) {
-          responseData(res, "", 401, false, "Wrong OTP!");
+          responseData(res, "", 403, false, "Wrong OTP!");
         } else {
           const updatestatus = await emailverifyModel.find({ email: email });
           if (updatestatus.length > 0) {
