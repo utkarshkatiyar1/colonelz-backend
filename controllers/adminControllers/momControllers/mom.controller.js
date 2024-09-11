@@ -175,13 +175,9 @@ export const createmom = async (req, res) => {
     } else if (!location) {
       responseData(res, "", 400, false, "location is required");
     } 
-    else if (!Array.isArray(client_name) || client_name.length === 0) {
-      responseData(res, "", 400, false, "client_name must be a non-empty array");
-      
-    }
-   else if (!client_name.every(name => typeof name === 'string' && !onlyAlphabetsValidation(name))) {
+    else if (!client_name || !onlyAlphabetsValidation(client_name)) {
       responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
-    } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
+    } else if (!organisor || !onlyAlphabetsValidation(organisor)) {
       responseData(res, "", 400, false, "organiser is required");
     } else {
       const check_user = await registerModel.findOne({ _id: user_id })
