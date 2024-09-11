@@ -1,7 +1,7 @@
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { s3 } from "../../../utils/function.js"
-import { onlyAlphabetsValidation } from "../../../utils/validation.js";
+import { onlyAlphabetsValidation, onlyMomClientsValidation } from "../../../utils/validation.js";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path"
@@ -162,7 +162,8 @@ export const createmom = async (req, res) => {
     const attendees = req.body.attendees;
     const remark = req.body.remark;
 
-
+console.log(client_name)
+  
     // write here validation ///
     if (!project_id) {
       responseData(res, "", 400, false, "project_id is required");
@@ -175,9 +176,9 @@ export const createmom = async (req, res) => {
     } else if (!location) {
       responseData(res, "", 400, false, "location is required");
     } 
-    else if (!client_name || !onlyAlphabetsValidation(client_name)) {
+    else if (!client_name || !onlyMomClientsValidation(client_name)) {
       responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
-    } else if (!organisor || !onlyAlphabetsValidation(organisor)) {
+    } else if (!organisor || !onlyMomClientsValidation(organisor)) {
       responseData(res, "", 400, false, "organiser is required");
     } else {
       const check_user = await registerModel.findOne({ _id: user_id })
