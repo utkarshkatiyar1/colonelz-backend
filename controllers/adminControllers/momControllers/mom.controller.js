@@ -165,31 +165,24 @@ export const createmom = async (req, res) => {
 
     // write here validation ///
     if (!project_id) {
-      return res
-        .status(400)
-        .send({ status: false, message: "project_id is required" });
+      responseData(res, "", 400, false, "project_id is required");
     }
     else if (!user_id) {
       responseData(res, "", 400, false, "User Id required");
     }
     else if (!meetingDate) {
-      return res
-        .status(400)
-        .send({ status: false, message: "meetingDate is required" });
+      responseData(res, "", 400, false, "meetingDate is required");
     } else if (!location) {
-      return res
-        .status(400)
-        .send({ status: false, message: "location is required" });
+      responseData(res, "", 400, false, "location is required");
     } 
     else if (!Array.isArray(client_name) || client_name.length === 0) {
-      return res.status(400).send({ status: false, message: "client_name must be a non-empty array" });
+      responseData(res, "", 400, false, "client_name must be a non-empty array");
+      
     }
    else if (!client_name.every(name => typeof name === 'string' && !onlyAlphabetsValidation(name))) {
-      return res.status(400).send({ status: false, message: "Each client_name entry must be a valid string containing only alphabets and spaces" });
+      responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
     } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "organiser is required" });
+      responseData(res, "", 400, false, "organiser is required");
     } else {
       const check_user = await registerModel.findOne({ _id: user_id })
       if (!check_user) {
