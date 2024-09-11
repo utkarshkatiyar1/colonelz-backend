@@ -970,6 +970,14 @@ export const updateLead = async (req, res) => {
             }
 
           );
+          await fileuploadModel.findOneAndUpdate({lead_id: lead_id},
+            {
+              $set: {
+                lead_name:name
+              },
+             
+            }
+          );
           responseData(
             res,
             "lead updated successfully.",
