@@ -173,7 +173,7 @@ export const shareContract = async (req, res) => {
         const folder_name = req.body.folder_name;
         const fileId = req.body.file_id;
         const lead_id = req.body.lead_id;
-        const user_name = req.body.user_name;
+        const user_name = req.user_name
         const type = req.body.type;
         const client_email = req.body.email;
         const client_name = req.body.client_name;
@@ -188,14 +188,14 @@ export const shareContract = async (req, res) => {
 
         else {
             if (type === 'Internal') {
-                if (!user_name) {
-                    return responseData(res, "", 400, false, "Please enter all fields");
-                }
-                const check_user = await registerModel.findOne({ username: user_name });
-                if (!check_user) {
-                    return responseData(res, "", 400, false, "User not found");
-                }
-                else {
+                // if (!user_name) {
+                //     return responseData(res, "", 400, false, "Please enter all fields");
+                // }
+                // const check_user = await registerModel.findOne({ username: user_name });
+                // if (!check_user) {
+                //     return responseData(res, "", 400, false, "User not found");
+                // }
+                // else {
                     const check_lead = await leadModel.findOne({ lead_id: lead_id });
                     if (!check_lead) {
                         return responseData(res, "", 400, false, "Lead not found");
@@ -366,7 +366,7 @@ export const shareContract = async (req, res) => {
                         }
 
                     }
-                }
+            // }
 
             }
             else if (type === 'Client') {
