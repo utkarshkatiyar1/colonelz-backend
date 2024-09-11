@@ -180,7 +180,12 @@ export const createmom = async (req, res) => {
       return res
         .status(400)
         .send({ status: false, message: "location is required" });
-    } else if (!client_name && !onlyAlphabetsValidation(client_name)) {
+    } 
+    else if (!Array.isArray(client_name) || client_name.length === 0) {
+      return res.status(400).send({ status: false, message: "client_name must be a non-empty array" });
+    }
+   else if (!client_name.every(name => typeof name === 'string' && !onlyAlphabetsValidation(name))) {
+      return res.status(400).send({ status: false, message: "Each client_name entry must be a valid string containing only alphabets and spaces" });
     } else if (!organisor && !onlyAlphabetsValidation(organisor)) {
       return res
         .status(400)
