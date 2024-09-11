@@ -134,7 +134,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
 export const shareQuotation = async (req, res) => {
     try {
         const user_id = req.body.user_id;
-        const user_name = req.body.user_name;
+        // const user_name = req.body.user_name;
         const file_id = req.body.file_id;
         const folder_name = req.body.folder_name;
         const project_id = req.body.project_id;
@@ -334,9 +334,9 @@ export const shareQuotation = async (req, res) => {
 
 
         } else if (type === "Internal") {
-            if (!user_name) {
-                return responseData(res, "", 400, false, "User name is required");
-            }
+            // if (!user_name) {
+            //     return responseData(res, "", 400, false, "User name is required");
+            // }
             const check_status = await registerModel.findOne({
                 "data.quotationData.project_id": project_id,
                 "data.quotationData.quotation_file_id": file_id,
@@ -345,11 +345,11 @@ export const shareQuotation = async (req, res) => {
             });
 
             if (!check_status) {
-                const user = await registerModel.findOne({ username: user_name });
+                // const user = await registerModel.findOne({ username: user_name });
 
-                if (!user) {
-                    return responseData(res, "", 403, false, "User not found");
-                }
+                // if (!user) {
+                //     return responseData(res, "", 403, false, "User not found");
+                // }
                 const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id });
                 if (!findQuotation) {
                     return responseData(res, "", 403, false, "Quotation file not found");
@@ -366,99 +366,99 @@ export const shareQuotation = async (req, res) => {
 
 
 
-                const mailOptions = {
-                    from: "info@colonelz.com",
-                    to: user.email,
-                    subject: "Quotation Approval Notification",
-                    html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Quotation Approval Notification</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                }
-                .container {
-                    width: 80%;
-                    margin: auto;
-                    padding: 20px;
-                }
-                .notification {
-                    background-color: #f0f0f0;
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-                .notification h2 {
-                    margin-top: 0;
-                    color: #333;
-                }
-                .notification p {
-                    margin-bottom: 10px;
-                    color: #555;
-                }
-                .btn {
-                    background-color: #4CAF50;
-                    color: white;
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 5px;
-                    text-decoration: none;
-                    cursor: pointer;
-                }
-                .btn:hover {
-                    background-color: #45a049;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="notification">
-                <h2>Quotation Approval Notification</h2>
-                <p>Hello ${user_name},</p>
-                <p>A new quotation file has been shared with you for approval. Please review it and take necessary actions.</p>
-                <p>Project Name: <strong>${findProject.project_name}</strong></p>
-                <p>Quotation File ID: <strong>${file_id}</strong></p>
-                <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
+    //             const mailOptions = {
+    //                 from: "info@colonelz.com",
+    //                 to: user.email,
+    //                 subject: "Quotation Approval Notification",
+    //                 html: `
+    //     <!DOCTYPE html>
+    //     <html lang="en">
+    //     <head>
+    //         <meta charset="UTF-8">
+    //         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    //         <title>Quotation Approval Notification</title>
+    //         <style>
+    //             body {
+    //                 font-family: Arial, sans-serif;
+    //                 margin: 0;
+    //                 padding: 0;
+    //             }
+    //             .container {
+    //                 width: 80%;
+    //                 margin: auto;
+    //                 padding: 20px;
+    //             }
+    //             .notification {
+    //                 background-color: #f0f0f0;
+    //                 padding: 20px;
+    //                 border-radius: 5px;
+    //                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    //             }
+    //             .notification h2 {
+    //                 margin-top: 0;
+    //                 color: #333;
+    //             }
+    //             .notification p {
+    //                 margin-bottom: 10px;
+    //                 color: #555;
+    //             }
+    //             .btn {
+    //                 background-color: #4CAF50;
+    //                 color: white;
+    //                 padding: 10px 20px;
+    //                 border: none;
+    //                 border-radius: 5px;
+    //                 text-decoration: none;
+    //                 cursor: pointer;
+    //             }
+    //             .btn:hover {
+    //                 background-color: #45a049;
+    //             }
+    //         </style>
+    //     </head>
+    //     <body>
+    //         <div class="notification">
+    //             <h2>Quotation Approval Notification</h2>
+    //             <p>Hello ${user_name},</p>
+    //             <p>A new quotation file has been shared with you for approval. Please review it and take necessary actions.</p>
+    //             <p>Project Name: <strong>${findProject.project_name}</strong></p>
+    //             <p>Quotation File ID: <strong>${file_id}</strong></p>
+    //             <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
             
-                <p>Thank you!</p>
-            </div>
-        </body>
-        </html>
-    `
-                };
+    //             <p>Thank you!</p>
+    //         </div>
+    //     </body>
+    //     </html>
+    // `
+    //             };
 
-                transporter.sendMail(mailOptions, async (error, info) => {
-                    if (error) {
-                        return responseData(res, "", 400, false, "Failed to send email");
-                    } else {
-                        await registerModel.updateOne(
-                            { username: user_name },
-                            {
-                                $push: {
-                                    "data.$[elem].quotationData": {
-                                        project_id: project_id,
-                                        quotation_file_id: file_id,
-                                        file_url: findFile,
-                                        approval_status: "pending"
-                                    },
-                                    "data.$[elem].notificationData": {
-                                        _id: new mongoose.Types.ObjectId(),
-                                        itemId: project_id,
-                                        notification_id: generatedigitnumber(),
-                                        type: "quotation",
-                                        status: false,
-                                        message: `Quotation file shared with you for approval in ${findProject.project_name}  . Please check`,
-                                        createdAt: new Date()
-                                    }
-                                }
-                            },
-                            { arrayFilters: [{ "elem.projectData": { $exists: true } }] }
-                        );
+                // transporter.sendMail(mailOptions, async (error, info) => {
+                //     if (error) {
+                //         return responseData(res, "", 400, false, "Failed to send email");
+                //     } else {
+                        // await registerModel.updateOne(
+                        //     { username: user_name },
+                        //     {
+                        //         $push: {
+                        //             "data.$[elem].quotationData": {
+                        //                 project_id: project_id,
+                        //                 quotation_file_id: file_id,
+                        //                 file_url: findFile,
+                        //                 approval_status: "pending"
+                        //             },
+                        //             "data.$[elem].notificationData": {
+                        //                 _id: new mongoose.Types.ObjectId(),
+                        //                 itemId: project_id,
+                        //                 notification_id: generatedigitnumber(),
+                        //                 type: "quotation",
+                        //                 status: false,
+                        //                 message: `Quotation file shared with you for approval in ${findProject.project_name}  . Please check`,
+                        //                 createdAt: new Date()
+                        //             }
+                        //         }
+                        //     },
+                        //     { arrayFilters: [{ "elem.projectData": { $exists: true } }] }
+                        // );
                         await projectModel.findOneAndUpdate({ project_id: project_id },
                             {
                                 $push: {
@@ -499,8 +499,8 @@ export const shareQuotation = async (req, res) => {
                             // return responseData(res, `Quotation shared successfully`, 200, true, "");
                         }
 
-                    }
-                });
+                //     }
+                // });
             }
             else {
                 return responseData(res, "", 400, false, "Already share this file.");
