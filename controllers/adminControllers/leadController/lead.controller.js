@@ -159,8 +159,6 @@ export const createLead = async (req, res) => {
     responseData(res, "", 403, false, "location is required.");
   } else if (!status) {
     responseData(res, "", 403, false, "status is required.");
-  } else if (!source) {
-    responseData(res, "", 403, false, "source is required.");
   }
   else if (!onlyAlphabetsValidation(lead_manager) && lead_manager.length >= 3) {
     responseData(
