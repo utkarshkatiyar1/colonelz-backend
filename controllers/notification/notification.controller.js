@@ -264,6 +264,8 @@ cron.schedule(" 0 0 */14 * *", async () => {
 export const getNotification = async (req, res) => {
   try {
     const userId = req.query.userId;
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
 
     // Validate userId
     if (!userId) {
@@ -277,16 +279,26 @@ export const getNotification = async (req, res) => {
       return responseData(res, "", 404, false, "User not found");
     }
 
-    // Fetch notifications
-    const find_notification = await notificationModel.find({}).lean();
+    // Fetch notifications with pagination
+    const notifications = await notificationModel.find({}).skip((page - 1) * limit).limit(limit).lean();
 
-    if (!find_notification.length) {
+    // Count total notifications to calculate total pages
+    const totalNotifications = await notificationModel.countDocuments({});
+    const totalPages = Math.ceil(totalNotifications / limit);
+
+    if (!notifications.length) {
       return responseData(res, "No notification found", 200, false, "");
     }
 
     // Prepare and return the response
     const response = {
-      NotificationData: find_notification.reverse(),
+      NotificationData: notifications.reverse(),
+      pagination: {
+        totalNotifications,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
     };
 
     return responseData(res, "Notification Data", 200, true, "", response);
@@ -296,6 +308,7 @@ export const getNotification = async (req, res) => {
     return responseData(res, "", 500, false, "Error fetching notification data");
   }
 };
+
 
 
 export const updateNotification = async (req, res) => {
