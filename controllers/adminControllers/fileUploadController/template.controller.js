@@ -20,7 +20,7 @@ const uploadFile = async (file, fileName, folder_name, sub_folder_name_first, su
         Key: fileName,
         Body: file.data,
         ContentType: file.mimetype,
-        ACL: 'public-read'
+        // ACL: 'public-read'
     }).promise();
 };
 
