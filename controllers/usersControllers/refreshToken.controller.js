@@ -5,7 +5,7 @@ import Jwt from "jsonwebtoken";
 // Generate Access Token
 const generateAccessToken = (userId) => {
     return Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "7d",
+        expiresIn: "1h",
     });
 };
 

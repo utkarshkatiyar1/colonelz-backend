@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import Jwt from "jsonwebtoken";
 
 const generateToken = (userId) => {
-  const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "7d" });
+  const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
   const refreshToken = Jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "10d" })
   return ({ accessToken, refreshToken });
 };
