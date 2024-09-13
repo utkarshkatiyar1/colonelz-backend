@@ -169,7 +169,7 @@ export const contractShare = async (req, res) => {
               const existingFile = await fileuploadModel.findOne({
                 lead_id: lead_id,
               });
-              const folder_name = `contract`;
+              const folder_name = `Contract`;
               const lead_Name = existingFile.name;
 
               if (existingFile) {

@@ -222,17 +222,17 @@ export const createLead = async (req, res) => {
             lead_name: name,
 
             files: [{
-              folder_name: "client brief",
+              folder_name: "Client Brief",
               updated_date: date,
               files: fileUrls
             },
             {
-              folder_name: "drawing",
+              folder_name: "Drawing",
               updated_date: date,
               files: fileUrls
             },
             {
-              folder_name: "review",
+              folder_name: "Review",
               updated_date: date,
               files: fileUrls
             },
@@ -813,17 +813,17 @@ export const leadToMultipleProject = async (req, res) => {
                 lead_name: check_lead.name,
 
                 files: [{
-                  folder_name: "client brief",
+                  folder_name: "Client Brief",
                   updated_date: new Date(),
                   files: fileUrls
                 },
                 {
-                  folder_name: "drawing",
+                  folder_name: "Drawing",
                   updated_date: new Date(),
                   files: fileUrls
                 },
                 {
-                  folder_name: "review",
+                  folder_name: "Review",
                   updated_date: new Date(),
                   files: fileUrls
                 },
