@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import loginModel from "../../../models/usersModels/login.model.js";
 import { RoleAccess } from "../../../utils/role.js";
 import roleModel from "../../../models/adminModels/role.model.js";
+import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 
 
 function generateStrongPassword() {
@@ -314,4 +315,29 @@ catch(err)
         console.log(err)
         return responseData(res, "", 500, false, `${err}`);   
 }
+}
+
+export const updateuser = async(req,res) =>{
+    try{
+        const user = req.user;
+        const user_name = req.body.user_name;
+        if(!user)
+        {
+            return responseData(res, "", 400, false, "User Id is required");
+        }
+        else if(!onlyAlphabetsValidation(user_name) && user_name.length>3)
+        {
+            return responseData(res, "", 400, false, "User Name is not valid");
+        }
+        else{
+            const updatedUser = await registerModel.findOneAndUpdate({ _id: user._id }, { username: user_name }, { new: true })
+            return responseData(res, "User Updated Successfully", 200, true, "");
+        }
+
+    }
+    catch(err)
+    {
+        console.log(err)
+        return responseData(res, "", 400, false, `${err}`);
+    }
 }

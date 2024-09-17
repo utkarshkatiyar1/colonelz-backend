@@ -10,6 +10,7 @@ import { updateStatus, updateStatusClient } from "../../controllers/adminControl
 import { updateStatusAdmin } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js"
 import { resetPassword } from "../../controllers/usersControllers/reset.password.controller.js";
 import { refreshAccessToken } from "../../controllers/usersControllers/refreshToken.controller.js";
+import { updateuser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 const router = Router();
 
 /**
@@ -296,6 +297,110 @@ router.route("/getdata").get(verifyJWT, getUserData)
  *         description: Profile image uploaded failed
  */
 router.route("/profileurl").post(verifyJWT, profileupload)
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/users/update/user:
+ *     put:
+ *       tags:
+ *         - Users
+ *       summary: Update a user
+ *       description: Allows updating a user's information, such as the username.
+ *       security:
+ *         - bearerAuth: []
+ *       requestBody:
+ *         description: Information required to update a user
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user_name:
+ *                   type: string
+ *                   example: "john_doe"
+ *                   description: The new username for the user
+ *       responses:
+ *         '200':
+ *           description: User updated successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   message:
+ *                     type: string
+ *                     example: "User updated successfully"
+ *                   data:
+ *                     type: object
+ *                     properties:
+ *                       user_name:
+ *                         type: string
+ *                         example: "john_doe"
+ *         '400':
+ *           description: Bad request, possibly due to missing or invalid parameters
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid input data"
+ *         '401':
+ *           description: Unauthorized access due to missing or invalid JWT
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Unauthorized"
+ *         '403':
+ *           description: Forbidden access due to insufficient permissions
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Forbidden"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+router.route("/update/user").put(verifyJWT, updateuser)
 
 // router.route("/").get(checkAvailableUserIsAdmin)
 router.route("/approval/admin").post(updateStatus)
