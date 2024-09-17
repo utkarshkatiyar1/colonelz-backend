@@ -7,16 +7,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { onlyAlphabetsValidation, onlyEmailValidation } from "../../../utils/validation.js";
 import { s3 } from "../../../utils/function.js"
-function generatedigitnumber() {
-    const length = 6;
-    const charset = "0123456789";
-    let password = "";
-    for (let i = 0; i < length; ++i) {
-        const randomIndex = Math.floor(Math.random() * charset.length);
-        password += charset[randomIndex];
-    }
-    return password;
-}
+
 function generateSixDigitNumber() {
     const min = 100000;
     const max = 999999;

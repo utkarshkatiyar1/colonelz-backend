@@ -8,6 +8,7 @@ import getSingleFileData from "../../controllers/adminControllers/fileUploadCont
 
 import {
   createmom,
+  deleteMom,
   getAllMom,
   getAllProjectMom,
   getSingleMom,
@@ -53,7 +54,7 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getProjectUser, getUserList, userAcessLeadOrProjectList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
 
@@ -2773,6 +2774,33 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
  *                   type: string
  *                   example: "Updated MoM with new details."
  *                   description: The updated description or remark for the MoM entry
+ *                 meetingdate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-09-17"
+ *                   description: The date of the meeting
+ *                 location:
+ *                   type: string
+ *                   example: "Conference Room A"
+ *                   description: The location where the meeting took place
+ *                 client_name:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["Acme Corp", "Beta LLC"]
+ *                   description: The names of the clients
+ *                 organisor:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["John Doe", "Jane Smith"]
+ *                   description: The names of the people organizing the meeting
+ *                 attendees:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["Jane Smith", "Robert Brown"]
+ *                   description: List of attendees at the meeting
  *       responses:
  *         '200':
  *           description: MoM entry updated successfully
@@ -2799,6 +2827,28 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
  *                       remark:
  *                         type: string
  *                         example: "Updated MoM with new details."
+ *                       meetingdate:
+ *                         type: string
+ *                         format: date
+ *                         example: "2024-09-17"
+ *                       location:
+ *                         type: string
+ *                         example: "Conference Room A"
+ *                       client_name:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["Acme Corp", "Beta LLC"]
+ *                       organisor:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["John Doe", "Jane Smith"]
+ *                       attendees:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["Jane Smith", "Robert Brown"]
  *         '400':
  *           description: Bad request, possibly due to missing or invalid parameters
  *           content:
@@ -2851,7 +2901,6 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
  *                   message:
  *                     type: string
  *                     example: "Internal Server Error"
- *
  * components:
  *   securitySchemes:
  *     bearerAuth:
@@ -2860,7 +2909,110 @@ router.route("/send/momdata").post(verifyJWT, sendPdf);
  *       bearerFormat: JWT
  */
 
-router.route("/update/mom").put(verifyJWT, updateMom);
+
+router.route("/update/mom").put(verifyJWT, updateMomAccess, updateMom);
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/admin/delete/mom:
+ *     delete:
+ *       tags:
+ *         - MOM Management
+ *       summary: Delete a MoM entry
+ *       description: Deletes a Minute of Meeting (MoM) entry based on the provided project ID and MoM ID.
+ *       security:
+ *         - bearerAuth: []
+ *       requestBody:
+ *         description: Identifiers for the MoM entry to be deleted
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 project_id:
+ *                   type: string
+ *                   example: "64c9e9f9c125f2a9a5b5d2d2"
+ *                   description: The unique identifier of the project to which the MoM belongs
+ *                 mom_id:
+ *                   type: string
+ *                   example: "64c9e9f9c125f2a9a5b5d2d3"
+ *                   description: The unique identifier of the MoM entry to be deleted
+ *       responses:
+ *         '200':
+ *           description: MoM entry deleted successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   message:
+ *                     type: string
+ *                     example: "MoM entry deleted successfully"
+ *         '400':
+ *           description: Bad request, possibly due to missing or invalid parameters
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid input data"
+ *         '401':
+ *           description: Unauthorized access due to missing or invalid JWT
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Unauthorized"
+ *         '403':
+ *           description: Forbidden access due to insufficient permissions
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Forbidden"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+router.route("/delete/mom").delete(verifyJWT, deleteMomAccess, deleteMom);
 
 
 

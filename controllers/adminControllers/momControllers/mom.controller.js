@@ -150,20 +150,35 @@ export const getAllProjectMom = async (req, res) => {
     console.log(err.message);
   }
 };
-
+function isValidClientName(name) {
+  return typeof name === 'string' && /^[a-zA-Z\s]+$/.test(name);
+}
+function validateClientNames(names) {
+  return Array.isArray(names) && names.every(isValidClientName);
+}
 export const createmom = async (req, res) => {
   try {
     const user_id = req.body.user_id;
     const project_id = req.body.project_id;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
-    const client_name = req.body.client_name;
-    const organisor = req.body.organisor;
-    const attendees = req.body.attendees;
+    let client_name = req.body.client_name;
+    let organisor = req.body.organisor;
+    let attendees = req.body.attendees;
     const remark = req.body.remark;
+    let client_names;
+    let organisors;
+    let others;
+    try {
+      client_names = JSON.parse(client_name);
+      organisors = JSON.parse(organisor);
+      others = JSON.parse(attendees)
 
-console.log(client_name)
-  
+    } catch (error) {
+      return responseData(res, "", 400, false, "Invalid JSON format");
+    }
+
+
     // write here validation ///
     if (!project_id) {
       responseData(res, "", 400, false, "project_id is required");
@@ -175,11 +190,11 @@ console.log(client_name)
       responseData(res, "", 400, false, "meetingDate is required");
     } else if (!location) {
       responseData(res, "", 400, false, "location is required");
-    } 
-    else if (!client_name || !onlyMomClientsValidation(client_name)) {
+    }
+    else if (!validateClientNames(client_names)) {
       responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
-    } else if (!organisor || !onlyMomClientsValidation(organisor)) {
-      responseData(res, "", 400, false, "organiser is required");
+    } else if (!validateClientNames(organisors)) {
+      responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
     } else {
       const check_user = await registerModel.findOne({ _id: user_id })
       if (!check_user) {
@@ -248,9 +263,9 @@ console.log(client_name)
                       meetingdate: meetingDate,
                       location: location,
                       attendees: {
-                        client_name: client_name,
-                        organisor: organisor,
-                        attendees: attendees,
+                        client_name: client_names,
+                        organisor: organisors,
+                        attendees: others,
                       },
                       remark: remark,
                       files: fileUrls,
@@ -277,7 +292,7 @@ console.log(client_name)
           const existingFile = await fileuploadModel.findOne({
             project_id: project_id,
           });
-          const folder_name = `mom`;
+          const folder_name = `Mom`;
           const project_Name = existingFile.project_name;
 
           if (existingFile) {
@@ -322,9 +337,9 @@ console.log(client_name)
                       meetingdate: meetingDate,
                       location: location,
                       attendees: {
-                        client_name: client_name,
-                        organisor: organisor,
-                        attendees: attendees,
+                        client_name: client_names,
+                        organisor: organisors,
+                        attendees: others,
                       },
                       remark: remark,
                       files: file,
@@ -336,6 +351,18 @@ console.log(client_name)
             },
             { new: true }
           );
+          await projectModel.findOneAndUpdate({ project_id: project_id },
+            {
+              $push: {
+                project_updated_by: {
+                  username: check_user.username,
+                  role: check_user.role,
+                  message: `has created new mom.`,
+                  updated_date: new Date()
+                }
+              }
+            }
+          )
 
 
           responseData(
@@ -523,13 +550,35 @@ export const updateMom = async (req, res) => {
     const project_id = req.query.project_id;
     const mom_id = req.query.mom_id;
     const description = req.body.remark;
+    const meetingDate = req.body.meetingdate;
+    const location = req.body.location;
+    const client_name = req.body.client_name;
+    const organisor = req.body.organisor;
+    const attendees = req.body.attendees;
+    const user = req.user
+
+
     if (!project_id) {
       responseData(res, "", 404, false, "Project Id is required");
     }
     else if (!mom_id) {
       responseData(res, "", 404, false, "MOM Id is required");
     }
+    else if (!meetingDate) {
+      responseData(res, "", 400, false, "meetingDate is required");
+    } else if (!location) {
+      responseData(res, "", 400, false, "location is required");
+    }
+    else if (!validateClientNames(client_name)) {
+      responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
+    } else if (!validateClientNames(organisor)) {
+      responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
+    }
     else {
+      if (!user) {
+        responseData(res, "", 404, false, "User Not Found");
+
+      }
       const check_project = await projectModel.findOne({ project_id: project_id });
       if (check_project) {
         const check_mom = check_project.mom.filter(
@@ -541,11 +590,31 @@ export const updateMom = async (req, res) => {
             'mom.mom_id': mom_id
           }, {
             $set: {
-              'mom.$.remark': description
+              'mom.$.remark': description,
+              'mom.$.meetingdate': meetingDate,
+              'mom $.location': location,
+              'mom.$.attendees': {
+                client_name: client_name,
+                organisor: organisor,
+                attendees: attendees
+              }
             }
           },
             { new: true }
 
+          )
+
+          await projectModel.findOneAndUpdate({ project_id: project_id },
+            {
+              $push: {
+                project_updated_by: {
+                  username: user.username,
+                  role: user.role,
+                  message: `has update  mom.`,
+                  updated_date: new Date()
+                }
+              }
+            }
           )
           responseData(res, "MOM Updated Successfully", 200, true, "");
 
@@ -564,5 +633,63 @@ export const updateMom = async (req, res) => {
     console.log(err);
     responseData(res, "", 500, false, "Internal server Error");
 
+  }
+}
+
+export const deleteMom = async (req, res) => {
+  try {
+    const project_id = req.body.project_id;
+    const mom_id = req.body.mom_id;
+    const user = req.user
+
+    if (!project_id) {
+      responseData(res, "", 404, false, "Project Id is required");
+    }
+    else if (!mom_id) {
+      responseData(res, "", 404, false, "MOM Id is required");
+    }
+    else {
+      if (!user) {
+        responseData(res, "", 404, false, "User Not Found");
+
+      }
+      const check_project = await projectModel.findOne({ project_id: project_id });
+      if (check_project) {
+        console.log(check_project)
+        const check_mom = check_project.mom.filter(
+          (mom) => mom.mom_id.toString() === mom_id
+        );
+        console.log(check_mom)
+        if (!check_mom) {
+
+          responseData(res, "", 404, false, "Mom Not Found");
+        }
+        else {
+          await projectModel.findOneAndDelete({ "mom.mom_id": mom_id })
+          await projectModel.findOneAndUpdate({ project_id: project_id },
+            {
+              $push: {
+                project_updated_by: {
+                  username: user.username,
+                  role: user.role,
+                  message: `has delete  mom  ${check_mom[0].mom_id}.`,
+                  updated_date: new Date()
+                }
+              }
+            }
+          )
+          responseData(res, "Mom Delete Successfully", 200, true, "");
+          
+        }
+      }
+      else{
+        responseData(res, "", 404, false, "Project Not Found");
+      }
+
+    }
+  }
+  catch (err) {
+    console.log(err);
+    responseData(res, "", 400, false, "Something went wrong");
   }
 }
