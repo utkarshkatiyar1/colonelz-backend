@@ -27,19 +27,14 @@ export const onlyPasswordPatternValidation = (pass_word) => {
 };
 
 export const onlyPhoneNumberValidation = (num_ber) => {
-  // Regular expression to match phone numbers with optional country code, spaces, and dashes, up to 20 characters total
-  const phoneNumber = /^(\+?\d{1,3}\s?)?\d{1,4}([\s-]?\d{1,4}){1,4}$/;
+  // Updated regular expression with length constraint
+  let phoneNumber = /^\d{10}$/;
 
-  // Remove all spaces and dashes for length validation
-  const cleanedNumber = num_ber.replace(/[\s-]/g, '');
-
-  // Check if the number matches the regular expression and its length does not exceed 20 characters
-  if (phoneNumber.test(num_ber) && cleanedNumber.length <= 20) {
+  if (phoneNumber.test(num_ber)) {
     return true;
   }
   return false;
 };
-
 
 export const onlyOrgValidation = (org)=>{
   let regex = /^[a-zA-Z.]+$/
