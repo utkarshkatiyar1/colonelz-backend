@@ -461,7 +461,6 @@ export const updateMom = async (req, res) => {
     const location = req.body.location;
     const client_name = req.body.client_name;
     const organisor = req.body.organisor;
-    const attendees = req.body.attendees;
     const user = req.user
 
 
@@ -499,11 +498,11 @@ export const updateMom = async (req, res) => {
             $set: {
               'mom.$.remark': description,
               'mom.$.meetingdate': meetingDate,
-              'mom $.location': location,
+              'mom.$.location': location,
               'mom.$.attendees': {
                 client_name: client_name,
                 organisor: organisor,
-                attendees: attendees
+               
               }
             }
           },
@@ -511,19 +510,23 @@ export const updateMom = async (req, res) => {
 
           )
 
-          await projectModel.findOneAndUpdate({ project_id: project_id },
+          await projectModel.findOneAndUpdate(
             {
-              $push: {
-                project_updated_by: {
-                  username: user.username,
-                  role: user.role,
-                  message: `has update  mom.`,
-                  updated_date: new Date()
-                }
+              project_id: project_id,
+              'mom.mom_id': mom_id,
+            },
+            {
+              $set: {
+                'mom.$.remark': description,
+                'mom.$.meetingdate': meetingDate,
+                'mom.$.location': location,
+                'mom.$.attendees.$.client_name': client_name, 
+                'mom.$.attendees.$.organisor': organisor 
               }
-            }
-          )
-          responseData(res, "MOM Updated Successfully", 200, true, "");
+            },
+          
+            { new: true }
+          );          responseData(res, "MOM Updated Successfully", 200, true, "");
 
         }
         else {
