@@ -544,58 +544,57 @@ export const updateMom = async (req, res) => {
 
 export const deleteMom = async (req, res) => {
   try {
-    const project_id = req.body.project_id;
-    const mom_id = req.body.mom_id;
-    const user = req.user
+    const { project_id, mom_id } = req.body;
+    const user = req.user;
 
     if (!project_id) {
-      responseData(res, "", 404, false, "Project Id is required");
+      return responseData(res, "", 404, false, "Project Id is required");
     }
-    else if (!mom_id) {
-      responseData(res, "", 404, false, "MOM Id is required");
-    }
-    else {
-      if (!user) {
-        responseData(res, "", 404, false, "User Not Found");
 
+    if (!mom_id) {
+      return responseData(res, "", 404, false, "MOM Id is required");
+    }
+
+    if (!user) {
+      return responseData(res, "", 404, false, "User Not Found");
+    }
+
+    const check_project = await projectModel.findOne({ project_id });
+    if (!check_project) {
+      return responseData(res, "", 404, false, "Project Not Found");
+    }
+
+    const check_mom = check_project.mom.find(mom => mom.mom_id.toString() === mom_id);
+    if (!check_mom) {
+      return responseData(res, "", 404, false, "Mom Not Found");
+    }
+
+    await projectModel.findOneAndUpdate(
+      { "mom.mom_id": mom_id },
+      {
+        $pull: { mom: { mom_id } }
       }
-      const check_project = await projectModel.findOne({ project_id: project_id });
-      if (check_project) {
-        console.log(check_project)
-        const check_mom = check_project.mom.filter(
-          (mom) => mom.mom_id.toString() === mom_id
-        );
-        console.log(check_mom)
-        if (!check_mom) {
+    );
 
-          responseData(res, "", 404, false, "Mom Not Found");
+    await projectModel.findOneAndUpdate(
+      { project_id },
+      {
+        $push: {
+          project_updated_by: {
+            username: user.username,
+            role: user.role,
+            message: `has deleted MOM ${check_mom.mom_id}.`,
+            updated_date: new Date()
+          }
         }
-        else {
-          await projectModel.findOneAndDelete({ "mom.mom_id": mom_id })
-          await projectModel.findOneAndUpdate({ project_id: project_id },
-            {
-              $push: {
-                project_updated_by: {
-                  username: user.username,
-                  role: user.role,
-                  message: `has delete  mom  ${check_mom[0].mom_id}.`,
-                  updated_date: new Date()
-                }
-              }
-            }
-          )
-          responseData(res, "Mom Delete Successfully", 200, true, "");
-          
-        }
       }
-      else{
-        responseData(res, "", 404, false, "Project Not Found");
-      }
+    );
 
-    }
+    return responseData(res, "Mom deleted successfully", 200, true, "");
+
+  } catch (err) {
+    console.error(err);
+    return responseData(res, "", 400, false, "Something went wrong");
   }
-  catch (err) {
-    console.log(err);
-    responseData(res, "", 400, false, "Something went wrong");
-  }
-}
+};
+
