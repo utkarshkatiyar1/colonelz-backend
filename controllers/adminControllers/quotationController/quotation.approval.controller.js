@@ -148,7 +148,7 @@ export const shareQuotation = async (req, res) => {
                 return responseData(res, "", 403, false, "File not found in the specified folder");
             }
             const mailOptions = {
-                from: INFO_USER_EMAIL,
+                from: process.env.INFO_USER_EMAIL,
                 to: client_email,
                 subject: "Quotation Approval Notification",
                 html: `<!DOCTYPE html>

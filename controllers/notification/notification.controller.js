@@ -280,7 +280,13 @@ export const getNotification = async (req, res) => {
     }
 
     // Fetch notifications with pagination
-    const notifications = await notificationModel.find({}).skip((page - 1) * limit).limit(limit).lean();
+    const notifications = await notificationModel
+      .find({})
+      .sort({ createdAt: -1 }) // Assuming you want the most recent notifications first
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
 
     // Count total notifications to calculate total pages
     const totalNotifications = await notificationModel.countDocuments({});
