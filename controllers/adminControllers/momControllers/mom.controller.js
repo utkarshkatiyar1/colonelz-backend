@@ -462,7 +462,15 @@ export const updateMom = async (req, res) => {
     const client_name = req.body.client_name;
     const organisor = req.body.organisor;
     const user = req.user
+    let client_names;
+    let organisors;
 
+    try {
+      client_names = JSON.parse(client_name);
+      organisors = JSON.parse(organisor);
+    } catch (error) {
+      return responseData(res, "", 400, false, "Invalid JSON format");
+    }
 
     if (!project_id) {
       responseData(res, "", 404, false, "Project Id is required");
@@ -475,9 +483,9 @@ export const updateMom = async (req, res) => {
     } else if (!location) {
       responseData(res, "", 400, false, "location is required");
     }
-    else if (!validateClientNames(client_name)) {
+    else if (!validateClientNames(client_names)) {
       responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
-    } else if (!validateClientNames(organisor)) {
+    } else if (!validateClientNames(organisors)) {
       responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
     }
     else {
@@ -500,8 +508,8 @@ export const updateMom = async (req, res) => {
               'mom.$.meetingdate': meetingDate,
               'mom.$.location': location,
               'mom.$.attendees': {
-                client_name: client_name,
-                organisor: organisor,
+                client_name: client_names,
+                organisor: organisors,
                
               }
             }

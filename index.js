@@ -13,7 +13,6 @@ import fileUpload from "express-fileupload";
 import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
-import nodemailer from "nodemailer";
 import session from "express-session";
 import expressWinston from "express-winston"
 import winston, { format } from "winston";
