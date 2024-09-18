@@ -12,7 +12,6 @@ import {
   getAllMom,
   getAllProjectMom,
   getSingleMom,
-  sendPdf,
   updateMom,
 } from "../../controllers/adminControllers/momControllers/mom.controller.js";
 import {
@@ -2735,7 +2734,7 @@ router.route("/getsingle/mom").get(verifyJWT, readMomAccess, getSingleMom);
  */
 
 router.route("/getall/project/mom").get(verifyJWT, readMomAccess, checkAvailableUserIsAdminInMom, getAllProjectMom);
-router.route("/send/momdata").post(verifyJWT, sendPdf);
+
 /**
  * @swagger
  * paths:

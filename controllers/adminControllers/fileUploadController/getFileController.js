@@ -1,4 +1,3 @@
-import { response } from "express";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";

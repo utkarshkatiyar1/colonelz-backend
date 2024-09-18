@@ -1,11 +1,10 @@
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
-import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import loginModel from "../../../models/usersModels/login.model.js";
-import { RoleAccess } from "../../../utils/role.js";
 import roleModel from "../../../models/adminModels/role.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
+import { infotransporter } from "../../../utils/function.js";
 
 
 function generateStrongPassword() {
@@ -19,14 +18,7 @@ function generateStrongPassword() {
     return password;
 }
 
-const transporter = nodemailer.createTransport({
-    host: process.env.HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-        user: process.env.USER_NAME,
-        pass: process.env.API_KEY,
-    },
-});
+
 
 
 export const createUser = async (req, res) => {
@@ -108,7 +100,7 @@ export const createUser = async (req, res) => {
                                 });
 
                                 const mailOptions = {
-                                    from: "info@colonelz.com",
+                                    from: process.env.INFO_USER_EMAIL,
                                     to: email,
                                     subject: "Login Credentials",
                                     html: `
@@ -135,7 +127,7 @@ export const createUser = async (req, res) => {
                                     `,
                                 };
 
-                                transporter.sendMail(mailOptions, (error, info) => {
+                                infotransporter.sendMail(mailOptions, (error, info) => {
                                     if (error) {
                                         console.log(error);
                                         responseData(res, "", 400, false, "Failed to send email");

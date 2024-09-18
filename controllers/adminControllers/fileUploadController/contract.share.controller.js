@@ -1,12 +1,10 @@
-import mongoose from "mongoose";
-import nodemailer from "nodemailer";
 import { responseData } from "../../../utils/respounse.js";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
-// import projectModel from "../../../models/adminModels/project.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { onlyAlphabetsValidation, onlyEmailValidation } from "../../../utils/validation.js";
 import { s3 } from "../../../utils/function.js"
+import { infotransporter } from "../../../utils/function.js";
 
 function generateSixDigitNumber() {
     const min = 100000;
@@ -16,14 +14,6 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const transporter = nodemailer.createTransport({
-    host: process.env.HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-        user: process.env.USER_NAME,
-        pass: process.env.API_KEY,
-    },
-});
 
 const storeOrUpdateContract = async (res, existingContractData, isFirst = false) => {
     try {
@@ -422,7 +412,7 @@ export const shareContract = async (req, res) => {
                                 files: fileUrls,
                             });
                             const mailOptions = {
-                                from: "info@colonelz.com",
+                                from: process.env.INFO_USER_EMAIL,
                                 to: client_email,
                                 subject: "Contract Share Notification",
                                 html: `<!DOCTYPE html>
@@ -473,7 +463,7 @@ export const shareContract = async (req, res) => {
 
 
 
-                            transporter.sendMail(mailOptions, async (error, info) => {
+                            infotransporter.sendMail(mailOptions, async (error, info) => {
                                 if (error) {
                                     return responseData(res, "", 400, false, "Failed to send email");
                                 } else {

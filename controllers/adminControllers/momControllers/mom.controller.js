@@ -1,10 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { s3 } from "../../../utils/function.js"
-import { onlyAlphabetsValidation, onlyMomClientsValidation } from "../../../utils/validation.js";
-import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 
@@ -455,95 +451,6 @@ export const getSingleMom = async (req, res) => {
     responseData(res, "", 400, false, error.message, []);
   }
 };
-
-
-
-
-export const sendPdf = async (req, res) => {
-  try {
-
-    const { project_id, mom_id } = req.body;
-    const cc = req.body.cc;
-    const bcc = req.body.bcc;
-    const client_email = req.body.client_email;
-    const subject = req.body.subject;
-    const body = req.body.body;
-    const check_project = await projectModel.find({ project_id: project_id });
-
-    if (check_project.length > 0) {
-
-      const check_mom = check_project[0].mom.filter(
-        (mom) => mom.mom_id.toString() === mom_id
-      );
-
-      if (check_mom.length > 0) {
-
-        const mom_pdf = req.files.file;
-        const filePath = path.join('momdata', mom_pdf.name);
-
-        mom_pdf.mv(filePath, (err) => {
-          if (err) {
-            console.error('Error saving file:', err);
-            return responseData(res, '', 500, false, 'Failed to save file');
-          }
-
-          // Define the mail options
-          const mailOptions = {
-            from: 'info@colonelz.com',
-            to: [check_project[0].client[0].client_email, client_email],
-            cc: cc,
-            bcc: bcc,
-            subject: subject,
-            html: body,
-            attachments: [
-              {
-                filename: mom_pdf.name,
-                path: filePath,
-              },
-            ],
-          };
-
-          // Send the email
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error('Error sending email:', error);
-              return responseData(res, '', 400, false, 'Failed to send email');
-            } else {
-              console.log('Email sent:', info.response);
-
-              fs.unlink(filePath, (err) => {
-                if (err) {
-                  console.error('Error deleting file:', err);
-                } else {
-                  console.log('File deleted successfully');
-                }
-              });
-
-              return responseData(res, 'Email has been sent successfully', 200, true, '');
-            }
-          });
-        });
-      } else {
-        return responseData(res, '', 404, false, 'MOM Not Found');
-      }
-    } else {
-      return responseData(res, '', 404, false, 'Project Not Found');
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    return responseData(res, '', 400, false, err.message);
-  }
-};
-
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
-
 
 export const updateMom = async (req, res) => {
   try {
