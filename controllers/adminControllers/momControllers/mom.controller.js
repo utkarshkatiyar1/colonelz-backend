@@ -510,23 +510,19 @@ export const updateMom = async (req, res) => {
 
           )
 
-          await projectModel.findOneAndUpdate(
+          await projectModel.findOneAndUpdate({ project_id: project_id },
             {
-              project_id: project_id,
-              'mom.mom_id': mom_id,
-            },
-            {
-              $set: {
-                'mom.$.remark': description,
-                'mom.$.meetingdate': meetingDate,
-                'mom.$.location': location,
-                'mom.$.attendees.$.client_name': client_name, 
-                'mom.$.attendees.$.organisor': organisor 
+              $push: {
+                project_updated_by: {
+                  username: user.username,
+                  role: user.role,
+                  message: `has update  mom.`,
+                  updated_date: new Date()
+                }
               }
-            },
-          
-            { new: true }
-          );          responseData(res, "MOM Updated Successfully", 200, true, "");
+            }
+          )
+          responseData(res, "MOM Updated Successfully", 200, true, "");
 
         }
         else {
