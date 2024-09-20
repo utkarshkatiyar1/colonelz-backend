@@ -131,39 +131,33 @@ export const UpdateRole = async(req,res) =>{
     }
 }
 
-
-export const DeleteRole = async(req,res) =>{
-    try{
+export const DeleteRole = async (req, res) => {
+    try {
         const id = req.query.id;
-        if(!id)
-        {
-            responseData(res, "", 400, false, "Role id is required")
-        }
-        else
-        {
-            const check_role = await roleModel.findById(id)
-            if(!check_role)
-            {
-                responseData(res,"",404, false, "Role not found for this id")
 
-            }
-            else
-            {
-                const deletedRole = await roleModel.findByIdAndDelete(id);
-                responseData(res, `${check_role.role} role has been deleted`, 200, true, "")  
-                
-            }
-           
+        if (!id) {
+            return responseData(res, "", 400, false, "Role id is required");
         }
-        
+
+        const check_role = await roleModel.findById(id);
+        if (!check_role) {
+            return responseData(res, "", 404, false, "Role not found for this id");
+        }
+
+        const users = await registerModel.find({ role: check_role.role });
+        if (users.length > 0) {
+            return responseData(res, "", 400, false, "This role cannot be deleted because it is assigned to some users. Please remove the users from this role.");
+        }
+
+        await roleModel.findByIdAndDelete(id);
+        responseData(res, `${check_role.role} role has been deleted`, 200, true, "");
+
+    } catch (err) {
+        console.error(err);
+        responseData(res, "", 500, false, "Internal Server Error");
     }
-    catch(err)
-    {
-        responseData(res, "", 500, false, "Internal Server Error")
-        console.log(err)
-    
-    }
-}
+};
+
 
 
 export const roleWiseAccess = async(req,res) =>{

@@ -40,7 +40,7 @@ import { shareFile } from "../../controllers/adminControllers/fileUploadControll
 import { getSingleTemplateFile, templateFileUpload } from "../../controllers/adminControllers/fileUploadController/template.controller.js";
 import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fileUploadController/delete.file.controller.js";
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
-import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
+import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser, updateUserRole } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember, listUserInProject, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
 import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, isAdmin } from "../../middlewares/auth.middlewares.js";
 
@@ -53,7 +53,7 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getProjectUser, getUserList, userAcessLeadOrProjectList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
 
@@ -342,6 +342,68 @@ router.route("/restore/user").post(verifyJWT, restoreUserAccess, restoreUser);
 router.route("/delete/archive/user").delete(verifyJWT, deleteArchiveUserAccess, deleteUserArchive);
 
 router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
+/**
+ * @swagger
+ * /v1/api/admin/update/users/role:
+ *   put:
+ *     summary: "Update User Role"
+ *     description: "Updates the role of a specified user."
+ *     tags:
+ *       - "User Management"
+ *     parameters:
+ *       - in: "header"
+ *         name: "Authorization"
+ *         description: "JWT token for authentication"
+ *         required: true
+ *         type: "string"
+ *       - in: "body"
+ *         name: "body"
+ *         description: "User role update information"
+ *         required: true
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             userId:
+ *               type: "string"
+ *               example: "1234567890abcdef"
+ *             role:
+ *               type: "string"
+ *               example: "admin"
+ *     responses:
+ *       200:
+ *         description: "User role updated successfully"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "User role updated successfully"
+ *       400:
+ *         description: "Bad Request"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "Invalid user ID or role"
+ *       401:
+ *         description: "Unauthorized"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "Invalid token"
+ *       404:
+ *         description: "User not found"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "User not found"
+ */
+router.route("/update/users/role").put(verifyJWT,updateUserRoleAccess, updateUserRole)
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);

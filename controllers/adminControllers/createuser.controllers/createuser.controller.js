@@ -309,27 +309,37 @@ catch(err)
 }
 }
 
-export const updateuser = async(req,res) =>{
+export const updateUserRole = async(req,res) =>{
     try{
-        const user = req.user;
-        const user_name = req.body.user_name;
-        if(!user)
-        {
-            return responseData(res, "", 400, false, "User Id is required");
+        const user_id = req.body.userId;
+        const role = req.body.role;
+        if (!user_id) {
+            return responseData(res, "", 400, false, "User ID is required");
         }
-        else if(!onlyAlphabetsValidation(user_name) && user_name.length>3)
-        {
-            return responseData(res, "", 400, false, "User Name is not valid");
-        }
-        else{
-            const updatedUser = await registerModel.findOneAndUpdate({ _id: user._id }, { username: user_name }, { new: true })
-            return responseData(res, "User Updated Successfully", 200, true, "");
+        if (!role  || role.length <= 3) {
+            return responseData(res, "", 400, false, "Role name is not valid");
         }
 
+        const user = await registerModel.findById(user_id);
+        if (!user) {
+            return responseData(res, "", 404, false, "User Not Found");
+        }
+
+        const check_role = await roleModel.findOne({ role });
+        if (!check_role) {
+            return responseData(res, "", 404, false, "Role Not Found");
+        }
+
+        await registerModel.findByIdAndUpdate(user_id, {
+            $set: {
+                role:role,
+                access: check_role.access
+            }
+        }, { new: true });
+
+        return responseData(res, "User Updated Successfully", 200, true, "");
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
     }
-    catch(err)
-    {
-        console.log(err)
-        return responseData(res, "", 400, false, `${err}`);
-    }
-}
+};

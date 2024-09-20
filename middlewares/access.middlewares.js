@@ -1519,7 +1519,7 @@ export const GetUser = async (req, res, next) => {
         return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 }
-export const updateUser = async (req, res, next) => {
+export const updateUserRoleAccess = async (req, res, next) => {
     try {
         const token = req.cookies?.auth ||
             req.header("Authorization")?.replace("Bearer", "").trim();
