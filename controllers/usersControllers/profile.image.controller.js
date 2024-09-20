@@ -69,7 +69,14 @@ export const profileUpload = async (req, res) => {
     const response = await uploadImage(req, fileName, userId, "file");
 
     if (response.status) {
-      await setProfileUrlInDB(res, response, userId, user_name);
+      if(!user_name)
+      {
+        await setProfileUrlInDB(res, response, userId, null);
+      }
+      else{
+        await setProfileUrlInDB(res, response, userId, user_name);
+      }
+     
     } else {
       console.log(response);
       return responseData(res, "", 500, false, "Image upload failed");
