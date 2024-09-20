@@ -1,6 +1,7 @@
 import { s3 } from "../../utils/function.js"
 import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
+import { onlyAlphabetsValidation } from "../../utils/validation.js";
 
 
 
@@ -23,7 +24,7 @@ const uploadImage = async (req, fileName, userId, key) => {
     });
 };
 
-const setProfileUrlInDB = async (res, response, userId) => {
+const setProfileUrlInDB = async (res, response, userId, user_name) => {
   registerModel
     .find({ _id: userId })
     .exec()
@@ -34,7 +35,9 @@ const setProfileUrlInDB = async (res, response, userId) => {
       if (result.length > 0) {
         registerModel.findByIdAndUpdate(
           result[0]._id,
-          { $set: { userProfile: response.data.Location } },
+          { $set: { userProfile: response.data.Location,
+            username:user_name
+           } },
           (err, docs) => {
             if (err) {
               console.log(err);
@@ -42,7 +45,7 @@ const setProfileUrlInDB = async (res, response, userId) => {
               console.log("profile url update successfull");
               responseData(
                 res,
-                "profile  photo upload successfully",
+                "profile update successfully",
                 200,
                 true,
                 "",
@@ -60,9 +63,14 @@ const setProfileUrlInDB = async (res, response, userId) => {
 
 export const profileupload = async (req, res) => {
   const userId = req.body.userId;
+  const user_name = req.body.user_name;
   if (!userId) {
     responseData(res, "", 400, false, "userId is required");
-  } else {
+  }
+  else if (!onlyAlphabetsValidation(user_name) && user_name.length > 3) {
+    return responseData(res, "", 400, false, "User Name is not valid");
+  }
+   else {
     try {
       const file = req.files.file;
       const fileName = Date.now() + "_" + file.name;
@@ -71,7 +79,7 @@ export const profileupload = async (req, res) => {
       let response = await uploadImage(req, fileName, userId, "file");
       if (response.status) {
         //  res.send({response})
-        setProfileUrlInDB(res, response, userId);
+        setProfileUrlInDB(res, response, userId, user_name);
         //  console.log("data",response.data.Location)
       } else {
         //  res.send({ response });
