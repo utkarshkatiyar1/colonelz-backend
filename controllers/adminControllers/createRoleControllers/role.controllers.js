@@ -164,7 +164,7 @@ export const DeleteRole = async (req, res) => {
         }
         const users = await registerModel.find({ role: check_role.role });
         if (users.length > 0) {
-            return responseData(res, "", 400, false, "This role cannot be deleted because it is assigned to some users. Please remove the users from this role.");
+            return responseData(res, "", 400, false, "This role cannot be deleted as it is assigned to the user.");
         }
 
         await roleModel.findByIdAndDelete(id);
