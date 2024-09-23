@@ -62,18 +62,36 @@ export const createRole = async(req,res) =>{
     }
 }
 
-export const getRole = async(req,res) =>{
-    try{
-        const role = await roleModel.find();
-        responseData(res, "role found successfully", 200, true, "", role)
+export const getRole = async (req, res) => {
+    try {
+        // Fetch all roles with lean for better performance
+        const roles = await roleModel.find().lean();
+
+        // Get all users in one query
+        const users = await registerModel.find({ role: { $in: roles.map(role => role.role) } }).lean();
+
+        // Create a lookup for quick access to user existence
+        const userLookup = {};
+        users.forEach(user => {
+            userLookup[user.role] = true;
+        });
+
+        // Build the response based on the role existence in the user lookup
+        const response = roles.map(role => ({
+            _id: role._id,
+            role: role.role,
+            access: role.access,
+            existUser: !!userLookup[role.role],
+        }));
+
+        responseData(res, "Roles found successfully", 200, true, "", response);
+    } catch (err) {
+        responseData(res, "", 500, false, "Internal Server Error");
+        console.error(err);
     }
-    catch(err)
-    {
-        responseData(res, "", 500, false, "Internal Server Error")
-        console.log(err)
-    
-    }
-}
+};
+
+
 
 export const UpdateRole = async(req,res) =>{
     try{
@@ -143,7 +161,6 @@ export const DeleteRole = async (req, res) => {
         if (!check_role) {
             return responseData(res, "", 404, false, "Role not found for this id");
         }
-
         const users = await registerModel.find({ role: check_role.role });
         if (users.length > 0) {
             return responseData(res, "", 400, false, "This role cannot be deleted because it is assigned to some users. Please remove the users from this role.");

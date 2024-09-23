@@ -16,6 +16,7 @@ import {
 } from "../../controllers/adminControllers/momControllers/mom.controller.js";
 import {
   createLead,
+  deleteInvativeLead,
   getAllLead,
   getSingleLead,
   leadToMultipleProject,
@@ -53,7 +54,7 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getProjectUser, getUserList, userAcessLeadOrProjectList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteLeadAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
 
@@ -403,7 +404,7 @@ router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
  *               type: "string"
  *               example: "User not found"
  */
-router.route("/update/users/role").put(verifyJWT,updateUserRoleAccess, updateUserRole)
+router.route("/update/users/role").put(verifyJWT, updateUserRoleAccess, updateUserRole)
 
 
 router.route("/fileupload").post(verifyJWT, fileupload);
@@ -2249,6 +2250,101 @@ router.route("/remove/member/lead").post(verify, deleteAddMember, removeMemberIn
  */
 
 router.route("/get/userlist/lead").get(verifyJWT, listUserInLead);
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/admin/delete/inactive/lead:
+ *     delete:
+ *       tags:
+ *         - Lead Management
+ *       summary: Delete an inactive lead
+ *       description: Deletes a lead based on the provided lead ID if the lead is inactive.
+ *       security:
+ *         - bearerAuth: []
+ *       parameters:
+ *         - in: query
+ *           name: lead_id
+ *           required: true
+ *           schema:
+ *             type: string
+ *             example: "723101"
+ *           description: The unique identifier of the lead to be deleted.
+ *       responses:
+ *         '200':
+ *           description: Lead deleted successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   message:
+ *                     type: string
+ *                     example: "Lead deleted successfully."
+ *         '400':
+ *           description: Bad request, possibly due to missing lead_id
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "lead_id is required."
+ *         '403':
+ *           description: Forbidden, user not found or insufficient permissions
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "User not found."
+ *         '404':
+ *           description: Lead not found
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Lead not found."
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Something went wrong."
+ *
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+router.route("/delete/inactive/lead").delete(verifyJWT, deleteLeadAccess, deleteInvativeLead);
 
 
 /**

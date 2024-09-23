@@ -3,17 +3,12 @@ import arvhiveModel from "../../../models/adminModels/archive.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import archiveModel from "../../../models/adminModels/archive.model.js";
-import AWS from "aws-sdk";
+import { s3} from "../../../utils/function.js"
 import cron from "node-cron";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import moment from "moment-timezone";
 // Configure AWS SDK
-AWS.config.update({
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-    region: "ap-south-1",
-});
-const s3 = new AWS.S3();
+
 
 
 

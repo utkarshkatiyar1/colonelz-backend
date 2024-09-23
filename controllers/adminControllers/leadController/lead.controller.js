@@ -11,6 +11,7 @@ import {
 } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { s3 } from "../../../utils/function.js"
+import archiveModel from "../../../models/adminModels/archive.model.js";
 
 
 function generateSixDigitNumber() {
@@ -968,12 +969,12 @@ export const updateLead = async (req, res) => {
             }
 
           );
-          await fileuploadModel.findOneAndUpdate({lead_id: lead_id},
+          await fileuploadModel.findOneAndUpdate({ lead_id: lead_id },
             {
               $set: {
-                lead_name:name
+                lead_name: name
               },
-             
+
             }
           );
           responseData(
@@ -994,5 +995,86 @@ export const updateLead = async (req, res) => {
   }
 
 }
+
+
+async function deleteFolder(bucket, folder) {
+  try {
+    // List all objects in the folder
+    const listParams = {
+      Bucket: bucket,
+      Prefix: folder
+    };
+
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+    if (listedObjects.Contents.length === 0) {
+      console.log('Folder is already empty or does not exist.');
+      return;
+    }
+
+    // Create a list of objects to delete
+    const deleteParams = {
+      Bucket: bucket,
+      Delete: { Objects: [] }
+    };
+
+    listedObjects.Contents.forEach(({ Key }) => {
+      deleteParams.Delete.Objects.push({ Key });
+    });
+
+    // Delete the objects
+    await s3.deleteObjects(deleteParams).promise();
+
+    // If there are more objects, continue deleting
+    if (listedObjects.IsTruncated) {
+      await deleteFolder(bucket, folder);
+    } else {
+      console.log('Folder and all its contents deleted successfully.');
+    }
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+  }
+}
+
+export const deleteInvativeLead = async (req, res) => {
+  try {
+    const user = req.user;
+    const lead_id = req.query.lead_id;
+  
+
+    // Validate user and lead_id
+    if (!user) {
+      return responseData(res, "", 403, false, "User not found.");
+    }
+
+    if (!lead_id) {
+      return responseData(res, "", 400, false, "lead_id is required.");
+    }
+
+    // Check for the lead
+    const check_lead = await leadModel.findOne({ lead_id, status: 'Inactive' });
+    console.log('Lead found:', check_lead);
+
+    if (!check_lead) {
+      return responseData(res, "", 404, false, "Lead not found.");
+    }
+
+    // Perform deletions
+    await Promise.all([
+      deleteFolder(process.env.S3_BUCKET_NAME, `${lead_id}/`),
+      leadModel.findOneAndDelete({ lead_id, status: 'Inactive' }),
+      fileuploadModel.findOneAndDelete({ lead_id }),
+      archiveModel.deleteMany({ lead_id }),
+    ]);
+
+    return responseData(res, "Lead deleted successfully.", 200, true, "");
+
+  } catch (err) {
+    console.error(err);
+    return responseData(res, "", 500, false, "Something went wrong", err);
+  }
+};
+
+
 
 
