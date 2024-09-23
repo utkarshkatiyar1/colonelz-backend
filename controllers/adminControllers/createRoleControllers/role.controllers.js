@@ -80,6 +80,7 @@ export const getRole = async (req, res) => {
         const response = roles.map(role => ({
             _id: role._id,
             role: role.role,
+            createdAt: role.createdAt,
             access: role.access,
             existUser: !!userLookup[role.role],
         }));
