@@ -94,61 +94,50 @@ export const getRole = async (req, res) => {
 
 
 
-export const UpdateRole = async(req,res) =>{
-    try{
-        const role = req.body.role;
-        const access = req.body.access;
-        const id = req.query.id;
+export const UpdateRole = async (req, res) => {
+    try {
+        const { role, access } = req.body;
+        const { id } = req.query;
 
-        if(!id)
-        {
-            responseData(res, "", 400, false, "Role id is required")
+        if (!id) {
+            return responseData(res, "", 400, false, "Role id is required");
         }
 
-        if(!role)
-        {
-            responseData(res, "", 400, false, "Role is required")
-
+        if (!role) {
+            return responseData(res, "", 400, false, "Role is required");
         }
-        else if(!access)
-        {
-            responseData(res, "", 400, false, "Access is required")
+
+        if (!access) {
+            return responseData(res, "", 400, false, "Access is required");
         }
-        else{
-            const check_id = await roleModel.findById(id)
-            if(!check_id)
-            {
-                responseData(res,"",404, false, "Role not found for this id")
 
-            }
-            else
-            {
+        const existingRole = await roleModel.findById(id);
+        if (!existingRole) {
+            return responseData(res, "", 404, false, "Role not found for this id");
+        }
 
-                const updatedRole = await roleModel.findByIdAndUpdate(id, { role, access });
+        const updatedRole = await roleModel.findByIdAndUpdate(id, { role, access }, { new: true });
 
-                if (updatedRole) {
-                  const find_user =   await registerModel.find({role:role})
-                  if(find_user.length>0)
-                  {
-                    find_user.forEach(async(user)=>{
-                        await registerModel.findByIdAndUpdate(user._id, {access:access})
+        if (updatedRole) {
+            const usersToUpdate = await registerModel.find({ role: existingRole.role });
+
+            if (usersToUpdate.length > 0) {
+                await Promise.all(usersToUpdate.map(user =>
+                    registerModel.findByIdAndUpdate(user._id, {
+                        $set: { access, role }
                     })
-                    
-                }
-                responseData(res, "Role updated successfully", 200, true, "")
+                ));
             }
+
+            return responseData(res, "Role updated successfully", 200, true, "");
         }
 
-           
-        }
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+};
 
-    }
-    catch(err)
-    {
-        responseData(res, "", 500, false, "Internal Server Error")
-        console.log(err)
-    }
-}
 
 export const DeleteRole = async (req, res) => {
     try {
