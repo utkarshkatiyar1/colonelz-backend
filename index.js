@@ -13,12 +13,12 @@ import fileUpload from "express-fileupload";
 import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
-import nodemailer from "nodemailer";
 import session from "express-session";
 import expressWinston from "express-winston"
 import winston, { format } from "winston";
 
 import setupSwaggerDocs from "./swagger.js";
+import { checkEmailServer, infotransporter } from "./utils/function.js";
 
 
 dotenv.config();
@@ -60,23 +60,6 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
-
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log(success)
-    console.log("Server is ready to take our messages");
-  }
-});
 app.use(cors());
 
 app.use(requestIp.mw());
@@ -144,6 +127,7 @@ app.use("/v1/api/users", usersRouter);
 setupSwaggerDocs(app);
 server.listen(8000, async () => {
   await connect();
+  await checkEmailServer();
   console.log("Connected to backend");
 });
 

@@ -5,7 +5,7 @@ import { login } from "../../controllers/usersControllers/login.controller.js";
 import { logout } from "../../controllers/usersControllers/logout.controller.js";
 import { changePassController, otpVerification, sendotpforgetpassword } from "../../controllers/usersControllers/forget.password.controller.js";
 import { getUserData } from "../../controllers/usersControllers/getuserdata.controller.js";
-import { profileupload } from "../../controllers/usersControllers/profile.image.controller.js";
+import { profileUpload } from "../../controllers/usersControllers/profile.image.controller.js";
 import { updateStatus, updateStatusClient } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { updateStatusAdmin } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js"
 import { resetPassword } from "../../controllers/usersControllers/reset.password.controller.js";
@@ -295,7 +295,8 @@ router.route("/getdata").get(verifyJWT, getUserData)
  *       '400':
  *         description: Profile image uploaded failed
  */
-router.route("/profileurl").post(verifyJWT, profileupload)
+router.route("/profileurl").post(verifyJWT, profileUpload)
+
 
 // router.route("/").get(checkAvailableUserIsAdmin)
 router.route("/approval/admin").post(updateStatus)

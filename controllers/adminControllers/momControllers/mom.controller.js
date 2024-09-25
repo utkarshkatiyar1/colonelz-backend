@@ -1,10 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { s3 } from "../../../utils/function.js"
-import { onlyAlphabetsValidation, onlyMomClientsValidation } from "../../../utils/validation.js";
-import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 
@@ -150,20 +146,35 @@ export const getAllProjectMom = async (req, res) => {
     console.log(err.message);
   }
 };
-
+function isValidClientName(name) {
+  return typeof name === 'string' && /^[a-zA-Z\s]+$/.test(name);
+}
+function validateClientNames(names) {
+  return Array.isArray(names) && names.every(isValidClientName);
+}
 export const createmom = async (req, res) => {
   try {
     const user_id = req.body.user_id;
     const project_id = req.body.project_id;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
-    const client_name = req.body.client_name;
-    const organisor = req.body.organisor;
-    const attendees = req.body.attendees;
+    let client_name = req.body.client_name;
+    let organisor = req.body.organisor;
+    let attendees = req.body.attendees;
     const remark = req.body.remark;
+    let client_names;
+    let organisors;
+    let others;
+    try {
+      client_names = JSON.parse(client_name);
+      organisors = JSON.parse(organisor);
+      others = JSON.parse(attendees)
 
-console.log(client_name)
-  
+    } catch (error) {
+      return responseData(res, "", 400, false, "Invalid JSON format");
+    }
+
+
     // write here validation ///
     if (!project_id) {
       responseData(res, "", 400, false, "project_id is required");
@@ -175,11 +186,11 @@ console.log(client_name)
       responseData(res, "", 400, false, "meetingDate is required");
     } else if (!location) {
       responseData(res, "", 400, false, "location is required");
-    } 
-    else if (!client_name || !onlyMomClientsValidation(client_name)) {
+    }
+    else if (!validateClientNames(client_names)) {
       responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
-    } else if (!organisor || !onlyMomClientsValidation(organisor)) {
-      responseData(res, "", 400, false, "organiser is required");
+    } else if (!validateClientNames(organisors)) {
+      responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
     } else {
       const check_user = await registerModel.findOne({ _id: user_id })
       if (!check_user) {
@@ -248,9 +259,9 @@ console.log(client_name)
                       meetingdate: meetingDate,
                       location: location,
                       attendees: {
-                        client_name: client_name,
-                        organisor: organisor,
-                        attendees: attendees,
+                        client_name: client_names,
+                        organisor: organisors,
+                        attendees: others,
                       },
                       remark: remark,
                       files: fileUrls,
@@ -277,7 +288,7 @@ console.log(client_name)
           const existingFile = await fileuploadModel.findOne({
             project_id: project_id,
           });
-          const folder_name = `mom`;
+          const folder_name = `Mom`;
           const project_Name = existingFile.project_name;
 
           if (existingFile) {
@@ -322,9 +333,9 @@ console.log(client_name)
                       meetingdate: meetingDate,
                       location: location,
                       attendees: {
-                        client_name: client_name,
-                        organisor: organisor,
-                        attendees: attendees,
+                        client_name: client_names,
+                        organisor: organisors,
+                        attendees: others,
                       },
                       remark: remark,
                       files: file,
@@ -336,6 +347,18 @@ console.log(client_name)
             },
             { new: true }
           );
+          await projectModel.findOneAndUpdate({ project_id: project_id },
+            {
+              $push: {
+                project_updated_by: {
+                  username: check_user.username,
+                  role: check_user.role,
+                  message: `has created new mom.`,
+                  updated_date: new Date()
+                }
+              }
+            }
+          )
 
 
           responseData(
@@ -429,107 +452,47 @@ export const getSingleMom = async (req, res) => {
   }
 };
 
-
-
-
-export const sendPdf = async (req, res) => {
-  try {
-
-    const { project_id, mom_id } = req.body;
-    const cc = req.body.cc;
-    const bcc = req.body.bcc;
-    const client_email = req.body.client_email;
-    const subject = req.body.subject;
-    const body = req.body.body;
-    const check_project = await projectModel.find({ project_id: project_id });
-
-    if (check_project.length > 0) {
-
-      const check_mom = check_project[0].mom.filter(
-        (mom) => mom.mom_id.toString() === mom_id
-      );
-
-      if (check_mom.length > 0) {
-
-        const mom_pdf = req.files.file;
-        const filePath = path.join('momdata', mom_pdf.name);
-
-        mom_pdf.mv(filePath, (err) => {
-          if (err) {
-            console.error('Error saving file:', err);
-            return responseData(res, '', 500, false, 'Failed to save file');
-          }
-
-          // Define the mail options
-          const mailOptions = {
-            from: 'info@colonelz.com',
-            to: [check_project[0].client[0].client_email, client_email],
-            cc: cc,
-            bcc: bcc,
-            subject: subject,
-            html: body,
-            attachments: [
-              {
-                filename: mom_pdf.name,
-                path: filePath,
-              },
-            ],
-          };
-
-          // Send the email
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error('Error sending email:', error);
-              return responseData(res, '', 400, false, 'Failed to send email');
-            } else {
-              console.log('Email sent:', info.response);
-
-              fs.unlink(filePath, (err) => {
-                if (err) {
-                  console.error('Error deleting file:', err);
-                } else {
-                  console.log('File deleted successfully');
-                }
-              });
-
-              return responseData(res, 'Email has been sent successfully', 200, true, '');
-            }
-          });
-        });
-      } else {
-        return responseData(res, '', 404, false, 'MOM Not Found');
-      }
-    } else {
-      return responseData(res, '', 404, false, 'Project Not Found');
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    return responseData(res, '', 400, false, err.message);
-  }
-};
-
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
-
-
 export const updateMom = async (req, res) => {
   try {
     const project_id = req.query.project_id;
     const mom_id = req.query.mom_id;
     const description = req.body.remark;
+    const meetingDate = req.body.meetingdate;
+    const location = req.body.location;
+    const client_name = req.body.client_name;
+    const organisor = req.body.organisor;
+    const user = req.user
+    let client_names;
+    let organisors;
+
+    try {
+      client_names = JSON.parse(client_name);
+      organisors = JSON.parse(organisor);
+    } catch (error) {
+      return responseData(res, "", 400, false, "Invalid JSON format");
+    }
+
     if (!project_id) {
       responseData(res, "", 404, false, "Project Id is required");
     }
     else if (!mom_id) {
       responseData(res, "", 404, false, "MOM Id is required");
     }
+    else if (!meetingDate) {
+      responseData(res, "", 400, false, "meetingDate is required");
+    } else if (!location) {
+      responseData(res, "", 400, false, "location is required");
+    }
+    else if (!validateClientNames(client_names)) {
+      responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
+    } else if (!validateClientNames(organisors)) {
+      responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
+    }
     else {
+      if (!user) {
+        responseData(res, "", 404, false, "User Not Found");
+
+      }
       const check_project = await projectModel.findOne({ project_id: project_id });
       if (check_project) {
         const check_mom = check_project.mom.filter(
@@ -541,11 +504,31 @@ export const updateMom = async (req, res) => {
             'mom.mom_id': mom_id
           }, {
             $set: {
-              'mom.$.remark': description
+              'mom.$.remark': description,
+              'mom.$.meetingdate': meetingDate,
+              'mom.$.location': location,
+              'mom.$.attendees': {
+                client_name: client_names,
+                organisor: organisors,
+               
+              }
             }
           },
             { new: true }
 
+          )
+
+          await projectModel.findOneAndUpdate({ project_id: project_id },
+            {
+              $push: {
+                project_updated_by: {
+                  username: user.username,
+                  role: user.role,
+                  message: `has update  mom.`,
+                  updated_date: new Date()
+                }
+              }
+            }
           )
           responseData(res, "MOM Updated Successfully", 200, true, "");
 
@@ -566,3 +549,60 @@ export const updateMom = async (req, res) => {
 
   }
 }
+
+export const deleteMom = async (req, res) => {
+  try {
+    const { project_id, mom_id } = req.body;
+    const user = req.user;
+
+    if (!project_id) {
+      return responseData(res, "", 404, false, "Project Id is required");
+    }
+
+    if (!mom_id) {
+      return responseData(res, "", 404, false, "MOM Id is required");
+    }
+
+    if (!user) {
+      return responseData(res, "", 404, false, "User Not Found");
+    }
+
+    const check_project = await projectModel.findOne({ project_id });
+    if (!check_project) {
+      return responseData(res, "", 404, false, "Project Not Found");
+    }
+
+    const check_mom = check_project.mom.find(mom => mom.mom_id.toString() === mom_id);
+    if (!check_mom) {
+      return responseData(res, "", 404, false, "Mom Not Found");
+    }
+
+    await projectModel.findOneAndUpdate(
+      { "mom.mom_id": mom_id },
+      {
+        $pull: { mom: { mom_id } }
+      }
+    );
+
+    await projectModel.findOneAndUpdate(
+      { project_id },
+      {
+        $push: {
+          project_updated_by: {
+            username: user.username,
+            role: user.role,
+            message: `has deleted MOM ${check_mom.mom_id}.`,
+            updated_date: new Date()
+          }
+        }
+      }
+    );
+
+    return responseData(res, "Mom deleted successfully", 200, true, "");
+
+  } catch (err) {
+    console.error(err);
+    return responseData(res, "", 400, false, "Something went wrong");
+  }
+};
+

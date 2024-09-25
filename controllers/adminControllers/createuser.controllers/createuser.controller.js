@@ -1,10 +1,10 @@
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
-import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import loginModel from "../../../models/usersModels/login.model.js";
-import { RoleAccess } from "../../../utils/role.js";
 import roleModel from "../../../models/adminModels/role.model.js";
+import { onlyAlphabetsValidation } from "../../../utils/validation.js";
+import { infotransporter } from "../../../utils/function.js";
 
 
 function generateStrongPassword() {
@@ -18,14 +18,7 @@ function generateStrongPassword() {
     return password;
 }
 
-const transporter = nodemailer.createTransport({
-    host: process.env.HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-        user: process.env.USER_NAME,
-        pass: process.env.API_KEY,
-    },
-});
+
 
 
 export const createUser = async (req, res) => {
@@ -107,7 +100,7 @@ export const createUser = async (req, res) => {
                                 });
 
                                 const mailOptions = {
-                                    from: "info@colonelz.com",
+                                    from: process.env.INFO_USER_EMAIL,
                                     to: email,
                                     subject: "Login Credentials",
                                     html: `
@@ -134,7 +127,7 @@ export const createUser = async (req, res) => {
                                     `,
                                 };
 
-                                transporter.sendMail(mailOptions, (error, info) => {
+                                infotransporter.sendMail(mailOptions, (error, info) => {
                                     if (error) {
                                         console.log(error);
                                         responseData(res, "", 400, false, "Failed to send email");
@@ -315,3 +308,38 @@ catch(err)
         return responseData(res, "", 500, false, `${err}`);   
 }
 }
+
+export const updateUserRole = async(req,res) =>{
+    try{
+        const user_id = req.body.userId;
+        const role = req.body.role;
+        if (!user_id) {
+            return responseData(res, "", 400, false, "User ID is required");
+        }
+        if (!role  || role.length <= 3) {
+            return responseData(res, "", 400, false, "Role name is not valid");
+        }
+
+        const user = await registerModel.findById(user_id);
+        if (!user) {
+            return responseData(res, "", 404, false, "User Not Found");
+        }
+
+        const check_role = await roleModel.findOne({ role });
+        if (!check_role) {
+            return responseData(res, "", 404, false, "Role Not Found");
+        }
+
+        await registerModel.findByIdAndUpdate(user_id, {
+            $set: {
+                role:role,
+                access: check_role.access
+            }
+        }, { new: true });
+
+        return responseData(res, "User Updated Successfully", 200, true, "");
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error");
+    }
+};

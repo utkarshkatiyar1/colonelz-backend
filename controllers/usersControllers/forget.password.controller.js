@@ -7,17 +7,10 @@ import registerModel from "../../models/usersModels/register.model.js";
 import Randomstring from "randomstring";
 import otpForForgetpassModel from "../../models/usersModels/otp.forget.password.model.js";
 import bcrypt from "bcrypt";
-import nodemailer from "nodemailer";
+import { infotransporter } from "../../utils/function.js";
 import Jwt from "jsonwebtoken";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
+
 
 export const sendotpforgetpassword = async (req, res) => {
   const email = req.body.email;
@@ -61,12 +54,12 @@ export const sendotpforgetpassword = async (req, res) => {
         });
       });
       const mailOptions = {
-        from: "info@colonelz.com",
+        from:process.env.INFO_USER_EMAIL,
         to: email,
         subject: "Email Verification",
         html: `<p>  Your verification code is :-  ${OTP}</p>`,
       };
-      transporter.sendMail(mailOptions, (error, info) => {
+      infotransporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           responseData(res, "", 400, false, "Failed to send email");
         } else {

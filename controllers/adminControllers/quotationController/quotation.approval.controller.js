@@ -1,31 +1,13 @@
-import mongoose from "mongoose";
-import nodemailer from "nodemailer";
 import { responseData } from "../../../utils/respounse.js";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { onlyEmailValidation } from "../../../utils/validation.js";
+import { infotransporter } from "../../../utils/function.js";
 
 
-function generatedigitnumber() {
-    const length = 6;
-    const charset = "0123456789";
-    let password = "";
-    for (let i = 0; i < length; ++i) {
-        const randomIndex = Math.floor(Math.random() * charset.length);
-        password += charset[randomIndex];
-    }
-    return password;
-}
 
-const transporter = nodemailer.createTransport({
-    host: process.env.HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-        user: process.env.USER_NAME,
-        pass: process.env.API_KEY,
-    },
-});
+
 
 
 
@@ -166,7 +148,7 @@ export const shareQuotation = async (req, res) => {
                 return responseData(res, "", 403, false, "File not found in the specified folder");
             }
             const mailOptions = {
-                from: "info@colonelz.com",
+                from: process.env.INFO_USER_EMAIL,
                 to: client_email,
                 subject: "Quotation Approval Notification",
                 html: `<!DOCTYPE html>
@@ -268,7 +250,7 @@ export const shareQuotation = async (req, res) => {
 
 
                 if (check_status == 0) {
-                    transporter.sendMail(mailOptions, async (error, info) => {
+                    infotransporter.sendMail(mailOptions, async (error, info) => {
                         if (error) {
                             console.log(error)
                             return responseData(res, "", 400, false, "Failed to send email");
@@ -303,7 +285,7 @@ export const shareQuotation = async (req, res) => {
 
             }
             if (check_data.quotation.length < 1) {
-                transporter.sendMail(mailOptions, async (error, info) => {
+                infotransporter.sendMail(mailOptions, async (error, info) => {
                     if (error) {
                         console.log(error)
                         return responseData(res, "", 400, false, "Failed to send email");

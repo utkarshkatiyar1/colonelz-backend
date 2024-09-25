@@ -35,6 +35,8 @@ export const verifyJWT = async (req, res, next) => {
 };
 
 // Middleware to check if the user is an admin
+// Ensure you import cron if not already done
+
 export const checkAvailableUserIsAdmin = async (req, res, next) => {
   try {
     const user = req.user; // Access user from req object
@@ -43,6 +45,16 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
     if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(user.role)) {
       return next();
     }
+
+    // Extract pagination parameters
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
+
+    // Fetch notifications data for the user with pagination
+    const notifications = user.data[0]?.notificationData || [];
+    const totalNotifications = notifications.length;
+    const totalPages = Math.ceil(totalNotifications / limit);
+    const paginatedNotifications = notifications.slice((page - 1) * limit, page * limit);
 
     // Schedule a cron job to send a notification at midnight
     cron.schedule("0 0 * * *", async () => {
@@ -56,15 +68,23 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
 
     // Prepare response data
     const response = {
-      NotificationData: user.data[0]?.notificationData || [],  // Use optional chaining to avoid potential errors
+      NotificationData: paginatedNotifications, // Return only the paginated data
+      pagination: {
+        totalNotifications,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
     };
 
     return responseData(res, "User data found", 200, true, "", response);
+
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdmin:", err);
     return responseData(res, "", 403, false, "Unauthorized: Invalid token");
   }
 };
+
 
 export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
   try {
