@@ -240,7 +240,7 @@ export const getAllTasks = async (req, res) => {
             task_createdBy: task.task_createdBy,
             task_assignee: task.task_assignee,
             reporter: task.reporter,
-            
+
 
         }));
 
@@ -255,67 +255,73 @@ export const getAllTasks = async (req, res) => {
 
 
 
-
 export const getSingleTask = async (req, res) => {
-
     try {
-        const user_id = req.query.user_id;
-        const project_id = req.query.project_id;
-        const task_id = req.query.task_id;
+        const { user_id, project_id, task_id } = req.query;
 
-        const check_user = await registerModel.findById({ _id: user_id })
-        if (!check_user) {
-            responseData(res, "", 404, false, "User not found", [])
-        }
-        else {
-            const check_project = await projectModel.findOne({ project_id: project_id })
-            if (!check_project) {
-                responseData(res, "", 404, false, "Project not found", [])
-            }
-            else {
-                const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id })
-                if (!check_task) {
-                    responseData(res, "Task not found", 200, false, "", [])
-                }
-                else {
-                    let response = []
-
-                    response.push({
-                        project_id: check_task.project_id,
-                        task_id: check_task.task_id,
-                        task_name: check_task.task_name,
-                        task_description: check_task.task_description,
-                        actual_task_start_date: check_task.actual_task_start_date,
-                        actual_task_end_date: check_task.actual_task_end_date,
-                        estimated_task_end_date: check_task.estimated_task_end_date,
-                        estimated_task_start_date: check_task.estimated_task_start_date,
-                        task_status: check_task.task_status,
-                        task_priority: check_task.task_priority,
-                        task_createdOn: check_task.task_createdOn,
-                        reporter: check_task.reporter,
-                        task_assignee: check_task.task_assignee,
-                        task_createdBy: check_task.task_createdBy,
-                        number_of_subtasks: check_task.subtasks.length,
-
-                    })
-
-                    responseData(res, "Task found successfully", 200, true, "", response)
-                }
-            }
+        // Validate required parameters
+        if (!user_id || !project_id || !task_id) {
+            return responseData(res, "", 400, false, "User ID, Project ID, and Task ID are required", []);
         }
 
+        // Aggregate to find user, project, and task
+        const result = await taskModel.aggregate([
+            {
+                $match: {
+                    task_id: task_id,
+                    project_id: project_id,
+                },
+            },
+            {
+                $lookup: {
+                    from: "projects", // Assuming the collection name for projects
+                    localField: "project_id",
+                    foreignField: "project_id",
+                    as: "project_info",
+                },
+            },
+            {
+                $lookup: {
+                    from: "users", // Assuming the collection name for users
+                    localField: "task_assignee",
+                    foreignField: "_id",
+                    as: "assignee_info",
+                },
+            },
+            {
+                $project: {
+                    project_id: 1,
+                    task_id: 1,
+                    task_name: 1,
+                    task_description: 1,
+                    actual_task_start_date: 1,
+                    actual_task_end_date: 1,
+                    estimated_task_end_date: 1,
+                    estimated_task_start_date: 1,
+                    task_status: 1,
+                    task_priority: 1,
+                    task_createdOn: 1,
+                    reporter: 1,
+                    task_assignee: 1,
+                    task_createdBy: 1,
+                    number_of_subtasks: { $size: "$subtasks" },
+                    project_name: { $arrayElemAt: ["$project_info.project_name", 0] },
+                    assignee_name: { $arrayElemAt: ["$assignee_info.name", 0] }, // Adjust based on your user schema
+                },
+            },
+        ]);
 
+        if (!result.length) {
+            return responseData(res, "Task not found", 200, false, "", []);
+        }
 
-
-
-
-
+        responseData(res, "Task found successfully", 200, true, "", result);
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal server error", []);
     }
-    catch (err) {
-        res.send(err);
-        console.log(err);
-    }
-}
+};
+
 
 
 export const updateTask = async (req, res) => {

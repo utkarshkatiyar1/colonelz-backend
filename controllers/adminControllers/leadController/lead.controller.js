@@ -290,23 +290,20 @@ export const createLead = async (req, res) => {
 
 export const getAllLead = async (req, res) => {
   try {
-    const leads = await leadModel.find({}).sort({ createdAt: -1 }).lean();
+    // Use projection to select only the fields you need
+    const leads = await leadModel.find({})
+      .select('name lead_id email phone location status date') // Select only necessary fields
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const formattedLeads = leads.map(lead => ({
-      name: lead.name,
-      lead_id: lead.lead_id,
-      email: lead.email,
-      phone: lead.phone,
-      location: lead.location,
-      status: lead.status,
-      date: lead.date
-    }));
-
-    responseData(res, "All Lead Data", 200, true, "", { leads: formattedLeads });
+    // Directly return the response without additional mapping
+    responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
+    console.error(error); // Log the error for debugging
     responseData(res, "", 500, false, error.message);
   }
 };
+
 
 
 

@@ -64,33 +64,34 @@ export const createRole = async(req,res) =>{
 
 export const getRole = async (req, res) => {
     try {
-        // Fetch all roles with lean for better performance
-        const roles = await roleModel.find().lean();
+        // Use aggregation to join roles and users in a single query
+        const rolesWithUsers = await roleModel.aggregate([
+            {
+                $lookup: {
+                    from: 'registers', // The name of your user collection
+                    localField: 'role',
+                    foreignField: 'role',
+                    as: 'users'
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    role: 1,
+                    createdAt: 1,
+                    access: 1,
+                    existUser: { $gt: [{ $size: '$users' }, 0] }
+                }
+            }
+        ]);
 
-        // Get all users in one query
-        const users = await registerModel.find({ role: { $in: roles.map(role => role.role) } }).lean();
-
-        // Create a lookup for quick access to user existence
-        const userLookup = {};
-        users.forEach(user => {
-            userLookup[user.role] = true;
-        });
-
-        // Build the response based on the role existence in the user lookup
-        const response = roles.map(role => ({
-            _id: role._id,
-            role: role.role,
-            createdAt: role.createdAt,
-            access: role.access,
-            existUser: !!userLookup[role.role],
-        }));
-
-        responseData(res, "Roles found successfully", 200, true, "", response);
+        responseData(res, "Roles found successfully", 200, true, "", rolesWithUsers);
     } catch (err) {
         responseData(res, "", 500, false, "Internal Server Error");
         console.error(err);
     }
 };
+
 
 
 
@@ -167,58 +168,57 @@ export const DeleteRole = async (req, res) => {
 
 
 
-export const roleWiseAccess = async(req,res) =>{
-try{
-    const access = await roleModel.find({});
-    if(access.length<1)
-    {
-        responseData(res, "No role found", 200, true, "")
-    }
-    else
-    {
-       const transformedData = {};
+export const roleWiseAccess = async (req, res) => {
+    try {
+        const access = await roleModel.find({}).lean(); // Use lean for better performance
 
+        if (access.length < 1) {
+            return responseData(res, "No role found", 200, true, "");
+        }
+
+        const transformedData = {};
+
+        // Use a single loop with flatMap to structure the data efficiently
         access.forEach(user => {
-            Object.keys(user.access).forEach(resource => {
-                user.access[resource].forEach(action => {
+            Object.entries(user.access).forEach(([resource, actions]) => {
+                actions.forEach(action => {
                     if (!transformedData[resource]) {
                         transformedData[resource] = {};
                     }
-                    if (!transformedData[resource][action]) {
-                        transformedData[resource][action] = [];
-                    }
+                    // Use the shorthand for initializing arrays
+                    transformedData[resource][action] = transformedData[resource][action] || [];
                     transformedData[resource][action].push(user.role);
                 });
             });
         });
 
-        responseData(res, "Role found successfully", 200, true, "", transformedData)
+        responseData(res, "Roles found successfully", 200, true, "", transformedData);
+    } catch (err) {
+        console.error(err);
+        responseData(res, "", 500, false, "Internal Server Error");
     }
+};
 
-
-
-}
-catch(err)
-{
-    responseData(res, "", 500, false, "Internal Server Error")
-    console.log(err)
-}
-}
 
 
 export const roleName = async (req, res) => {
     try {
-        const roles = await roleModel.find({}, 'role'); 
-        if (roles.length === 0) {
+        // Use lean to get plain JavaScript objects and only fetch the 'role' field
+        const roles = await roleModel.find({}, 'role').lean();
+
+        if (!roles.length) {
             return responseData(res, "No role found", 200, true, "");
         }
-        const response = roles.map(role => role.role); 
 
-        return responseData(res, "Role found successfully", 200, true, "", response);
+        // Directly extract role names using map
+        const response = roles.map(({ role }) => role);
+
+        return responseData(res, "Roles found successfully", 200, true, "", response);
     } catch (err) {
         console.error(err);
         return responseData(res, "", 500, false, "Internal Server Error");
     }
-}
+};
+
 
 

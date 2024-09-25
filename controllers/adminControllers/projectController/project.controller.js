@@ -55,14 +55,21 @@ export const getAllProject = async (req, res) => {
     }
 
     const user = await registerModel.findById(id);
-
     if (!user) {
       return responseData(res, "", 404, false, "User not found");
     }
 
-    const projects = await projectModel.find({}).sort({ createdAt: -1 });
+    // Fetch projects with only required fields and use lean for better performance
+    const projects = await projectModel.find({})
+      .select('project_id project_name project_status project_start_date project_end_date project_type designer client')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const projectData = projects.map((project) => {
+    // Initialize counters and categories
+    let projectData = [];
+    let execution = 0, design = 0, designAndExecution = 0, completed = 0, commercial = 0, residential = 0, archive = 0;
+
+    for (const project of projects) {
       const {
         project_id,
         project_name,
@@ -74,7 +81,8 @@ export const getAllProject = async (req, res) => {
         client,
       } = project;
 
-      return {
+      // Add to projectData
+      projectData.push({
         project_id,
         project_name,
         project_status,
@@ -84,65 +92,73 @@ export const getAllProject = async (req, res) => {
         project_type,
         designer,
         client,
-      };
-    });
+      });
 
-    const execution = projectData.filter((p) => p.project_status === "executing");
-    const design = projectData.filter((p) => p.project_status === "designing");
-    const designandexecution = projectData.filter((p) => p.project_status === "design & execution");
-    const completed = projectData.filter((p) => p.project_status === "completed");
-    const commercial = projectData.filter((p) => p.project_type === "commercial");
-    const residential = projectData.filter((p) => p.project_type === "residential");
-    const archive = completed.filter((p) =>
-      isProjectOlderThan6Months(p.project_end_date)
-    );
+      // Count based on project status and type
+      if (project_status === "executing") execution++;
+      else if (project_status === "designing") design++;
+      else if (project_status === "design & execution") designAndExecution++;
+      else if (project_status === "completed") completed++;
+      if (project_type === "commercial") commercial++;
+      else if (project_type === "residential") residential++;
+    }
+
+    // Calculate archives
+    archive = projectData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;
+
+    const totalProjects = projectData.length;
+    const activeProjects = totalProjects - completed;
 
     const response = {
-      total_Project: projectData.length,
-      Execution_Phase: execution.length,
-      Design_Phase: design.length,
-      Design_Execution: designandexecution.length,
-      completed: completed.length,
-      commercial: ((commercial.length / projectData.length) * 100).toFixed(2),
-      residential: ((residential.length / projectData.length) * 100).toFixed(2),
-      archive: archive.length,
-      active_Project: projectData.length - completed.length,
+      total_Project: totalProjects,
+      Execution_Phase: execution,
+      Design_Phase: design,
+      Design_Execution: designAndExecution,
+      completed,
+      commercial: ((commercial / totalProjects) * 100).toFixed(2),
+      residential: ((residential / totalProjects) * 100).toFixed(2),
+      archive,
+      active_Project: activeProjects,
       projects: projectData,
     };
 
     responseData(res, "Projects fetched successfully", 200, true, "", response);
   } catch (error) {
+    console.error(error.message); // Log the error for debugging
     responseData(res, "", 500, false, "Error in fetching projects");
   }
 };
+
 
 
 export const getSingleProject = async (req, res) => {
   const { project_id, id } = req.query;
 
   if (!project_id) {
-    return responseData(res, "", 404, false, "Project ID is required.", []);
+    return responseData(res, "", 400, false, "Project ID is required.", []);
   }
 
   if (!id) {
-    return responseData(res, "", 404, false, "User ID is required.", []);
+    return responseData(res, "", 400, false, "User ID is required.", []);
   }
 
   try {
-    // Fetch the user
-    const user = await registerModel.findById(id);
+    // Fetch the user and project in parallel
+    const [user, project] = await Promise.all([
+      registerModel.findById(id),
+      projectModel.findOne({ project_id }).lean(),
+    ]);
+
     if (!user) {
       return responseData(res, "", 404, false, "User not found.", []);
     }
 
-    // Fetch the project
-    const project = await projectModel.findOne({ project_id });
     if (!project) {
       return responseData(res, "", 404, false, "Project not found.", []);
     }
 
     // Fetch tasks associated with the project
-    const tasks = await taskModel.find({ project_id });
+    const tasks = await taskModel.find({ project_id }).lean();
 
     // Calculate task completion percentage
     const totalTasks = tasks.length;
@@ -173,10 +189,11 @@ export const getSingleProject = async (req, res) => {
 
     responseData(res, "Project found", 200, true, "", [response]);
   } catch (err) {
+    console.error(err); // Log the error for debugging
     responseData(res, "", 500, false, "Error fetching project", err);
-    console.error(err);
   }
 };
+
 
 
 export const updateProjectDetails = async (req, res) => {

@@ -53,7 +53,7 @@ import { archive, deletearchive, restoreData } from "../../controllers/adminCont
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
-import { getProjectUser, getUserList, userAcessLeadOrProjectList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
+import { getProjectUser, getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
 import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteLeadAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
@@ -342,7 +342,7 @@ router.route("/restore/user").post(verifyJWT, restoreUserAccess, restoreUser);
  */
 router.route("/delete/archive/user").delete(verifyJWT, deleteArchiveUserAccess, deleteUserArchive);
 
-router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
+// router.route("/user/access/list").get(verifyJWT, userAcessLeadOrProjectList)
 /**
  * @swagger
  * /v1/api/admin/update/users/role:

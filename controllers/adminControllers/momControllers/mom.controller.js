@@ -115,37 +115,34 @@ const saveFileUploadData = async (
 
 export const getAllProjectMom = async (req, res) => {
   try {
-    const find_project = await projectModel.find({}).sort({ createdAt: -1 });
+    // Fetch projects with the mom data, projecting only necessary fields
+    const projects = await projectModel.find({})
+      .select('project_id project_name client mom') // Select only necessary fields
+      .sort({ createdAt: -1 })
+      .lean(); // Use lean() to get plain JavaScript objects
 
+    const MomData = projects.flatMap(project => {
+      if (!project.mom || project.mom.length === 0) return [];
 
-    let MomData = [];
-    for (let i = 0; i < find_project.length; i++) {
-      if (find_project[i].mom.length !== 0) {
-        for (let j = find_project[i].mom.length - 1; j >= 0; j--) {
-          MomData.push({
-            project_id: find_project[i].project_id,
-            project_name: find_project[i].project_name,
-            mom_id: find_project[i].mom[j].mom_id,
-            client_name: find_project[i].client[0].client_name,
-            location: find_project[i].mom[j].location,
-            meetingDate: find_project[i].mom[j].meetingdate,
-          });
+      // Get the latest MOM for the project
+      const latestMom = project.mom[project.mom.length - 1]; // Access last element directly
+      return {
+        project_id: project.project_id,
+        project_name: project.project_name,
+        mom_id: latestMom.mom_id,
+        client_name: project.client[0]?.client_name, // Use optional chaining
+        location: latestMom.location,
+        meetingDate: latestMom.meetingdate,
+      };
+    });
 
-          break;
-        }
-
-      }
-    }
-    const response = {
-      MomData: MomData
-    }
-
-    responseData(res, "all project mom", 200, true, "", response);
+    responseData(res, "All Project MOM", 200, true, "", { MomData });
   } catch (err) {
+    console.error(err.message); // Log the error for debugging
     responseData(res, "", 500, false, err.message);
-    console.log(err.message);
   }
 };
+
 function isValidClientName(name) {
   return typeof name === 'string' && /^[a-zA-Z\s]+$/.test(name);
 }
