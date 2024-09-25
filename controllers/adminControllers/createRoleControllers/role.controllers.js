@@ -68,7 +68,7 @@ export const getRole = async (req, res) => {
         const rolesWithUsers = await roleModel.aggregate([
             {
                 $lookup: {
-                    from: 'registers', // The name of your user collection
+                    from: 'users', // The name of your user collection
                     localField: 'role',
                     foreignField: 'role',
                     as: 'users'
