@@ -6,7 +6,7 @@ import leadModel from "../../../models/adminModels/leadModel.js";
 export const getFileData = async (req, res) => {
   try {
     const data = await fileuploadModel.find({})
-      .select('project_id lead_id')
+      .select('project_id lead_id lead_name project_name')
       .lean();
 
     if (!data.length) {
