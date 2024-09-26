@@ -19,6 +19,7 @@ import {
   deleteInvativeLead,
   getAllLead,
   getSingleLead,
+  leadActivity,
   leadToMultipleProject,
   leadToProject,
   updateFollowLead,
@@ -27,6 +28,7 @@ import {
 import {
   getAllProject,
   getSingleProject,
+  projectActivity,
   updateProjectDetails,
 } from "../../controllers/adminControllers/projectController/project.controller.js";
 import {
@@ -833,6 +835,10 @@ router.route("/get/user/project").get(verifyJWT, getProjectUser);
  *       bearerFormat: JWT
  */
 router.route("/get/userlist/project/").get(verifyJWT, listUserInProject);
+
+router.route("/get/project/activity").get(verifyJWT, projectActivity);
+
+router.route("/get/lead/activity").get(verifyJWT, leadActivity);
 
 /**
  * @swagger

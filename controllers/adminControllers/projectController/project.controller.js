@@ -191,14 +191,13 @@ export const getSingleProject = async (req, res) => {
       project_start_date: project.project_start_date,
       project_end_date: project.project_end_date,
       project_location: project.project_location,
-      project_updated_by: project.project_updated_by,
       percentage: percentage
     };
 
     responseData(res, "Project found", 200, true, "", [response]);
   } catch (err) {
     console.error(err); // Log the error for debugging
-    responseData(res, "", 500, false, "Error fetching project", err);
+    responseData(res, "", 400, false, "Error fetching project", err);
   }
 };
 
@@ -305,5 +304,52 @@ export const updateProjectDetails = async (req, res) => {
     }
   }
 };
+
+
+export const projectActivity = async (req, res) => {
+  try {
+    const project_id = req.query.project_id;
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
+    const skip = (page - 1) * limit;
+
+    if (!project_id) {
+      return responseData(res, "", false, 400, "ProjectId is required");
+    }
+
+    // Fetch project activities and only the project_updated_by field
+    const project = await projectModel
+      .findOne({ project_id: project_id })
+      .select('project_updated_by');
+
+    if (!project) {
+      return responseData(res, "", false, 404, "Project not found");
+    }
+
+    const activities = project.project_updated_by.reverse() || [];
+    
+    const totalActivities = activities.length;
+
+    // Slice the activities array for pagination
+    const paginatedActivities = activities.slice(skip, skip + limit);
+    
+
+    // Structure the response
+    const response = {
+      activities: paginatedActivities,
+      total: totalActivities,
+      page,
+      limit,
+      totalPages: Math.ceil(totalActivities / limit),
+    }
+    responseData(res, "Project Activity", 200, true, "", response);
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    responseData(res, "", 400, false, "Error fetching project activity", err);
+  }
+};
+
+
+
 
 

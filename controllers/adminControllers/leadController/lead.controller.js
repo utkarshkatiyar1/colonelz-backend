@@ -1061,3 +1061,48 @@ export const deleteInvativeLead = async (req, res) => {
 
 
 
+export const leadActivity = async(req,res) =>{
+    try {
+    const lead_id = req.query.lead_id;
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
+    const skip = (page - 1) * limit;
+
+    if (!lead_id) {
+      return responseData(res, "", false, 400, "Lead Id is required");
+    }
+
+    // Fetch lead activities and only the lead_update_track field
+    const lead = await leadModel
+      .findOne({ lead_id: lead_id })
+      .select('lead_update_track');
+
+    if (!lead) {
+      return responseData(res, "", false, 404, "Lead not found");
+    }
+
+    const activities = lead.lead_update_track.reverse() || [];
+    
+    const totalActivities = activities.length;
+
+    // Slice the activities array for pagination
+    const paginatedActivities = activities.slice(skip, skip + limit);
+    
+
+    // Structure the response
+    const response = {
+      activities: paginatedActivities,
+      total: totalActivities,
+      page,
+      limit,
+      totalPages: Math.ceil(totalActivities / limit),
+    }
+    responseData(res, "Lead Activity", 200, true, "", response);
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    responseData(res, "", 400, false, "Error fetching lead activity", err);
+  }
+}
+
+
+
