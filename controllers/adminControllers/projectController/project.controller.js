@@ -70,7 +70,7 @@ export const getAllProject = async (req, res) => {
           project_end_date: 1,
           project_type: 1,
           designer: 1,
-          client: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
+          client_name: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
         }
       },
       {
