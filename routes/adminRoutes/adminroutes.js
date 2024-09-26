@@ -835,8 +835,244 @@ router.route("/get/user/project").get(verifyJWT, getProjectUser);
  *       bearerFormat: JWT
  */
 router.route("/get/userlist/project/").get(verifyJWT, listUserInProject);
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/admin/get/project/activity:
+ *     get:
+ *       tags:
+ *         - Project Management
+ *       summary: Retrieve project activity
+ *       description: Fetches the activity associated with a specific project using the project ID.
+ *       security:
+ *         - bearerAuth: []
+ *       parameters:
+ *         - name: project_id
+ *           in: query
+ *           required: true
+ *           schema:
+ *             type: string
+ *           description: The ID of the project*
+ *         - name: page
+ *           in: query
+ *           required: false
+ *           schema:
+ *             type: integer
+ *             format: int32
+ *           description: The page number for pagination (default is 1).
+ *         - name: limit
+ *           in: query
+ *           required: false
+ *           schema:
+ *             type: integer
+ *             format: int32
+ *           description: The number of results per page (default is 5).
+ *       responses:
+ *         '200':
+ *           description: Successful response with project activity
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   data:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         activity_id:
+ *                           type: string
+ *                           example: "activity_456"
+ *                         timestamp:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2024-09-26T12:00:00Z"
+ *                         description:
+ *                           type: string
+ *                           example: "Project updated with new milestones"
+ *         '400':
+ *           description: Bad request, possibly due to missing or invalid parameters
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid project ID"
+ *         '401':
+ *           description: Unauthorized access due to missing or invalid JWT
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Unauthorized"
+ *         '404':
+ *           description: Project not found
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Project not found"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
+ *
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
 
 router.route("/get/project/activity").get(verifyJWT, projectActivity);
+/**
+ * @swagger
+ * paths:
+ *   /v1/api/admin/get/lead/activity:
+ *     get:
+ *       tags:
+ *         - Lead Management
+ *       summary: Retrieve lead activity
+ *       description: Fetches the activity associated with a specific lead using the lead ID.
+ *       security:
+ *         - bearerAuth: []
+ *       parameters:
+ *         - name: lead_id
+ *           in: query
+ *           required: true
+ *           schema:
+ *             type: string
+ *           description: The ID of the lead*
+ *         - name: page
+ *           in: query
+ *           required: false
+ *           schema:
+ *             type: integer
+ *             format: int32
+ *           description: The page number for pagination (default is 1).
+ *         - name: limit
+ *           in: query
+ *           required: false
+ *           schema:
+ *             type: integer
+ *             format: int32
+ *           description: The number of results per page (default is 5).
+ *       responses:
+ *         '200':
+ *           description: Successful response with lead activity
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: true
+ *                   data:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         activity_id:
+ *                           type: string
+ *                           example: "activity_123"
+ *                         timestamp:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2024-09-26T12:00:00Z"
+ *                         description:
+ *                           type: string
+ *                           example: "Lead viewed product X"
+ *         '400':
+ *           description: Bad request, possibly due to missing or invalid parameters
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Invalid lead ID"
+ *         '401':
+ *           description: Unauthorized access due to missing or invalid JWT
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Unauthorized"
+ *         '404':
+ *           description: Lead not found
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Lead not found"
+ *         '500':
+ *           description: Internal server error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                     example: false
+ *                   message:
+ *                     type: string
+ *                     example: "Internal Server Error"
+ *
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
 
 router.route("/get/lead/activity").get(verifyJWT, leadActivity);
 
