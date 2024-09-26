@@ -71,6 +71,7 @@ export const getAllProject = async (req, res) => {
           project_type: 1,
           designer: 1,
           client_name: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
+          client:1,
         }
       },
       {
