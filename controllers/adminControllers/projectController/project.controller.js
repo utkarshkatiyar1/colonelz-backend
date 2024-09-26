@@ -59,67 +59,65 @@ export const getAllProject = async (req, res) => {
       return responseData(res, "", 404, false, "User not found");
     }
 
-    // Fetch projects with only required fields and use lean for better performance
-    const projects = await projectModel.find({})
-      .select('project_id project_name project_status project_start_date project_end_date project_type designer client')
-      .sort({ createdAt: -1 })
-      .lean();
+    // Use aggregation to count and categorize projects in one go
+    const projects = await projectModel.aggregate([
+      {
+        $project: {
+          project_id: 1,
+          project_name: 1,
+          project_status: 1,
+          project_start_date: 1,
+          project_end_date: 1,
+          project_type: 1,
+          designer: 1,
+          client: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalProjects: { $sum: 1 },
+          execution: { $sum: { $cond: [{ $eq: ["$project_status", "executing"] }, 1, 0] } },
+          design: { $sum: { $cond: [{ $eq: ["$project_status", "designing"] }, 1, 0] } },
+          designAndExecution: { $sum: { $cond: [{ $eq: ["$project_status", "design & execution"] }, 1, 0] } },
+          completed: { $sum: { $cond: [{ $eq: ["$project_status", "completed"] }, 1, 0] } },
+          commercial: { $sum: { $cond: [{ $eq: ["$project_type", "commercial"] }, 1, 0] } },
+          residential: { $sum: { $cond: [{ $eq: ["$project_type", "residential"] }, 1, 0] } },
+          projectsData: { $push: "$$ROOT" }
+        }
+      },
+      {
+        $project: {
+          totalProjects: 1,
+          execution: 1,
+          design: 1,
+          designAndExecution: 1,
+          completed: 1,
+          commercial: { $multiply: [{ $divide: ["$commercial", "$totalProjects"] }, 100] },
+          residential: { $multiply: [{ $divide: ["$residential", "$totalProjects"] }, 100] },
+          projectsData: 1,
+        }
+      }
+    ]);
 
-    // Initialize counters and categories
-    let projectData = [];
-    let execution = 0, design = 0, designAndExecution = 0, completed = 0, commercial = 0, residential = 0, archive = 0;
-
-    for (const project of projects) {
-      const {
-        project_id,
-        project_name,
-        project_status,
-        project_start_date,
-        project_end_date,
-        project_type,
-        designer,
-        client,
-      } = project;
-
-      // Add to projectData
-      projectData.push({
-        project_id,
-        project_name,
-        project_status,
-        project_start_date,
-        project_end_date,
-        client_name: client[0]?.client_name || "",
-        project_type,
-        designer,
-        client,
-      });
-
-      // Count based on project status and type
-      if (project_status === "executing") execution++;
-      else if (project_status === "designing") design++;
-      else if (project_status === "design & execution") designAndExecution++;
-      else if (project_status === "completed") completed++;
-      if (project_type === "commercial") commercial++;
-      else if (project_type === "residential") residential++;
+    if (!projects.length) {
+      return responseData(res, "", 404, false, "No projects found");
     }
 
-    // Calculate archives
-    archive = projectData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;
-
-    const totalProjects = projectData.length;
-    const activeProjects = totalProjects - completed;
+    const archive = projects[0].projectsData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;
+    const activeProjects = projects[0].totalProjects - projects[0].completed;
 
     const response = {
-      total_Project: totalProjects,
-      Execution_Phase: execution,
-      Design_Phase: design,
-      Design_Execution: designAndExecution,
-      completed,
-      commercial: ((commercial / totalProjects) * 100).toFixed(2),
-      residential: ((residential / totalProjects) * 100).toFixed(2),
+      total_Project: projects[0].totalProjects,
+      Execution_Phase: projects[0].execution,
+      Design_Phase: projects[0].design,
+      Design_Execution: projects[0].designAndExecution,
+      completed: projects[0].completed,
+      commercial: projects[0].commercial.toFixed(2),
+      residential: projects[0].residential.toFixed(2),
       archive,
       active_Project: activeProjects,
-      projects: projectData,
+      projects: projects[0].projectsData,
     };
 
     responseData(res, "Projects fetched successfully", 200, true, "", response);
@@ -145,7 +143,7 @@ export const getSingleProject = async (req, res) => {
   try {
     // Fetch the user and project in parallel
     const [user, project] = await Promise.all([
-      registerModel.findById(id),
+      registerModel.findById(id).lean(), // Use lean to get plain JavaScript objects
       projectModel.findOne({ project_id }).lean(),
     ]);
 
@@ -157,13 +155,22 @@ export const getSingleProject = async (req, res) => {
       return responseData(res, "", 404, false, "Project not found.", []);
     }
 
-    // Fetch tasks associated with the project
-    const tasks = await taskModel.find({ project_id }).lean();
+    // Use aggregation to get task metrics directly from the database
+    const taskMetrics = await taskModel.aggregate([
+      { $match: { project_id } },
+      {
+        $group: {
+          _id: null,
+          totalTasks: { $sum: 1 },
+          completedTasks: { $sum: { $cond: [{ $eq: ["$task_status", "Completed"] }, 1, 0] } },
+          cancelledTasks: { $sum: { $cond: [{ $eq: ["$task_status", "Cancelled"] }, 1, 0] } },
+        }
+      },
+    ]);
 
-    // Calculate task completion percentage
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.task_status === 'Completed').length;
-    const cancelledTasks = tasks.filter(task => task.task_status === 'Cancelled').length;
+    const totalTasks = taskMetrics.length > 0 ? taskMetrics[0].totalTasks : 0;
+    const completedTasks = taskMetrics.length > 0 ? taskMetrics[0].completedTasks : 0;
+    const cancelledTasks = taskMetrics.length > 0 ? taskMetrics[0].cancelledTasks : 0;
     const percentage = totalTasks > 0 ? (completedTasks / (totalTasks - cancelledTasks)) * 100 : 0;
 
     // Construct response
@@ -193,6 +200,7 @@ export const getSingleProject = async (req, res) => {
     responseData(res, "", 500, false, "Error fetching project", err);
   }
 };
+
 
 
 

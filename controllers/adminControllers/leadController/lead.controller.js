@@ -290,13 +290,11 @@ export const createLead = async (req, res) => {
 
 export const getAllLead = async (req, res) => {
   try {
-    // Use projection to select only the fields you need
     const leads = await leadModel.find({})
-      .select('name lead_id email phone location status date') // Select only necessary fields
-      .sort({ createdAt: -1 })
-      .lean();
+      .select('name lead_id email phone location status date') 
+      .sort({ createdAt: -1 }) 
+      .lean(); 
 
-    // Directly return the response without additional mapping
     responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
     console.error(error); // Log the error for debugging
@@ -307,57 +305,45 @@ export const getAllLead = async (req, res) => {
 
 
 
+
 export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
 
+  if (!lead_id) {
+    return responseData(res, "", 400, false, "Lead ID is required", []);
+  }
+
   try {
-    const lead = await leadModel.find({ lead_id: lead_id });
-    if (lead.length < 1) {
-      responseData(res, "", 404, false, "Data not found", []);
+    // Fetch lead data and check project existence in a single query
+    const [leads, projectExists, fileUploadExists] = await Promise.all([
+      leadModel.find({ lead_id })
+        .select('name lead_id lead_manager email phone location status source date updated_date notes contract lead_update_track lead_status createdAt contract_Status')
+        .lean(),
+      projectModel.exists({ lead_id }),
+      fileuploadModel.exists({ lead_id, project_id: null })
+    ]);
+
+    if (leads.length === 0) {
+      return responseData(res, "", 404, false, "Data not found", []);
     }
-    if (lead.length > 0) {
-      let leads = [];
-      let project = false;
-      const check_project = await projectModel.findOne({ lead_id: lead_id })
-      if (check_project) {
-        const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
-        if (check_lead_in_file) {
-          project = false;
-        }
-        else {
-          project = true;
-        }
 
-      }
+    // Determine project status
+    const project = !(projectExists && fileUploadExists);
 
-      for (let i = 0; i < lead.length; i++) {
-        leads.push({
-          name: lead[i].name,
-          lead_id: lead[i].lead_id,
-          lead_manager: lead[i].lead_manager,
-          email: lead[i].email,
-          phone: lead[i].phone,
-          location: lead[i].location,
-          status: lead[i].status,
-          source: lead[i].source,
-          date: lead[i].date,
-          updated_date: lead[i].updated_date,
-          notes: lead[i].notes,
-          contract: lead[i].contract,
-          lead_update_track: lead[i].lead_update_track,
-          lead_status: lead[i].lead_status,
-          createdAt: lead[i].createdAt,
-          project: project,
-          contract_Status: lead[i].contract_Status
-        })
-      }
+    // Construct response data
+    const responseLeads = leads.map(lead => ({
+      ...lead,
+      project,
+    }));
 
-      responseData(res, "Lead Data", 200, true, "", leads);
-    }
+    return responseData(res, "Lead Data", 200, true, "", responseLeads);
   } catch (error) {
-    responseData(res, "", 500, false, error.message);
+    console.error(error); // Log the error for debugging
+    return responseData(res, "", 500, false, error.message);
   }
 };
+
+
 
 function formatDate(dateString) {
   const date = new Date(dateString);
