@@ -151,74 +151,48 @@ export const getprojectData = async (req, res) => {
 };
 
 
-export const getCompanyData = async(req,res) =>{
+export const getCompanyData = async (req, res) => {
   try {
+    const type = req.query.type;
+    if (!type) {
+      return responseData(res, "", 400, false, "Please Provide Type!");
+    }
+
     const data = await fileuploadModel.find({});
-    if (data.length > 0) {
-      let templateData = []
-      await Promise.all(data.map(async (element) => {
-        if (element.lead_id == null && element.project_id == null) {
-          let files = []
+    if (data.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
+    }
 
-          // console.log(element.files)
-          for (let i = 0; i < element.files.length; i++) {
+    const templateData = await Promise.all(data.map(async (element) => {
+      if (element.lead_id === null && element.project_id === null) {
+        const files = element.files
+          .filter(file => file.folder_name === type)
+          .map(file => ({
+            folder_name: file.folder_name,
+            folder_id: file.folder_id,
+            sub_folder_name_first: file.sub_folder_name_first,
+            sub_folder_name_second: file.sub_folder_name_second,
+            updated_date: file.updated_date,
+            total_files: file.files.length,
+            files: file.files,
+          }));
 
-
-            files.push({
-              folder_name: element.files[i].folder_name,
-              folder_id: element.files[i].folder_id,
-              sub_folder_name_first: element.files[i].sub_folder_name_first,
-              sub_folder_name_second: element.files[i].sub_folder_name_second,
-              updated_date: element.files[i].updated_date,
-              total_files: element.files[i].files.length,
-              files: element.files[i].files
-
-            })
-
-          }
-          
-
-          templateData.push({
-            type: element.type,
-            files: files
-
-          })
-        }
-
-
-      }))
-
-      const response = {
-        templateData: templateData
+        // Only return data if files are found
+        return files.length > 0 ? { type: element.type, files } : null;
       }
-      responseData(
-        res,
-        `Get File  Data Successfully !`,
-        200,
-        true,
-        "",
-        response
-      );
-    }
-    if (data.length < 1) {
+      return null; // Return null for elements not matching the criteria
+    }));
 
-      responseData(
-        res,
-        "Data Not Found!",
-        200,
-        true,
-        " ",
+    // Filter out null values from templateData
+    const filteredTemplateData = templateData.filter(item => item !== null);
 
-      );
-    }
+    responseData(res, "Get File Data Successfully!", 200, true, "", { templateData: filteredTemplateData });
   } catch (err) {
-    res.send(err);
-    console.log(err);
+    console.error(err);
+    res.status(500).send("Internal Server Error");
   }
+};
 
-
-
-}
 
 
 
