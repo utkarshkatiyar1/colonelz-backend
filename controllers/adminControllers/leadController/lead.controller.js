@@ -315,9 +315,9 @@ export const getSingleLead = async (req, res) => {
 
   try {
     // Fetch lead data and check project existence in a single query
-    const [leads,  fileUploadExists] = await Promise.all([
+    const [leads, fileUploadExists] = await Promise.all([
       leadModel.find({ lead_id })
-        .select('name lead_id lead_manager email phone location status source date updated_date notes contract lead_update_track lead_status createdAt contract_Status')
+        .select('name lead_id lead_manager email phone location status source date updated_date notes contract  lead_status createdAt contract_Status')
         .lean(),
       fileuploadModel.exists({ lead_id, project_id: null })
     ]);
@@ -328,8 +328,8 @@ export const getSingleLead = async (req, res) => {
 
     // Determine project status
     const project = !(fileUploadExists);
-    
-    
+
+
     // Construct response data
     const responseLeads = leads.map(lead => ({
       ...lead,
