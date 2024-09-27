@@ -118,7 +118,7 @@ export const getAllProject = async (req, res) => {
       residential: projects[0].residential.toFixed(2),
       archive,
       active_Project: activeProjects,
-      projects: projects[0].projectsData,
+      projects: projects[0].projectsData.reverse(),
     };
 
     responseData(res, "Projects fetched successfully", 200, true, "", response);

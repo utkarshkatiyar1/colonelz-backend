@@ -291,9 +291,9 @@ export const createLead = async (req, res) => {
 export const getAllLead = async (req, res) => {
   try {
     const leads = await leadModel.find({})
-      .select('name lead_id email phone location status date') 
-      .sort({ createdAt: -1 }) 
-      .lean(); 
+      .select('name lead_id email phone location status date')
+      .sort({ createdAt: -1 })
+      .lean();
 
     responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
@@ -315,11 +315,10 @@ export const getSingleLead = async (req, res) => {
 
   try {
     // Fetch lead data and check project existence in a single query
-    const [leads, projectExists, fileUploadExists] = await Promise.all([
+    const [leads,  fileUploadExists] = await Promise.all([
       leadModel.find({ lead_id })
         .select('name lead_id lead_manager email phone location status source date updated_date notes contract lead_update_track lead_status createdAt contract_Status')
         .lean(),
-      projectModel.exists({ lead_id }),
       fileuploadModel.exists({ lead_id, project_id: null })
     ]);
 
@@ -328,11 +327,9 @@ export const getSingleLead = async (req, res) => {
     }
 
     // Determine project status
-    let project
-    const projects = (projectExists && fileUploadExists);
-    if (!projects) {
-      project = false;
-    }
+    const projects = !(fileUploadExists);
+    
+    
     // Construct response data
     const responseLeads = leads.map(lead => ({
       ...lead,
@@ -509,7 +506,7 @@ export const leadToProject = async (req, res) => {
                 responseData(res, "", 400, false, "contract file is required", []);
               }
               const fileName = file.name;
-              const folder_name = `contract`;
+              const folder_name = `Contract`;
               const fileSizeInBytes = file.size;
               let response = await uploadFile(file, fileName, lead_id, folder_name)
 
@@ -1026,7 +1023,7 @@ export const deleteInvativeLead = async (req, res) => {
   try {
     const user = req.user;
     const lead_id = req.query.lead_id;
-  
+
 
     // Validate user and lead_id
     if (!user) {
@@ -1064,8 +1061,8 @@ export const deleteInvativeLead = async (req, res) => {
 
 
 
-export const leadActivity = async(req,res) =>{
-    try {
+export const leadActivity = async (req, res) => {
+  try {
     const lead_id = req.query.lead_id;
     const page = parseInt(req.query.page, 10) || 1; // Default to page 1
     const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
@@ -1085,12 +1082,12 @@ export const leadActivity = async(req,res) =>{
     }
 
     const activities = lead.lead_update_track.reverse() || [];
-    
+
     const totalActivities = activities.length;
 
     // Slice the activities array for pagination
     const paginatedActivities = activities.slice(skip, skip + limit);
-    
+
 
     // Structure the response
     const response = {
