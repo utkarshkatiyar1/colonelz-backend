@@ -1,6 +1,6 @@
 import { responseData } from "../../../utils/respounse.js";
 import nodemailer from "nodemailer";
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/function.js"
 import fs from "fs";
 import path from "path"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
@@ -14,11 +14,6 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
 
 const uploadImage = async (req, filePath, lead_id, fileName) => {
 
@@ -27,7 +22,7 @@ const uploadImage = async (req, filePath, lead_id, fileName) => {
   }
   let response = s3
     .upload({
-      Bucket: `collegemanage/${lead_id}/contract`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/contract`,
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',
@@ -121,104 +116,116 @@ export const contractShare = async (req, res) => {
   const lead_id = req.body.lead_id;
   const userId = req.body.user_id;
 
-if(!lead_id)
-  {
-    responseData(res,"",400,false,"lead_id is required");
-   
-  }
-  if(!userId)
-  {
-    responseData(res,"",400,false,"user_id is required");
-   
-  }
-  else{
-  try {
+  if (!lead_id) {
+    responseData(res, "", 400, false, "lead_id is required");
 
-    const find_user = await registerModel.findOne({ _id: userId });
-    if (find_user.role === 'Senior Architect' || find_user.role ==='ADMIN') {
-      
-      const  lead = await leadModel.findOne({lead_id:lead_id})
-      if(!lead)
-        {
-        return responseData(res, "", 400, false, "Lead Not Found");
+  }
+  if (!userId) {
+    responseData(res, "", 400, false, "user_id is required");
+
+  }
+  else {
+    try {
+
+      const find_user = await registerModel.findOne({ _id: userId });
+      if (find_user) {
+
+        const lead = await leadModel.findOne({ lead_id: lead_id })
+        if (!lead) {
+          return responseData(res, "", 400, false, "Lead Not Found");
         }
 
-const check_lead = await fileuploadModel.findOne({lead_id:lead_id})
-if (!check_lead)
-  {
-  return responseData(res, "", 400, false, "This Lead Converted Into Project");
-  }
-      const contract_pdf = req.files.file;
-      
-      const filePath = path.join('contract', contract_pdf.name);
-
-      contract_pdf.mv(filePath, async (err) => {
-        if (err) {
-          console.error('Error saving file:', err);
-          return responseData(res, '', 500, false, 'Failed to save file');
+        const check_lead = await fileuploadModel.findOne({ lead_id: lead_id })
+        if (!check_lead) {
+          return responseData(res, "", 400, false, "This Lead Converted Into Project");
         }
+        const contract_pdf = req.files.file;
 
-        let response;
-        try {
+        const filePath = path.join('contract', contract_pdf.name);
 
-          response = await uploadImage(req, filePath, lead_id, contract_pdf.name);
-
-          if (response.status) {
-
-
-            let fileUrls = [{
-              fileUrl: response.data.Location,
-              fileName: response.data.Location.split('/').pop(),
-              fileId: `FL-${generateSixDigitNumber()}`,
-              fileSize: `${contract_pdf.size/1024} KB`,
-              date: new Date()
-            }]
-
-
-            const existingFile = await fileuploadModel.findOne({
-              lead_id: lead_id,
-            });
-            const folder_name = `contract`;
-            const lead_Name = existingFile.name;
-
-            if (existingFile) {
-              await saveFileUploadData(res, {
-                lead_id,
-                lead_Name,
-                folder_name,
-                updated_date: new Date(),
-                files: fileUrls,
-              });
-            }
-
-            responseData(res, "contract create successfully", 200, true, "", response.data.Location);
-
-            fs.unlink(filePath, (unlinkErr) => {
-              if (unlinkErr) {
-                console.error('Error deleting local PDF file:', unlinkErr);
-              } else {
-                console.log('Local PDF file deleted successfully');
-              }
-            });
-
-          } else {
-            console.log(response)
-            responseData(res, "", 400, false, "contract create failed", "");
+        contract_pdf.mv(filePath, async (err) => {
+          if (err) {
+            console.error('Error saving file:', err);
+            return responseData(res, '', 500, false, 'Failed to save file');
           }
-        } catch (error) {
-          console.error("Error uploading image:", error);
-          responseData(res, "", 500, false, "contract create failed", "");
-        }
-      });
+
+          let response;
+          try {
+
+            response = await uploadImage(req, filePath, lead_id, contract_pdf.name);
+
+            if (response.status) {
+
+
+              let fileUrls = [{
+                fileUrl: response.data.Location,
+                fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
+                fileId: `FL-${generateSixDigitNumber()}`,
+                fileSize: `${contract_pdf.size / 1024} KB`,
+                date: new Date()
+              }]
+
+
+              const existingFile = await fileuploadModel.findOne({
+                lead_id: lead_id,
+              });
+              const folder_name = `Contract`;
+              const lead_Name = existingFile.name;
+
+              if (existingFile) {
+                await saveFileUploadData(res, {
+                  lead_id,
+                  lead_Name,
+                  folder_name,
+                  updated_date: new Date(),
+                  files: fileUrls,
+                });
+              }
+              await leadModel.findOneAndUpdate({ lead_id: lead_id },
+                {
+                  $set: {
+                    lead_status: "contract",
+                    contract_Status: true
+                  },
+                  $push: {
+                    lead_update_track: {
+                      username: find_user.username,
+                      role: find_user.role,
+                      message: ` has created contract in lead ${check_lead.lead_name} .`,
+                      updated_date: new Date()
+                    }
+                  }
+                }
+              )
+
+              responseData(res, "contract create successfully", 200, true, "", response.data.Location);
+
+              fs.unlink(filePath, (unlinkErr) => {
+                if (unlinkErr) {
+                  console.error('Error deleting local PDF file:', unlinkErr);
+                } else {
+                  console.log('Local PDF file deleted successfully');
+                }
+              });
+
+            } else {
+              console.log(response)
+              responseData(res, "", 400, false, "contract create failed", "");
+            }
+          } catch (error) {
+            console.error("Error uploading image:", error);
+            responseData(res, "", 500, false, "contract create failed", "");
+          }
+        });
+      }
+      else {
+        return responseData(res, "", 400, false, "You are not a registered User");
+      }
     }
-    else {
-      return responseData(res, "", 400, false, "You are not a Senior Architect or Admin");
+    catch (err) {
+      console.log(err)
+      return responseData(res, "", 500, false, "Internal Server Error");
     }
   }
-  catch (err) {
-    console.log(err)
-    return responseData(res, "", 500, false, "Internal Server Error");
-  }
-}
 }
 

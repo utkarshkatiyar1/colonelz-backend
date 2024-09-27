@@ -1,6 +1,6 @@
 import projectModel from "../../../models/adminModels/project.model.js";
 import { responseData } from "../../../utils/respounse.js";
-import AWS from "aws-sdk";
+
 import dotenv from "dotenv";
 import registerModel from "../../../models/usersModels/register.model.js";
 import {
@@ -9,13 +9,16 @@ import {
   onlyPhoneNumberValidation,
 } from "../../../utils/validation.js";
 import notificationModel from "../../../models/adminModels/notification.model.js";
+import taskModel from "../../../models/adminModels/task.model.js";
 dotenv.config();
+function generateSixDigitNumber() {
+  const min = 100000;
+  const max = 999999;
+  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+  return randomNumber;
+}
+
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -25,13 +28,7 @@ function formatDate(dateString) {
   return `${day}-${month}-${year}`;
 }
 
-function generateSixDigitNumber() {
-  const min = 100000;
-  const max = 999999;
-  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
 
-  return randomNumber;
-}
 
 // Function to check if the project is older than 6 months
 function isProjectOlderThan6Months(createdDate) {
@@ -52,113 +49,160 @@ function isProjectOlderThan6Months(createdDate) {
 export const getAllProject = async (req, res) => {
   try {
     const id = req.query.id;
+
     if (!id) {
-      responseData(res, "", 400, false, "user id is required");
-    } else {
-      const check_role = await registerModel.find({ _id: id });
-      if (check_role.length > 0) {
-
-        let execution = [];
-        let design = [];
-        let completed = [];
-        let archive = [];
-        let projects = [];
-        const project = await projectModel.find({}).sort({ createdAt: -1 });
-        
-        for (let i = 0; i < project.length; i++) {
-          if (project[i].project_status == "executing") {
-            execution.push(project[i]);
-          }
-          if (project[i].project_status == "designing") {
-            design.push(project[i]);
-          }
-          if (project[i].project_status == "completed") {
-            completed.push(project[i]);
-            const createdDate = project[i].project_end_date;
-            const isOlderThan6Months = isProjectOlderThan6Months(createdDate);
-            if (isOlderThan6Months) {
-              archive.push(isOlderThan6Months);
-            }
-          }
-          
-          projects.push({
-            project_id: project[i].project_id,
-            project_name: project[i].project_name,
-            project_status: project[i].project_status,
-            project_start_date: project[i].project_start_date,
-            project_end_date: project[i].project_end_date,
-            project_description: project[i].project_description,
-            project_image: project[i].project_image,
-            project_budget: project[i].project_budget,
-            client_name: project[i].client[0].client_name,
-            project_type: project[i].project_type,
-            designer:project[i].designer,
-            client:project[i].client
-
-          });
-        }
-
-        const response = {
-          total_Project: projects.length,
-          Execution_Phase: execution.length,
-          Design_Phase: design.length,
-          completed: completed.length,
-          archive: archive.length,
-          active_Project: projects.length - completed.length,
-          projects,
-        };
-        responseData(
-          res,
-          "projects fetched successfully",
-          200,
-          true,
-          "",
-          response
-        );
-
-      }
-      if (check_role.length < 1) {
-        responseData(res, "", 404, false, " User not found.", []);
-      }
+      return responseData(res, "", 400, false, "User ID is required");
     }
+
+    const user = await registerModel.findById(id);
+    if (!user) {
+      return responseData(res, "", 404, false, "User not found");
+    }
+
+    // Use aggregation to count and categorize projects in one go
+    const projects = await projectModel.aggregate([
+      {
+        $project: {
+          project_id: 1,
+          project_name: 1,
+          project_status: 1,
+          project_start_date: 1,
+          project_end_date: 1,
+          project_type: 1,
+          designer: 1,
+          client_name: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
+          client:1,
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalProjects: { $sum: 1 },
+          execution: { $sum: { $cond: [{ $eq: ["$project_status", "executing"] }, 1, 0] } },
+          design: { $sum: { $cond: [{ $eq: ["$project_status", "designing"] }, 1, 0] } },
+          designAndExecution: { $sum: { $cond: [{ $eq: ["$project_status", "design & execution"] }, 1, 0] } },
+          completed: { $sum: { $cond: [{ $eq: ["$project_status", "completed"] }, 1, 0] } },
+          commercial: { $sum: { $cond: [{ $eq: ["$project_type", "commercial"] }, 1, 0] } },
+          residential: { $sum: { $cond: [{ $eq: ["$project_type", "residential"] }, 1, 0] } },
+          projectsData: { $push: "$$ROOT" }
+        }
+      },
+      {
+        $project: {
+          totalProjects: 1,
+          execution: 1,
+          design: 1,
+          designAndExecution: 1,
+          completed: 1,
+          commercial: { $multiply: [{ $divide: ["$commercial", "$totalProjects"] }, 100] },
+          residential: { $multiply: [{ $divide: ["$residential", "$totalProjects"] }, 100] },
+          projectsData: 1,
+        }
+      }
+    ]);
+
+    if (!projects.length) {
+      return responseData(res, "", 404, false, "No projects found");
+    }
+
+    const archive = projects[0].projectsData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;
+    const activeProjects = projects[0].totalProjects - projects[0].completed;
+
+    const response = {
+      total_Project: projects[0].totalProjects,
+      Execution_Phase: projects[0].execution,
+      Design_Phase: projects[0].design,
+      Design_Execution: projects[0].designAndExecution,
+      completed: projects[0].completed,
+      commercial: projects[0].commercial.toFixed(2),
+      residential: projects[0].residential.toFixed(2),
+      archive,
+      active_Project: activeProjects,
+      projects: projects[0].projectsData,
+    };
+
+    responseData(res, "Projects fetched successfully", 200, true, "", response);
   } catch (error) {
-    responseData(res, "", 500, false, "error in fetching projects");
+    console.error(error.message); // Log the error for debugging
+    responseData(res, "", 500, false, "Error in fetching projects");
   }
 };
+
+
 
 export const getSingleProject = async (req, res) => {
-  const project_ID = req.query.project_id;
-  const id = req.query.id;
+  const { project_id, id } = req.query;
 
-  if (!project_ID) {
-    responseData(res, "", 404, false, " Project ID is required.", []);
-  } else if (!id) {
-    responseData(res, "", 404, false, " User ID is required.", []);
-  } else {
-    try {
-      const check_role = await registerModel.find({ _id: id });
-      if (check_role.length < 1) {
-        responseData(res, "", 404, false, " User not found.", []);
-      }
-      if (check_role.length > 0) {
+  if (!project_id) {
+    return responseData(res, "", 400, false, "Project ID is required.", []);
+  }
 
-        const find_project = await projectModel.find({
-          project_id: project_ID,
-        });
-        if (find_project.length > 0) {
-          responseData(res, "project found", 200, true, "", find_project);
-        }
-        if (find_project < 1) {
-          responseData(res, "", 404, false, "project not found", []);
-        }
+  if (!id) {
+    return responseData(res, "", 400, false, "User ID is required.", []);
+  }
 
-      }
-    } catch (err) {
-      responseData(res, "", 500, false, "error in fetching projects", err);
-      console.log(err);
+  try {
+    // Fetch the user and project in parallel
+    const [user, project] = await Promise.all([
+      registerModel.findById(id).lean(), // Use lean to get plain JavaScript objects
+      projectModel.findOne({ project_id }).lean(),
+    ]);
+
+    if (!user) {
+      return responseData(res, "", 404, false, "User not found.", []);
     }
+
+    if (!project) {
+      return responseData(res, "", 404, false, "Project not found.", []);
+    }
+
+    // Use aggregation to get task metrics directly from the database
+    const taskMetrics = await taskModel.aggregate([
+      { $match: { project_id } },
+      {
+        $group: {
+          _id: null,
+          totalTasks: { $sum: 1 },
+          completedTasks: { $sum: { $cond: [{ $eq: ["$task_status", "Completed"] }, 1, 0] } },
+          cancelledTasks: { $sum: { $cond: [{ $eq: ["$task_status", "Cancelled"] }, 1, 0] } },
+        }
+      },
+    ]);
+
+    const totalTasks = taskMetrics.length > 0 ? taskMetrics[0].totalTasks : 0;
+    const completedTasks = taskMetrics.length > 0 ? taskMetrics[0].completedTasks : 0;
+    const cancelledTasks = taskMetrics.length > 0 ? taskMetrics[0].cancelledTasks : 0;
+    const percentage = totalTasks > 0 ? (completedTasks / (totalTasks - cancelledTasks)) * 100 : 0;
+
+    // Construct response
+    const response = {
+      project_id: project.project_id,
+      project_name: project.project_name,
+      project_type: project.project_type,
+      project_status: project.project_status,
+      timeline_date: project.timeline_date,
+      project_budget: project.project_budget,
+      description: project.description,
+      designer: project.designer,
+      client: project.client,
+      lead_id: project.lead_id,
+      visualizer: project.visualizer,
+      leadmanager: project.leadmanager,
+      project_start_date: project.project_start_date,
+      project_end_date: project.project_end_date,
+      project_location: project.project_location,
+      percentage: percentage
+    };
+
+    responseData(res, "Project found", 200, true, "", [response]);
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    responseData(res, "", 400, false, "Error fetching project", err);
   }
 };
+
+
+
 
 export const updateProjectDetails = async (req, res) => {
   const project_ID = req.body.project_id;
@@ -168,6 +212,7 @@ export const updateProjectDetails = async (req, res) => {
   const description = req.body.description;
   const designer = req.body.designer;
   const user_id = req.body.user_id;
+  const client_email = req.body.client_email;
 
   if (!project_ID) {
     responseData(res, "", 400, false, " Project ID is required.", []);
@@ -184,6 +229,9 @@ export const updateProjectDetails = async (req, res) => {
   else if (!user_id) {
     responseData(res, "", 400, false, "user id is required.", []);
   }
+  else if (!onlyEmailValidation(client_email) && client_email.length > 5) {
+    responseData(res, "", 400, false, "client email is invalid", []);
+  }
 
   //  *********** add other validation **********//
   else {
@@ -197,25 +245,28 @@ export const updateProjectDetails = async (req, res) => {
       const project_find = await projectModel.find({ project_id: project_ID });
       if (project_find.length > 0) {
         const project_update = await projectModel.findOneAndUpdate(
-          { project_id: project_ID },
+          { project_id: project_ID, 'client.client_email': project_find[0].client[0].client_email },
           {
             $set: {
               project_budget: project_budget,
               project_status: project_status,
               timeline_date: timeline_date,
-              project_end_date:timeline_date,
+              project_end_date: timeline_date,
               description: description,
-              designer: designer
+              designer: designer,
+              'client.$.client_email': client_email
             },
 
             $push: {
               project_updated_by: {
-                user_name: find_user[0].username,
+                username: find_user[0].username,
+                role: find_user[0].role,
                 project_budget: project_budget,
                 project_status: project_status,
                 timeline_date: timeline_date,
                 description: description,
                 designer: designer,
+                message: `has updated project ${project_find[0].project_name}.`,
                 updated_date: new Date()
 
               }
@@ -230,7 +281,7 @@ export const updateProjectDetails = async (req, res) => {
           type: "project",
           notification_id: generateSixDigitNumber(),
           itemId: project_ID,
-          message: `project  updated: Project name ${project_find[0].project_name}  update  on  ${formatDate(new Date())}.`,
+          message: `project  updated: Project name ${project_find[0].project_name}up date on ${formatDate(new Date())}.`,
           status: false,
         });
         await newNotification.save();
@@ -253,5 +304,52 @@ export const updateProjectDetails = async (req, res) => {
     }
   }
 };
+
+
+export const projectActivity = async (req, res) => {
+  try {
+    const project_id = req.query.project_id;
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
+    const skip = (page - 1) * limit;
+
+    if (!project_id) {
+      return responseData(res, "", false, 400, "ProjectId is required");
+    }
+
+    // Fetch project activities and only the project_updated_by field
+    const project = await projectModel
+      .findOne({ project_id: project_id })
+      .select('project_updated_by');
+
+    if (!project) {
+      return responseData(res, "", false, 404, "Project not found");
+    }
+
+    const activities = project.project_updated_by.reverse() || [];
+    
+    const totalActivities = activities.length;
+
+    // Slice the activities array for pagination
+    const paginatedActivities = activities.slice(skip, skip + limit);
+    
+
+    // Structure the response
+    const response = {
+      activities: paginatedActivities,
+      total: totalActivities,
+      page,
+      limit,
+      totalPages: Math.ceil(totalActivities / limit),
+    }
+    responseData(res, "Project Activity", 200, true, "", response);
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    responseData(res, "", 400, false, "Error fetching project activity", err);
+  }
+};
+
+
+
 
 

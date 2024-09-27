@@ -12,8 +12,13 @@ import fileUpload from "express-fileupload";
 import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
-import nodemailer from "nodemailer";
 import session from "express-session";
+import expressWinston from "express-winston";
+import winston, { format } from "winston";
+import cluster from 'cluster';
+import os from 'os';
+import setupSwaggerDocs from "./swagger.js";
+import { checkEmailServer } from "./utils/function.js";
 
 dotenv.config();
 
@@ -54,25 +59,7 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
-
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log(success)
-    console.log("Server is ready to take our messages");
-  }
-});
 app.use(cors());
-
 app.use(requestIp.mw());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -83,29 +70,76 @@ const limiter = rateLimit({
     return req.clientIp;
   },
   handler: (_, __, ___, options) => {
-    throw new ApiError(
-      options.statusCode || 500,
+    throw new Error(
       `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`
     );
+
   },
 });
 
 app.use(limiter);
-// const isAuthenticated = (req, res, next) => {
-//   console.log(req.session)
-//   if (req.session.user) {
 
-//     next();
-//   } else {
+const tableFormat = format.printf(({ level, message, meta }) => {
+  const req = meta.req;
+  const res = meta.res;
 
-//     res.status(401).send('Unauthorized');
-//   }
-// };
+  return `
+    ------------------------------------------------------------------------
+    | Level: ${level} | Method: ${req.method} | Status: ${res.statusCode} |
+    ------------------------------------------------------------------------
+    | URL: ${req.originalUrl} | Query: ${JSON.stringify(req.query)} |
+    ------------------------------------------------------------------------
+    | Response Time: ${meta.responseTime}ms |
+    ------------------------------------------------------------------------
+    `;
+});
+
+const logger = winston.createLogger({
+  format: format.combine(
+    format.colorize(),
+    format.timestamp(),
+    tableFormat
+  ),
+  transports: [
+    new winston.transports.Console()
+  ]
+});
+
+app.use(expressWinston.logger({
+  winstonInstance: logger,
+  meta: true, // Whether to log the metadata about the request (default: true)
+  msg: "HTTP {{req.method}} {{req.url}}", // Custom message
+  colorize: true, // Colorize the output (default: false)
+  expressFormat: false, // Use the default express/morgan style formatting
+}));
 
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
-server.listen(8000, async () => {
-  await connect();
-  console.log("Connected to backend");
-});
+setupSwaggerDocs(app);
+
+// Clustering logic
+if (cluster.isMaster) {
+  const numCPUs = os.cpus().length; // Get the number of CPU cores
+
+  console.log(`Master ${process.pid} is running`);
+
+  // Fork workers
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  // Listen for worker exit events
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died`);
+    // Optionally, fork a new worker
+    cluster.fork();
+  });
+} else {
+  // Workers can share any TCP connection
+  server.listen(8000, async () => {
+    await connect();
+    await checkEmailServer();
+    console.log(`Worker ${process.pid} started and listening on port 8000`);
+  });
+}

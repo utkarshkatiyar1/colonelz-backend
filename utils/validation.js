@@ -2,6 +2,10 @@ export const onlyAlphabetsValidation = (NameToCheck) => {
   let regex = /^[A-Za-z _]*$/;
   return regex.test(NameToCheck);
 };
+export const onlyMomClientsValidation = (NameToCheck) => {
+  let regex = /^([A-Za-z]+(?: [A-Za-z]+)*)(, [A-Za-z]+(?: [A-Za-z]+)*)*$/;
+  return regex.test(NameToCheck);
+};
 
 export const onlyEmailValidation = (emailforValidation) => {
   if (
@@ -40,3 +44,11 @@ export const onlyOrgValidation = (org)=>{
     }
 }
 
+export const validateOnlyNumbers = (input) => {
+  const numberRegex = /^[0-9]+$/;
+
+  if (numberRegex.test(input)) {
+    return true;  
+  }
+  return false;
+}

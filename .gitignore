@@ -4,6 +4,7 @@ node_modules/
 # Ignore build artifacts
 build/
 dist/
+test.js
 
 # Ignore system files
 .DS_Store

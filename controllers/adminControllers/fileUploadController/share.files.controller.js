@@ -1,9 +1,9 @@
 
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
-import nodemailer from "nodemailer";
 import { onlyEmailValidation } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import { infotransporter } from "../../../utils/function.js";
 
 function validateEmailArray(emailArray) {
     for (let i = 0; i < emailArray.length; i++) {
@@ -15,14 +15,6 @@ function validateEmailArray(emailArray) {
 }
 
 
-const transporter = nodemailer.createTransport({
-    host: process.env.HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-        user: process.env.USER_NAME,
-        pass: process.env.API_KEY,
-    },
-});
 
 export const shareFile = async (req, res) => {
     try {
@@ -32,6 +24,8 @@ export const shareFile = async (req, res) => {
         const folderId = req.body.folder_id;
         const email = req.body.email;
         const subject = req.body.subject;
+        const cc = req.body.cc;
+        const bcc = req.body.bcc;
         const body = req.body.body;
         const type = req.body.type;
         const user_id = req.body.user_id;
@@ -47,11 +41,10 @@ export const shareFile = async (req, res) => {
             let findfiles;
             let attachments = [];
 
-            const check_user = await registerModel.findOne({_id:user_id})
-            if(!check_user)
-                {
-                    return responseData(res, "", 404, false, "User not found", null);
-                }
+            const check_user = await registerModel.findOne({ _id: user_id })
+            if (!check_user) {
+                return responseData(res, "", 404, false, "User not found", null);
+            }
 
             if (type === 'template') {
                 findfiles = await fileuploadModel.findOne({
@@ -88,22 +81,22 @@ export const shareFile = async (req, res) => {
             if (!findfiles) {
                 return responseData(res, "", 404, false, "Data Not Found", null);
             }
-           
-          console.log(check_user.email)
+
             const mailOptions = {
-                from: check_user.email,
-                to: email,
+                from:process.env.INFO_USER_EMAIL,
+                to:email, 
+                cc: cc,
+                bcc: bcc,
                 subject: subject,
                 html: body,
-                attachments: attachments
+                attachments: attachments,
+                replyTo: "info@colonelz.com" 
             };
-
-          
-            transporter.sendMail(mailOptions, (error, info) => {
+            infotransporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                     responseData(res, "", 400, false, "Failed to send email");
                 } else {
-                    console.log(info)
+
                     responseData(
                         res,
                         `Email has been sent successfully`,

@@ -262,43 +262,60 @@ cron.schedule(" 0 0 */14 * *", async () => {
 
 
 export const getNotification = async (req, res) => {
-
-
   try {
     const userId = req.query.userId;
-    const find_user = await registerModel.findOne({ _id: userId })
-    if (find_user) {
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
 
-      if (find_user.role === "ADMIN" || find_user.role === "Senior Architect") {
-        const find_notification = await notificationModel.find({})
-        if (find_notification.length > 0) {
-          const response = {
-            NotificationData: find_notification.reverse()
-          }
-          responseData(res, "notification Data", 200, true, "", response)
-        }
-        else {
-          responseData(res, "", 404, false, "No notification found")
-        }
-      }
-    }
-    else {
-      responseData(res, "", 404, false, "User not found")
+    // Validate userId
+    if (!userId) {
+      return responseData(res, "", 400, false, "Bad Request: User ID is required");
     }
 
-  }
-  catch (error) {
+    // Fetch the user using a lean query
+    const find_user = await registerModel.findById(userId).lean();
+
+    if (!find_user) {
+      return responseData(res, "", 404, false, "User not found");
+    }
+
+    // Fetch notifications with pagination
+    const notifications = await notificationModel
+      .find({})
+      .sort({ createdAt: -1 }) // Assuming you want the most recent notifications first
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+
+    // Count total notifications to calculate total pages
+    const totalNotifications = await notificationModel.countDocuments({});
+    const totalPages = Math.ceil(totalNotifications / limit);
+
+    if (!notifications.length) {
+      return responseData(res, "No notification found", 200, false, "");
+    }
+
+    // Prepare and return the response
+    const response = {
+      NotificationData: notifications.reverse(),
+      pagination: {
+        totalNotifications,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
+    };
+
+    return responseData(res, "Notification Data", 200, true, "", response);
+
+  } catch (error) {
     console.error("Error fetching notification data:", error);
-    responseData(
-      res,
-      "",
-      500,
-      false,
-      "Error fetching notification data"
-    );
+    return responseData(res, "", 500, false, "Error fetching notification data");
   }
+};
 
-}
+
 
 export const updateNotification = async (req, res) => {
   try {
@@ -316,7 +333,7 @@ export const updateNotification = async (req, res) => {
         return responseData(res, "", 404, false, "User not found");
       }
       else {
-        if (find_user.role === "ADMIN" || find_user.role === "SENIOR ARCHITECT") {
+        if (find_user.role === "ADMIN" || find_user.role === "Senior Architect") {
           if (type === "One") {
             const notification = await Notification.findOneAndUpdate(
             {notification_id:notification_id},

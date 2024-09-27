@@ -3,24 +3,27 @@ import { responseData } from "../../../utils/respounse.js";
 
 
 
-export const  getQuotationData = async(req,res) =>{
+export const getQuotationData = async (req, res) => {
   try {
-    const project_id = req.query.project_id;
-    const find_project = await projectModel.findOne({ project_id: project_id });
-    if(find_project)
-    {
-      responseData(res, "Quotation data found", 200, true, "", find_project.quotation);
+    const { project_id } = req.query;
 
+    // Validate project_id
+    if (!project_id) {
+      return responseData(res, "", 400, false, "Project ID is required");
     }
-    else{
-      return responseData(res, "", 404, false, "No project found with this id");
+
+    // Fetch project with only necessary fields, using lean for performance
+    const project = await projectModel.findOne({ project_id }).select('quotation').lean();
+
+    if (project) {
+      return responseData(res, "Quotation data found", 200, true, "", project.quotation);
+    } else {
+      return responseData(res, "", 404, false, "No project found with this ID");
     }
-    
-  }
-  catch(err)
-  {
+  } catch (err) {
     console.error(err);
-    return responseData(res, "", 500, false, err.message);
+    return responseData(res, "", 500, false, "Error fetching quotation data");
   }
-}
+};
+
 

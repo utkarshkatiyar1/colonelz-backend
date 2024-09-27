@@ -1,15 +1,11 @@
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const s3 = new AWS.S3({
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-    region: "ap-south-1",
-});
+
 
 function generateSixDigitNumber() {
     const min = 100000;
@@ -20,10 +16,11 @@ function generateSixDigitNumber() {
 
 const uploadFile = async (file, fileName, folder_name, sub_folder_name_first, sub_folder_name_second) => {
     return s3.upload({
-        Bucket: `collegemanage/template/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
+        Bucket: `${process.env.S3_BUCKET_NAME}/template/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
         Key: fileName,
         Body: file.data,
         ContentType: file.mimetype,
+        // ACL: 'public-read'
     }).promise();
 };
 
@@ -107,12 +104,12 @@ export const templateFileUpload = async (req, res) => {
     const type = req.body.type;
 
     if (!folder_name || !sub_folder_name_first || !sub_folder_name_second || !type) {
-        responseData(res, "", 401, false, "folder name, sub folder names, and type are required", []);
+        responseData(res, "", 403, false, "folder name, sub folder names, and type are required", []);
         return;
     }
 
     if (type !== "template") {
-        responseData(res, "", 401, false, "Type must be 'template'", []);
+        responseData(res, "", 403, false, "Type must be 'template'", []);
         return;
     }
 
@@ -148,7 +145,7 @@ export const templateFileUpload = async (req, res) => {
             for (let i = 0; i < fileSize.length; i++) {
                 fileUrls = successfullyUploadedFiles.map((result) => ({
                     fileUrl: result.data.Location,
-                    fileName: result.data.Location.split('/').pop(),
+                    fileName: decodeURIComponent(result.data.Location.split('/').pop().replace(/\+/g, ' ')),
                     fileId: `FL-${generateSixDigitNumber()}`,
                     fileSize: `${fileSize[i]} KB`,
                     date: new Date()

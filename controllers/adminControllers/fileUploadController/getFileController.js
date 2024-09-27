@@ -1,228 +1,198 @@
-import { response } from "express";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 
- export const getFileData = async(req,res)=>{
-        try {
-          const data = await fileuploadModel.find({});
-          if (data.length > 0) {
-            let projectData =[]
-            let leadData = []
-            let templateData =[]
-            await Promise.all(data.map(async (element) => {
-              if (element.project_id != null) {
-                const check_project = await projectModel.findOne({ project_id: element.project_id });
-                if (check_project) {
-                  projectData.push({
-                    project_name: element.project_name,
-                    project_id: element.project_id,
-                    client_name: check_project.client[0].client_name,
-                    project_type: check_project.project_type,
-                    project_status: check_project.project_status,
-                    files: element.files
-                  });
-                }
-              }
-              if(element.lead_id !=null){
-                const check_lead = await leadModel.findOne({lead_id:element.lead_id})
-                if(check_lead)
-                {
-                  leadData.push({
+export const getFileData = async (req, res) => {
+  try {
+    const data = await fileuploadModel.find({})
+      .select('project_id lead_id lead_name project_name')
+      .lean();
 
-                    lead_id: element.lead_id,
-                    lead_Name: element.lead_name,
-                    lead_email: check_lead.email,
-                    lead_phone: check_lead.phone,
-                    lead_status: check_lead.status,
-                    lead_date: check_lead.date,
-                    files: element.files
-
-                  })
-                }
-                
-                }
-                if(element.lead_id ==null && element.project_id ==null)
-                {
-                  let files=[]
-                  
-                  // console.log(element.files)
-                  for(let i=0;i<element.files.length;i++)
-                  {
-
-                    
-                    files.push({
-                      folder_name:element.files[i].folder_name,
-                      folder_id:element.files[i].folder_id,
-                      sub_folder_name_first:element.files[i].sub_folder_name_first,
-                      sub_folder_name_second: element.files[i].sub_folder_name_second,
-                      updated_date:element.files[i].updated_date,
-                      total_files:element.files[i].files.length,
-                      files:element.files[i].files
-                      
-                    })
-
-                  }
-
-                  templateData.push({
-                   type:element.type,
-                    files:files
-
-                  })
-                }
-
-              }))
-              
-              const response  = {
-                leadData: leadData,
-                projectData: projectData,
-                templateData:templateData
-              }
-            responseData(
-              res,
-              `Get File  Data Successfully !`,
-              200,
-              true,
-              "",
-              response
-            );
-          }
-          if (data.length < 1) {
-           
-            responseData(
-              res,
-              "",
-              404,
-              false,
-              "Data Not Found! ",
-              
-            );
-          }
-        } catch (err) {
-          res.send(err);
-          console.log(err);
-        }
-
-}
-
-export const getleadData = async(req,res)=>{
-        try {
-           const lead_id = req.query.lead_id;
-          const data = await fileuploadModel.find({lead_id:lead_id});
-          if(data.length>0)
-          {
-            
-
-            let files = []
-            for (let i = 0; i < data[0].files.length; i++) {
-              
-              if(data[0].files[i].files.length>0)
-              {
-                files.push({
-                  folder_name: data[0].files[i].folder_name,
-                  updated_date: data[0].files[i].updated_date,
-                  total_files: data[0].files[i].files.length,
-                  files: data[0].files[i].files
-                })
-              }
-              else{
-                files.push({
-                  folder_name: data[0].files[i].folder_name,
-                  updated_date: data[0].files[i].updated_date,
-                  total_files: 0,
-                  files: []
-                })
-              }
-             
-
-            }
-            responseData(
-              res,
-              `Get File  Data Successfully !`,
-              200,
-              true,
-              "",
-              files
-            );
-          }
-          if(data.length<1)
-          {
-            responseData(
-              res,
-              "",
-              404,
-              false,
-              "Data Not Found! ",
-
-            );
-          }
-          
-        }
-        catch(error)
-        {
-responseData(res,"",500,false,"Internal Server Error",error)
-        }
-}
-
-export const getprojectData = async(req,res)=>{
-try{
-  const project_id = req.query.project_id;
-  const data = await fileuploadModel.find({project_id:project_id});
-  if(data.length>0)
-  {
-    
-    let files =[]
-    for(let i=0;i<data[0].files.length;i++)
-    {
-      if(data[0].files[i].files.length>0)
-      {
-        files.push({
-          folder_name: data[0].files[i].folder_name,
-          updated_date: data[0].files[i].updated_date,
-          total_files: data[0].files[i].files.length,
-          files: data[0].files[i].files
-        })
-      }
-      else{
-        files.push({
-          folder_name: data[0].files[i].folder_name,
-          updated_date: data[0].files[i].updated_date,
-          total_files: 0,
-          files: []
-        })
-      }
-     
-
+    if (!data.length) {
+      return responseData(res, "Data Not Found!", 200, true, "");
     }
-    responseData(
-      res,
-      `Get File  Data Successfully !`,
-      200,
-      true,
-      "",
-      files
-    );
+
+    const projectIds = [...new Set(data.map(d => d.project_id).filter(Boolean))];
+    const leadIds = [...new Set(data.map(d => d.lead_id).filter(Boolean))];
+
+    const [projects, leads] = await Promise.all([
+      projectModel.find({ project_id: { $in: projectIds } }).select('project_id client project_type project_status').lean(),
+      leadModel.find({ lead_id: { $in: leadIds } }).select('lead_id email status date').lean(),
+    ]);
+
+    const projectMap = new Map(projects.map(p => [p.project_id, p]));
+    const leadMap = new Map(leads.map(l => [l.lead_id, l]));
+
+    const projectData = data
+      .filter(element => element.project_id && projectMap.has(element.project_id))
+      .map(element => {
+        const project = projectMap.get(element.project_id);
+        return {
+          project_name: element.project_name,
+          project_id: element.project_id,
+          client_name: project.client[0]?.client_name,
+          project_type: project.project_type,
+          project_status: project.project_status,
+        };
+      });
+
+    const leadData = data
+      .filter(element => element.lead_id && leadMap.has(element.lead_id))
+      .map(element => {
+        const lead = leadMap.get(element.lead_id);
+        return {
+          lead_id: element.lead_id,
+          lead_name: element.lead_name,
+          lead_email: lead.email,
+          lead_status: lead.status,
+          lead_date: lead.date,
+        };
+      });
+
+    const response = {
+      leadData,
+      projectData,
+    };
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", response);
+
+  } catch (err) {
+    console.error(err);
+    responseData(res, "", 500, false, "An error occurred while fetching file data.");
   }
-  if(data.length<1)
-  {
-    responseData(
-      res,
-      "",
-      404,
-      false,
-      "Data Not Found! ",
+};
 
-    );
+
+
+
+export const getleadData = async (req, res) => {
+  try {
+    const { lead_id } = req.query;
+    const { user } = req;
+    const data = await fileuploadModel.findOne({ lead_id }).lean();
+
+    if (!data || data.files.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
+    }
+
+    const files = data.files.map(file => {
+      const foldername = file.folder_name.toLowerCase();
+
+      
+      if (foldername === 'contract') {
+        if (!user.access?.contract || !user.access.contract.includes('read')) {
+          return null;
+        }
+      }
+      if (foldername === 'quotation') {
+        if (!user.access?.quotation || !user.access.quotation.includes('read')) {
+          return null;
+        }
+      }
+
+      return {
+        folder_name: file.folder_name,
+        updated_date: file.updated_date,
+        total_files: file.files.length,
+        files: file.files
+      };
+    }).filter(file => file !== null);
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", files);
+
+  } catch (error) {
+    console.error(error);
+    responseData(res, "", 500, false, "Internal Server Error", error);
   }
+};
 
-}
-catch(error)
-{
-responseData(res,"",500,false,"Internal Server Error",error)
-}
 
-}
+
+export const getprojectData = async (req, res) => {
+  try {
+    const project_id = req.query.project_id;
+    const { user } = req;
+    const data = await fileuploadModel.findOne({ project_id }).lean();
+
+    if (!data || data.files.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
+    }
+
+    const files = data.files.map(file => {
+      const foldername = file.folder_name.toLowerCase();
+
+
+      if (foldername === 'contract') {
+        if (!user.access?.contract || !user.access.contract.includes('read')) {
+          return null;
+        }
+      }
+      if (foldername === 'quotation' || foldername === 'procurement data') {
+        if (!user.access?.quotation || !user.access.quotation.includes('read')) {
+          return null;
+        }
+      }
+
+      return {
+        folder_name: file.folder_name,
+        updated_date: file.updated_date,
+        total_files: file.files.length,
+        files: file.files
+      };
+    }).filter(file => file !== null);
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", files);
+
+  } catch (error) {
+    console.error(error);
+    responseData(res, "", 500, false, "Internal Server Error", error);
+  }
+};
+
+
+export const getCompanyData = async (req, res) => {
+  try {
+    const type = req.query.type;
+    if (!type) {
+      return responseData(res, "", 400, false, "Please Provide Type!");
+    }
+
+    const data = await fileuploadModel.find({});
+    if (data.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
+    }
+
+    const templateData = await Promise.all(data.map(async (element) => {
+      if (element.lead_id === null && element.project_id === null) {
+        const files = element.files
+          .filter(file => file.folder_name === type)
+          .map(file => ({
+            folder_name: file.folder_name,
+            folder_id: file.folder_id,
+            sub_folder_name_first: file.sub_folder_name_first,
+            sub_folder_name_second: file.sub_folder_name_second,
+            updated_date: file.updated_date,
+            total_files: file.files.length,
+            files: file.files,
+          }));
+
+        // Only return data if files are found
+        return files.length > 0 ? { type: element.type, files } : null;
+      }
+      return null; // Return null for elements not matching the criteria
+    }));
+
+    // Filter out null values from templateData
+    const filteredTemplateData = templateData.filter(item => item !== null);
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", { templateData: filteredTemplateData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
 
 
 

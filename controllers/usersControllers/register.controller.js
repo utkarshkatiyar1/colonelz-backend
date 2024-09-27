@@ -26,7 +26,7 @@ export const checkEmail = async (req, res) => {
   try {
     const email = req.query.email;
     const username = req.query.username;
-  
+
     if (!username) {
       responseData(res, "", 400, false, "Username cannot be empty", []);
     }
@@ -205,7 +205,7 @@ export const verifyOtp = async (req, res) => {
       if (otpdata.length > 0) {
         let otpCheck = bcrypt.compare(otp, otpdata[0].otp);
         if (!otpCheck) {
-          responseData(res, "", 401, false, "Wrong OTP!");
+          responseData(res, "", 403, false, "Wrong OTP!");
         } else {
           const updatestatus = await emailverifyModel.find({ email: email });
           if (updatestatus.length > 0) {
@@ -236,7 +236,7 @@ export const registerUser = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const orgnisation = req.body.organization;
-  const role = 'ORGADMIN';
+  const role = 'SUPERADMIN';
 
   if (user_name.length < 3) {
     responseData(res, "", 400, false, "User name must be 3 characters");

@@ -1,4 +1,4 @@
-import AWS from "aws-sdk";
+import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import projectModel from "../../../models/adminModels/project.model.js";
@@ -6,11 +6,7 @@ import { responseData } from "../../../utils/respounse.js";
 
 dotenv.config();
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+
 
 function generateSixDigitNumber() {
   const min = 100000;
@@ -23,11 +19,11 @@ function generateSixDigitNumber() {
 const uploadFile = async (file, fileName, lead_id, folder_name) => {
   return s3
     .upload({
-      Bucket: `collegemanage/${lead_id}/${folder_name}`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      // ACL: 'public-read'
+      // ACL: 'public-read'/
     })
     .promise();
 };
@@ -121,9 +117,9 @@ const projectFileUpload = async (req, res) => {
   const project_id = req.body.project_id;
 
   if (!project_id) {
-    responseData(res, "", 401, false, "project Id required!", []);
+    responseData(res, "", 403, false, "project Id required!", []);
   } else if (!folder_name) {
-    responseData(res, "", 401, false, "folder name required!", []);
+    responseData(res, "", 403, false, "folder name required!", []);
   } else {
     try {
       const find_project = await projectModel.find({ project_id: project_id });
@@ -176,7 +172,7 @@ const projectFileUpload = async (req, res) => {
           for (let i = 0; i < fileSize.length; i++) {
             fileUrls = successfullyUploadedFiles.map((result) => ({
               fileUrl: result.data.Location,
-              fileName: result.data.Location.split('/').pop(),
+              fileName: decodeURIComponent(result.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${fileSize[i]} KB`,
               date: new Date()

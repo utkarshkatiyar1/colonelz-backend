@@ -1,88 +1,89 @@
-import AWS from "aws-sdk";
+import { s3 } from "../../utils/function.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
-
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_KEY,
-  secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: "ap-south-1",
-});
+import { onlyAlphabetsValidation } from "../../utils/validation.js";
 
 const uploadImage = async (req, fileName, userId, key) => {
-  let response = s3
-    .upload({
-      Bucket: `collegemanage/${userId}`,
+  try {
+    const data = await s3.upload({
+      Bucket: `${process.env.S3_BUCKET_NAME}/${userId}/profile`,
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
-      //   ACL: "public-read",
-    })
-    .promise();
-  return response
-    .then((data) => {
-      return { status: true, data };
-    })
-    .catch((err) => {
-      return { status: false, err };
-    });
+    }).promise();
+    
+    return { status: true, data };
+  } catch (err) {
+    return { status: false, err };
+  }
 };
 
-const setProfileUrlInDB = async (res, response, userId) => {
-  registerModel
-    .find({ _id: userId })
-    .exec()
-    .then((result) => {
-      if (result.length < 1) {
-        responseData(res, "", 404, false, "user not exist");
-      }
-      if (result.length > 0) {
-        registerModel.findByIdAndUpdate(
-          result[0]._id,
-          { $set: { userProfile: response.data.Location } },
-          (err, docs) => {
-            if (err) {
-              console.log(err);
-            } else {
-              console.log("profile url update successfull");
-              responseData(
-                res,
-                "profile  photo upload successfully",
-                200,
-                true,
-                "",
-                response.data.Location
-              );
-            }
-          }
-        );
-      }
-    })
-    .catch((err) => {
-      responseData(res, "", 401, false, "server problem");
-    });
+const updateProfileInDB = async (userId, updates) => {
+  try {
+    const result = await registerModel.findByIdAndUpdate(userId, { $set: updates }, { new: true });
+    return result;
+  } catch (err) {
+    console.error(err);
+    throw new Error('Database update failed');
+  }
 };
 
-export const profileupload = async (req, res) => {
-  const userId = req.body.userId;
-  if (!userId) {
-    responseData(res, "", 400, false, "userId is required");
-  } else {
-    try {
-      const file = req.files.file;
-      const fileName = Date.now() + "_" + file.name;
+const setProfileUrlInDB = async (res, response, userId, user_name) => {
+  try {
+    const updates = {};
+    if (response) updates.userProfile = response.data.Location;
+    if (user_name) updates.username = user_name;
 
-      console.log(fileName);
-      let response = await uploadImage(req, fileName, userId, "file");
-      if (response.status) {
-        //  res.send({response})
-        setProfileUrlInDB(res, response, userId);
-        //  console.log("data",response.data.Location)
-      } else {
-        //  res.send({ response });
-        console.log(response);
-      }
-    } catch (error) {
-      console.log(error);
+    const updatedUser = await updateProfileInDB(userId, updates);
+    if (!updatedUser) {
+      return responseData(res, "", 404, false, "User does not exist");
     }
+
+    console.log("Profile update successful");
+    return responseData(res, "Profile updated successfully", 200, true, "", updates || response.data.Location);
+  } catch (error) {
+    return responseData(res, "", 403, false, "Server problem");
+  }
+};
+
+export const profileUpload = async (req, res) => {
+  const userId = req.body.userId;
+  const user_name = req.body.user_name;
+
+  if (!userId) {
+    return responseData(res, "", 400, false, "UserId is required");
+  }
+
+  try {
+    const file = req.files ? req.files.file : null; 
+
+    if (!file) {
+      if (!onlyAlphabetsValidation(user_name) || user_name.length <= 3) {
+        return responseData(res, "", 400, false, "User Name is not valid");
+      }
+      return await setProfileUrlInDB(res, null, userId, user_name);
+    }
+
+    const fileName = `${Date.now()}_${file.name}`;
+    console.log(fileName);
+    const response = await uploadImage(req, fileName, userId, "file");
+
+    if (response.status) {
+      if(!user_name)
+      {
+        await setProfileUrlInDB(res, response, userId, null);
+      }
+      else{
+        await setProfileUrlInDB(res, response, userId, user_name);
+      }
+     
+    } else {
+      console.log(response);
+      return responseData(res, "", 500, false, "Image upload failed");
+    }
+
+  } catch (error) {
+    console.error(error);
+    return responseData(res, "", 500, false, "Server error");
   }
 };
