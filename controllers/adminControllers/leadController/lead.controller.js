@@ -327,7 +327,7 @@ export const getSingleLead = async (req, res) => {
     }
 
     // Determine project status
-    const projects = !(fileUploadExists);
+    const project = !(fileUploadExists);
     
     
     // Construct response data
