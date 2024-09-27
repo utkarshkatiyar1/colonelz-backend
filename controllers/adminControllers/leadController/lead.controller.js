@@ -625,7 +625,7 @@ export const leadToProject = async (req, res) => {
               responseData(res, "", 400, false, "contract file is required", []);
             }
             const fileName = file.name;
-            const folder_name = `contract`;
+            const folder_name = `Contract`;
             const fileSizeInBytes = file.size;
             let response = await uploadFile(file, fileName, lead_id, folder_name)
 
