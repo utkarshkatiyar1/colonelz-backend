@@ -153,15 +153,15 @@ export const getprojectData = async (req, res) => {
 
 export const getCompanyData = async (req, res) => {
   try {
-    const type = req.query.type;
-    const type2 = req.query.filter;
-    if (!type) {
-      return responseData(res, "", 400, false, "Please Provide Type!");
-    }
-    if(!type2)
-    {
-      return responseData(res, "", 400, false, "Please Provide Filter!");
-    }
+    // const type = req.query.type;
+    // const type2 = req.query.filter;
+    // if (!type) {
+    //   return responseData(res, "", 400, false, "Please Provide Type!");
+    // }
+    // if(!type2)
+    // {
+    //   return responseData(res, "", 400, false, "Please Provide Filter!");
+    // }
 
     const data = await fileuploadModel.find({});
     if (data.length === 0) {
@@ -171,7 +171,9 @@ export const getCompanyData = async (req, res) => {
     const templateData = await Promise.all(data.map(async (element) => {
       if (element.lead_id === null && element.project_id === null) {
         const files = element.files
-          .filter(file => file.folder_name === type && file.sub_folder_name_first === type2)
+          .filter(file => file.folder_name
+            //  === type && file.sub_folder_name_first === type2
+            )
           .map(file => ({
             folder_name: file.folder_name,
             folder_id: file.folder_id,
