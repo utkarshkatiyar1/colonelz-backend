@@ -3,6 +3,7 @@ import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
 import bcrypt from "bcrypt";
 import Jwt from "jsonwebtoken";
+import { onlyEmailValidation } from "../../utils/validation.js";
 
 const generateToken = (userId) => {
   const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" });
@@ -15,7 +16,7 @@ const insertLogInData = async (res, user) => {
     const tokens = generateToken(user._id);
     const token = tokens.accessToken
     const refreshToken = tokens.refreshToken
-    res.cookie("auth", token, { maxAge: 604800000, httpOnly: true });
+    res.cookie("auth", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
     res.cookie("refreshToken", refreshToken, { maxAge: 604800000, httpOnly: true });
 
     // const loginUserData = new loginModel({
@@ -41,23 +42,27 @@ const insertLogInData = async (res, user) => {
 };
 
 export const login = async (req, res) => {
-  const { user_name, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!user_name || !password) {
-    return responseData(res, "", 400, false, `${!user_name ? "Username" : "Password"} is required`);
+  if (!email || !password) {
+    return responseData(res, "", 400, false, `${!email ? "Email" : "Password"} is required`);
+  }
+  if(!onlyEmailValidation(email))
+  {
+    return responseData(res, "", 400, false, "Please enter a valid email");
   }
 
   try {
-    const user = await registerModel.findOne({ username: user_name, status: true });
+    const user = await registerModel.findOne({email: email, status: true });
 
     if (!user) {
-      return responseData(res, "", 404, false, "Username or password does not match");
+      return responseData(res, "", 404, false, "Email or password does not match");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return responseData(res, "", 403, false, "Username or password does not match");
+      return responseData(res, "", 403, false, "Email or password does not match");
     }
 
     await insertLogInData(res, user);

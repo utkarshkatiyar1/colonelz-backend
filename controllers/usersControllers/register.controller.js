@@ -10,16 +10,14 @@ import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/tenant.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
 import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
+import { infotransporter } from "../../utils/function.js";
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
+const generateToken = (userId) => {
+  const accessToken = Jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" });
+  const refreshToken = Jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "10d" })
+  return ({ accessToken, refreshToken });
+};
 
 
 export const checkEmail = async (req, res) => {
@@ -158,7 +156,7 @@ export const sendOtp = async (req, res) => {
                 subject: "Email Verification",
                 html: `<p>  Your verrification code is :-  ${otp}</p>`,
               };
-              transporter.sendMail(mailOptions, (error, info) => {
+              infotransporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   responseData(res, "", 400, false, "Failed to send email");
                 } else {
@@ -269,6 +267,8 @@ export const registerUser = async (req, res) => {
             if (err) {
               responseData(res, "", 400, false, "Something went wrong");
             } else {
+
+
               const register = new registerModel({
                 username: user_name,
                 userProfile: "",
@@ -285,10 +285,8 @@ export const registerUser = async (req, res) => {
                 const token = jwt.sign(
                   { userId: result._id, email: result.email },
                   process.env.ACCESS_TOKEN_SECRET,
-                  { expiresIn: "1d" } // You can adjust the expiration time
+                  { expiresIn: "1d" } 
                 );
-
-                // Include the access token in the response headers
                 res.header("Authorization", `Bearer ${token}`);
 
                 // Store access token in cookies
@@ -296,14 +294,7 @@ export const registerUser = async (req, res) => {
                   httpOnly: true,
                   maxAge: 24 * 60 * 60 * 1000, // 1 day
                 });
-
-                // Store access token in the database (you can adjust this based on your database schema)
-                const login = new loginModel({
-                  userID: result._id,
-                  token: token,
-                  logInDate: new Date(),
-                });
-                login.save();
+              
                 const response = {
                   token: token,
                   username: result.username,

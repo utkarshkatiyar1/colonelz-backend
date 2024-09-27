@@ -328,8 +328,12 @@ export const getSingleLead = async (req, res) => {
     }
 
     // Determine project status
-    const project = !(projectExists && fileUploadExists);
-
+    let project
+    const projects = (projectExists && fileUploadExists);
+if(!projects)
+{
+project = false;
+}
     // Construct response data
     const responseLeads = leads.map(lead => ({
       ...lead,
