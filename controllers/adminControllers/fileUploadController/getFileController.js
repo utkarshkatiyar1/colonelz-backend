@@ -154,8 +154,13 @@ export const getprojectData = async (req, res) => {
 export const getCompanyData = async (req, res) => {
   try {
     const type = req.query.type;
+    const type2 = req.query.filter;
     if (!type) {
       return responseData(res, "", 400, false, "Please Provide Type!");
+    }
+    if(!type2)
+    {
+      return responseData(res, "", 400, false, "Please Provide Filter!");
     }
 
     const data = await fileuploadModel.find({});
@@ -166,7 +171,7 @@ export const getCompanyData = async (req, res) => {
     const templateData = await Promise.all(data.map(async (element) => {
       if (element.lead_id === null && element.project_id === null) {
         const files = element.files
-          .filter(file => file.folder_name === type)
+          .filter(file => file.folder_name === type && file.sub_folder_name_first === type2)
           .map(file => ({
             folder_name: file.folder_name,
             folder_id: file.folder_id,
@@ -177,13 +182,10 @@ export const getCompanyData = async (req, res) => {
             files: file.files,
           }));
 
-        // Only return data if files are found
         return files.length > 0 ? { type: element.type, files } : null;
       }
-      return null; // Return null for elements not matching the criteria
+      return null; 
     }));
-
-    // Filter out null values from templateData
     const filteredTemplateData = templateData.filter(item => item !== null);
 
     responseData(res, "Get File Data Successfully!", 200, true, "", { templateData: filteredTemplateData });
