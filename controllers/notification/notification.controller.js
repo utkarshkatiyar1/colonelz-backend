@@ -282,7 +282,6 @@ export const getNotification = async (req, res) => {
     // Fetch notifications with pagination
     const notifications = await notificationModel
       .find({})
-      .sort({ createdAt: -1 }) // Assuming you want the most recent notifications first
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
