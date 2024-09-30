@@ -3,8 +3,8 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { onlyAlphabetsValidation, onlyEmailValidation } from "../../../utils/validation.js";
-import { s3 } from "../../../utils/function.js"
-import { infotransporter } from "../../../utils/function.js";
+import { admintransporter, s3 } from "../../../utils/function.js"
+
 
 function generateSixDigitNumber() {
     const min = 100000;
@@ -290,7 +290,7 @@ export const shareContract = async (req, res) => {
                         html: createEmailBody(client_name, project_name, site_location, file_url.fileUrl, response.data.Location)
                     };
 
-                    infotransporter.sendMail(mailOptions, async (error) => {
+                    admintransporter.sendMail(mailOptions, async (error) => {
                         if (error) {
                             return responseData(res, "", 400, false, "Failed to send email");
                         }
