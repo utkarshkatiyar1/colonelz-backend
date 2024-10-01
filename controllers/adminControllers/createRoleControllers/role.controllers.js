@@ -4,8 +4,8 @@ import { responseData } from "../../../utils/respounse.js";
 
 
 
-export const createRole = async(req,res) =>{
-    try{
+export const createRole = async (req, res) => {
+    try {
         const role = req.body.role;
         const access = req.body.access;
 
@@ -14,17 +14,15 @@ export const createRole = async(req,res) =>{
             return Object.entries(obj).length === 0;
         };
 
-        if(!role)
-        {
+        if (!role) {
             responseData(res, "", 400, false, "Role is required")
-        
+
         }
-        else if(isEmpty(access))
-        {
+        else if (isEmpty(access)) {
             responseData(res, "", 400, false, "Access is required")
-        
+
         }
-        else{
+        else {
 
             if (role === 'ADMIN'
                 || role === 'Site Supervisor'
@@ -34,29 +32,26 @@ export const createRole = async(req,res) =>{
                 || role === 'Executive Assistant'
                 || role === 'Project Architect'
                 || role === 'Senior Architect'
-                
-            )
-            {
+
+            ) {
                 // console.log("Role already exists")
                 responseData(res, "", 400, false, "This role is predefine")
             }
-            else{
-                const checkRole = await roleModel.findOne({role});
-                if(checkRole)
-                {
+            else {
+                const checkRole = await roleModel.findOne({ role });
+                if (checkRole) {
                     responseData(res, "", 400, false, "Role already exists")
 
+                }
+                else {
+                    const newRole = await roleModel.create({ role, access });
+                    responseData(res, "Role created successfully", 200, true, "")
+                }
             }
-            else{
-                 const newRole = await roleModel.create({role, access});
-            responseData(res,"Role created successfully", 200, true, "")
-            }
-        }
-           
+
         }
     }
-    catch(err)
-    {
+    catch (err) {
         responseData(res, "", 500, false, "Internal Server Error")
         console.log(err)
     }
