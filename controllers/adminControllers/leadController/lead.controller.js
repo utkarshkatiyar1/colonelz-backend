@@ -290,77 +290,60 @@ export const createLead = async (req, res) => {
 
 export const getAllLead = async (req, res) => {
   try {
-    const leads = await leadModel.find({}).sort({ createdAt: -1 }).lean();
+    const leads = await leadModel.find({})
+      .select('name lead_id email phone location status date')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const formattedLeads = leads.map(lead => ({
-      name: lead.name,
-      lead_id: lead.lead_id,
-      email: lead.email,
-      phone: lead.phone,
-      location: lead.location,
-      status: lead.status,
-      date: lead.date
-    }));
-
-    responseData(res, "All Lead Data", 200, true, "", { leads: formattedLeads });
+    responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
+    console.error(error); // Log the error for debugging
     responseData(res, "", 500, false, error.message);
   }
 };
+
+
 
 
 
 export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
 
+  if (!lead_id) {
+    return responseData(res, "", 400, false, "Lead ID is required", []);
+  }
+
   try {
-    const lead = await leadModel.find({ lead_id: lead_id });
-    if (lead.length < 1) {
-      responseData(res, "", 404, false, "Data not found", []);
+    // Fetch lead data and check project existence in a single query
+    const [leads, fileUploadExists] = await Promise.all([
+      leadModel.find({ lead_id })
+        .select('name lead_id lead_manager email phone location status source date updated_date notes contract  lead_status createdAt contract_Status')
+        .lean(),
+      fileuploadModel.exists({ lead_id, project_id: null })
+    ]);
+
+    if (leads.length === 0) {
+      return responseData(res, "", 404, false, "Data not found", []);
     }
-    if (lead.length > 0) {
-      let leads = [];
-      let project = false;
-      const check_project = await projectModel.findOne({ lead_id: lead_id })
-      if (check_project) {
-        const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
-        if (check_lead_in_file) {
-          project = false;
-        }
-        else {
-          project = true;
-        }
 
-      }
+    // Determine project status
+    const project = !(fileUploadExists);
 
-      for (let i = 0; i < lead.length; i++) {
-        leads.push({
-          name: lead[i].name,
-          lead_id: lead[i].lead_id,
-          lead_manager: lead[i].lead_manager,
-          email: lead[i].email,
-          phone: lead[i].phone,
-          location: lead[i].location,
-          status: lead[i].status,
-          source: lead[i].source,
-          date: lead[i].date,
-          updated_date: lead[i].updated_date,
-          notes: lead[i].notes,
-          contract: lead[i].contract,
-          lead_update_track: lead[i].lead_update_track,
-          lead_status: lead[i].lead_status,
-          createdAt: lead[i].createdAt,
-          project: project,
-          contract_Status: lead[i].contract_Status
-        })
-      }
 
-      responseData(res, "Lead Data", 200, true, "", leads);
-    }
+    // Construct response data
+    const responseLeads = leads.map(lead => ({
+      ...lead,
+      project,
+    }));
+
+    return responseData(res, "Lead Data", 200, true, "", responseLeads);
   } catch (error) {
-    responseData(res, "", 500, false, error.message);
+    console.error(error); // Log the error for debugging
+    return responseData(res, "", 500, false, error.message);
   }
 };
+
+
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -523,7 +506,7 @@ export const leadToProject = async (req, res) => {
                 responseData(res, "", 400, false, "contract file is required", []);
               }
               const fileName = file.name;
-              const folder_name = `contract`;
+              const folder_name = `Contract`;
               const fileSizeInBytes = file.size;
               let response = await uploadFile(file, fileName, lead_id, folder_name)
 
@@ -642,7 +625,7 @@ export const leadToProject = async (req, res) => {
               responseData(res, "", 400, false, "contract file is required", []);
             }
             const fileName = file.name;
-            const folder_name = `contract`;
+            const folder_name = `Contract`;
             const fileSizeInBytes = file.size;
             let response = await uploadFile(file, fileName, lead_id, folder_name)
 
@@ -1040,7 +1023,7 @@ export const deleteInvativeLead = async (req, res) => {
   try {
     const user = req.user;
     const lead_id = req.query.lead_id;
-  
+
 
     // Validate user and lead_id
     if (!user) {
@@ -1075,6 +1058,51 @@ export const deleteInvativeLead = async (req, res) => {
   }
 };
 
+
+
+
+export const leadActivity = async (req, res) => {
+  try {
+    const lead_id = req.query.lead_id;
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
+    const skip = (page - 1) * limit;
+
+    if (!lead_id) {
+      return responseData(res, "", false, 400, "Lead Id is required");
+    }
+
+    // Fetch lead activities and only the lead_update_track field
+    const lead = await leadModel
+      .findOne({ lead_id: lead_id })
+      .select('lead_update_track');
+
+    if (!lead) {
+      return responseData(res, "", false, 404, "Lead not found");
+    }
+
+    const activities = lead.lead_update_track.reverse() || [];
+
+    const totalActivities = activities.length;
+
+    // Slice the activities array for pagination
+    const paginatedActivities = activities.slice(skip, skip + limit);
+
+
+    // Structure the response
+    const response = {
+      activities: paginatedActivities,
+      total: totalActivities,
+      page,
+      limit,
+      totalPages: Math.ceil(totalActivities / limit),
+    }
+    responseData(res, "Lead Activity", 200, true, "", response);
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    responseData(res, "", 400, false, "Error fetching lead activity", err);
+  }
+}
 
 
 

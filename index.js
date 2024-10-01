@@ -1,4 +1,3 @@
-
 import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
@@ -14,12 +13,12 @@ import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
 import session from "express-session";
-import expressWinston from "express-winston"
+import expressWinston from "express-winston";
 import winston, { format } from "winston";
-
+import cluster from 'cluster';
+import os from 'os';
 import setupSwaggerDocs from "./swagger.js";
-import { checkEmailServer, infotransporter } from "./utils/function.js";
-
+import { checkEmailServer } from "./utils/function.js";
 
 dotenv.config();
 
@@ -61,7 +60,6 @@ mongoose.connection.on("disconnected", () => {
 });
 
 app.use(cors());
-
 app.use(requestIp.mw());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -72,15 +70,14 @@ const limiter = rateLimit({
     return req.clientIp;
   },
   handler: (_, __, ___, options) => {
-    throw new ApiError(
-      options.statusCode || 500,
+    throw new Error(
       `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`
     );
+
   },
 });
 
 app.use(limiter);
-
 
 const tableFormat = format.printf(({ level, message, meta }) => {
   const req = meta.req;
@@ -90,16 +87,13 @@ const tableFormat = format.printf(({ level, message, meta }) => {
     ------------------------------------------------------------------------
     | Level: ${level} | Method: ${req.method} | Status: ${res.statusCode} |
     ------------------------------------------------------------------------
-    | URL: ${req.originalUrl} |Query: ${JSON.stringify(req.query)} |
+    | URL: ${req.originalUrl} | Query: ${JSON.stringify(req.query)} |
     ------------------------------------------------------------------------
     | Response Time: ${meta.responseTime}ms |
     ------------------------------------------------------------------------
     `;
-  // ------------------------------------------------------------------------
-  //   | Query: ${ JSON.stringify(req.query) } |
-  //   ------------------------------------------------------------------------
-  //   | Headers: ${ JSON.stringify(req.headers, null, 2) } |
 });
+
 const logger = winston.createLogger({
   format: format.combine(
     format.colorize(),
@@ -111,7 +105,6 @@ const logger = winston.createLogger({
   ]
 });
 
-
 app.use(expressWinston.logger({
   winstonInstance: logger,
   meta: true, // Whether to log the metadata about the request (default: true)
@@ -120,15 +113,33 @@ app.use(expressWinston.logger({
   expressFormat: false, // Use the default express/morgan style formatting
 }));
 
-
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
 
 setupSwaggerDocs(app);
-server.listen(8000, async () => {
-  await connect();
-  await checkEmailServer();
-  console.log("Connected to backend");
-});
 
+// Clustering logic
+if (cluster.isMaster) {
+  const numCPUs = os.cpus().length; // Get the number of CPU cores
 
+  console.log(`Master ${process.pid} is running`);
+
+  // Fork workers
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  // Listen for worker exit events
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died`);
+    // Optionally, fork a new worker
+    cluster.fork();
+  });
+} else {
+  // Workers can share any TCP connection
+  server.listen(8000, async () => {
+    await connect();
+    await checkEmailServer();
+    console.log(`Worker ${process.pid} started and listening on port 8000`);
+  });
+}

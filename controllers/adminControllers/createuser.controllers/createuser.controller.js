@@ -26,7 +26,7 @@ export const createUser = async (req, res) => {
     const user_name = req.body.user_name;
     const email = req.body.email;
     const role = req.body.role;
-    // const access = req.body.access;
+    
     
 
 

@@ -236,7 +236,7 @@ export const registerUser = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const orgnisation = req.body.organization;
-  const role = 'ORGADMIN';
+  const role = 'SUPERADMIN';
 
   if (user_name.length < 3) {
     responseData(res, "", 400, false, "User name must be 3 characters");

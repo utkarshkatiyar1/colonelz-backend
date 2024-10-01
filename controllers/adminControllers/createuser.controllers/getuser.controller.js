@@ -5,95 +5,87 @@ import { responseData } from "../../../utils/respounse.js";
 export const getUserList = async (req, res) => {
     try {
         const userId = req.query.user_id;
+
+        // Validate user ID
         if (!userId) {
             return responseData(res, "", 400, false, "User Id is required");
         }
-        else {
-            const check_user = await registerModel.findById(userId);
-       if(check_user)
-       {
-           const users = await registerModel.find({ $and: [{ status: true }, { organization: check_user.organization }] })
 
-           if (users) {
-               const filteredUsers = users.reduce((acc, user) => {
-                   if (user) {
-                       acc.push({ username: user.username, role: user.role });
-                   }
-                   return acc;
-               }, []);
+        // Fetch user and their organization in a single query using lean for better performance
+        const check_user = await registerModel.findById(userId).lean();
 
-
-               return responseData(res, "all user found", 200, true, "", filteredUsers);
-
-           }
-           else {
-               return responseData(res, "", 404, false, "No User Found");
-           }
-       }
-       else{
-           return responseData(res, "", 404, false, "No User Found");
-       }
-            
-            
-          
+        if (!check_user) {
+            return responseData(res, "", 404, false, "No User Found");
         }
 
-    }
-    catch (err) {
-        return responseData(res, "", 500, false, err.message);
-    }
+        // Fetch users belonging to the same organization in a single query
+        const users = await registerModel.find(
+            { status: true, organization: check_user.organization },
+            { username: 1, role: 1 } // Only select necessary fields
+        ).lean();
 
-}
-
-
-
-export const userAcessLeadOrProjectList = async(req,res) =>{
-    try{
-        const find_user = await registerModel.find({status:true})
-        for(let i=0;find_user.length;i++){
-
+        if (!users.length) {
+            return responseData(res, "", 404, false, "No Users Found");
         }
 
+        // Construct response with filtered users
+        const filteredUsers = users.map(user => ({
+            username: user.username,
+            role: user.role,
+        }));
 
+        return responseData(res, "All users found", 200, true, "", filteredUsers);
 
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal server error");
     }
-    catch(err)
-    {
-        console.log(err)
-        responseData(res, "", 500, false, "Invernal  Server Error")
-    }
-}
+};
 
 
-export const getProjectUser = async(req,res) =>{
-    try{
-        const  project_id = req.query.project_id;
 
-        if ( !project_id) {
-            return responseData(res, "", 404, false, `project id  required`, []);
+// export const userAcessLeadOrProjectList = async(req,res) =>{
+//     try{
+//         const find_user = await registerModel.find({status:true})
+//         for(let i=0;find_user.length;i++){
+
+//         }
+
+
+
+//     }
+//     catch(err)
+//     {
+//         console.log(err)
+//         responseData(res, "", 500, false, "Invernal  Server Error")
+//     }
+// }
+
+
+export const getProjectUser = async (req, res) => {
+    try {
+        const project_id = req.query.project_id;
+
+        if (!project_id) {
+            return responseData(res, "", 400, false, "Project ID is required", []);
         }
-        
-        const projectUsers = await registerModel.find({
-            'data.projectData.project_id': project_id
-        });
-       
 
-        const seniorAdmins = await registerModel.find({
-            role: { $in: ['Senior Architect', 'ADMIN'] }, status: true
-        });
+        // Fetch project users and senior admins in a single query
+        const users = await registerModel.find({
+            $or: [
+                { 'data.projectData.project_id': project_id },
+                { role: { $in: ['Senior Architect', 'ADMIN'] }, status: true }
+            ]
+        }).lean(); // Use lean for better performance
 
+        // Extract unique usernames using a Set
+        const userList = [...new Set(users.map(user => user.username))];
 
-        const userList = [...new Set([...projectUsers, ...seniorAdmins].map(user => user.username))];
-
-        responseData(res, "List of User in Project", 200, true, "", userList)
-
+        responseData(res, "List of Users in Project", 200, true, "", userList);
+    } catch (err) {
+        console.error(err);
+        responseData(res, "", 500, false, "Internal Server Error", []);
     }
-    catch(err)
-    {
-        console.log(err)
-        responseData(res, "", 500, false, "Internal Server Error")
-
-    }
-}
+};
 
 

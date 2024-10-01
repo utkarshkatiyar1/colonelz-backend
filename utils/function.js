@@ -20,12 +20,23 @@ export const infotransporter = nodemailer.createTransport({
         pass: process.env.INFO_APP_PASSWORD,
     },
 });
+export const admintransporter = nodemailer.createTransport({
+    host: process.env.HOST,
+    port: process.env.EMAIL_PORT,
+    auth: {
+        user: process.env.ADMIN_USER_EMAIL,
+        pass: process.env.ADMIN_APP_PASSWORD,
+    },
+});
 
 
 export const checkEmailServer = async (req, res) => {
     try {
         await infotransporter.verify();
         console.log("Info server is ready to take our messages");
+        await admintransporter.verify();
+        console.log("Admin server is ready to take our messages");
+
     } catch (error) {
         console.error("Error verifying email server:", error);
     }

@@ -157,21 +157,21 @@ export const listUserInProject = async (req, res) => {
         }
 
         const [findProject, findUser] = await Promise.all([
-            projectModel.findOne({ project_id }).lean(),
-            registerModel.find({ 'data.projectData.project_id': project_id }).lean(),
+            projectModel.findOne({ project_id }, 'project_name project_id timeline_date project_type project_status designer').lean(),
+            registerModel.find({ 'data.projectData.project_id': project_id }, 'username role _id').lean(),
         ]);
 
         if (!findProject) {
             return responseData(res, "", 404, false, "Project not found");
         }
 
-        if (!findUser.length) {
+        if (!findUser || !findUser.length) {
             return responseData(res, "", 404, false, "User not found");
         }
 
         const response = findUser.map(user => ({
             user_name: user.username,
-            role:user.role,
+            role: user.role,
             project_name: findProject.project_name,
             project_id: findProject.project_id,
             user_id: user._id,
@@ -188,5 +188,6 @@ export const listUserInProject = async (req, res) => {
         return responseData(res, "", 500, false, "Internal Server Error");
     }
 };
+
 
 
