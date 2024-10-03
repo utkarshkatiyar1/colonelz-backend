@@ -5,6 +5,7 @@ node_modules/
 build/
 dist/
 test.js
+env.json
 
 # Ignore system files
 .DS_Store
