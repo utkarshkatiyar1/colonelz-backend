@@ -902,9 +902,7 @@ export const updateLead = async (req, res) => {
       responseData(res, "", 403, false, "phone number  is  invalid.");
     } else if (!location) {
       responseData(res, "", 403, false, "location is required.");
-    } else if (!source) {
-      responseData(res, "", 403, false, "source is required.");
-    }
+    } 
     else if (!onlyAlphabetsValidation(lead_manager) && lead_manager.length >= 3) {
       responseData(
         res,
