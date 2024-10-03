@@ -31,7 +31,7 @@ export const deleteFile = async (req, res) => {
             const file = fileGroup.files.find(file => file.fileId === fileId);
             const updateQuery = type === "template"
                 ? { "files.sub_folder_name_second": folder_name }
-                : { $or: [{ project_id }, { lead_id }], "files.folder_name": folder_name, 'files.files.fileId':fileId };
+                : { $or: [{ project_id }, { lead_id }], "files.folder_name": folder_name, };
 
             const data = await fileuploadModel.findOneAndUpdate(
                 updateQuery,

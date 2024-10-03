@@ -22,7 +22,7 @@ const uploadFile = async (file, fileName, project_id, mom_id) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      // ACL: 'public-read'
+      ACL: "public-read",
     })
     .promise();
 };
@@ -507,7 +507,7 @@ export const updateMom = async (req, res) => {
               'mom.$.attendees': {
                 client_name: client_names,
                 organisor: organisors,
-               
+
               }
             }
           },

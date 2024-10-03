@@ -10,6 +10,7 @@ const uploadImage = async (req, fileName, userId, key) => {
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
+      ACL: 'public-read'
     }).promise();
     
     return { status: true, data };

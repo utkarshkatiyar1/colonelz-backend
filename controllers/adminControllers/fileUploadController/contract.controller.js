@@ -26,7 +26,7 @@ const uploadImage = async (req, filePath, lead_id, fileName) => {
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',
-      // ACL: "public-read",
+      ACL: "public-read",
     })
     .promise();
   return response

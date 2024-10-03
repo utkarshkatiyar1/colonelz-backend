@@ -61,7 +61,7 @@ const uploadImage = async (req, file, lead_id, fileName) => {
             Key: fileName,
             Body: file.data,
             ContentType: file.mimetype,
-            // ACL: "public-read",
+            ACL: "public-read",
         })
         .promise();
 

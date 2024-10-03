@@ -31,7 +31,7 @@ const uploadFile = async (file, fileName, lead_id, folder_name) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      // ACL: 'public-read'
+      ACL: "public-read",
     })
     .promise()
   return response
@@ -902,7 +902,7 @@ export const updateLead = async (req, res) => {
       responseData(res, "", 403, false, "phone number  is  invalid.");
     } else if (!location) {
       responseData(res, "", 403, false, "location is required.");
-    } 
+    }
     else if (!onlyAlphabetsValidation(lead_manager) && lead_manager.length >= 3) {
       responseData(
         res,
