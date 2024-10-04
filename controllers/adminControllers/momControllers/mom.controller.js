@@ -223,23 +223,25 @@ export const createmom = async (req, res) => {
           }
 
           const responses = await Promise.all(fileUploadPromises);
-
           const fileUploadResults = responses.map((response) => ({
             status: response.Location ? true : false,
             data: response ? response : response.err,
           }));
 
           successfullyUploadedFiles = fileUploadResults.filter(
-            (result) => result.status
+            (result) => result.data
           );
         }
+        
         let file = [];
 
         let fileUrls
         if (successfullyUploadedFiles.length > 0) {
+        
           for (let i = 0; i < fileSize.length; i++) {
+          
             fileUrls = successfullyUploadedFiles.map((result) => ({
-              fileUrl: result.signedUrl,
+              fileUrl: result.data.signedUrl,
               fileName: decodeURIComponent(result.data.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${fileSize[i]} KB`,
