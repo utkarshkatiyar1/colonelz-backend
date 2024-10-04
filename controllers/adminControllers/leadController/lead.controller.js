@@ -31,12 +31,16 @@ const uploadFile = async (file, fileName, lead_id, folder_name) => {
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      ACL: "public-read",
     })
     .promise()
   return response
     .then((data) => {
-      return { status: true, data };
+      const signedUrl = s3.getSignedUrl('getObject', {
+        Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
+        Key: fileName,
+        Expires: 157680000 // URL expires in 5 year
+      });
+      return { status: true, data, signedUrl };
     })
     .catch((err) => {
       return { status: false, err };
@@ -514,7 +518,7 @@ export const leadToProject = async (req, res) => {
 
 
                 let fileUrls = [{
-                  fileUrl: response.data.Location,
+                  fileUrl: response.signedUrl,
                   fileName: fileName,
                   fileId: `FL-${generateSixDigitNumber()}`,
                   fileSize: `${fileSizeInBytes / 1024} KB`,
@@ -633,7 +637,7 @@ export const leadToProject = async (req, res) => {
 
 
               let fileUrls = [{
-                fileUrl: response.data.Location,
+                fileUrl: response.signedUrl,
                 fileName: fileName,
                 fileId: `FL-${generateSixDigitNumber()}`,
                 fileSize: `${fileSizeInBytes / 1024} KB`,

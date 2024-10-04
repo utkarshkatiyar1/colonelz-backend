@@ -38,13 +38,10 @@ app.use(session({
   secret: process.env.EXPRESS_SESSION_SECRET || 'yourSecretKey',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // Note: secure should be true in production with HTTPS
+  cookie: { secure: true } 
 }));
 
 const server = createServer(app);
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 mongoose.set("strictQuery", true);
 const connect = async () => {
   try {
@@ -59,7 +56,7 @@ mongoose.connection.on("disconnected", () => {
   console.log("mongoDB disconnected");
 });
 
-app.use(cors());
+
 app.use(requestIp.mw());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -113,8 +110,15 @@ app.use(expressWinston.logger({
   expressFormat: false, // Use the default express/morgan style formatting
 }));
 
+const corsOptions = {
+  origin: process.env.LOGIN_URL, // Replace with your allowed origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
+  // allowedHeaders: ['Content-Type', 'Authorization'], h
+};
+
+app.use(cors(corsOptions));
 app.use("/v1/api/admin", adminRoutes);
-app.use("/v1/api/users", usersRouter);
+app.use("/v1/api/users",  usersRouter);
 
 setupSwaggerDocs(app);
 

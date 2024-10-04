@@ -16,15 +16,19 @@ function generateSixDigitNumber() {
 
 
 const uploadFile = async (file, fileName, project_id, mom_id) => {
-  return s3
-    .upload({
+  const data = await s3.upload({
       Bucket: `${process.env.S3_BUCKET_NAME}/${project_id}/MOM/`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      ACL: "public-read",
     })
     .promise();
+  const signedUrl = s3.getSignedUrl('getObject', {
+    Bucket: `${process.env.S3_BUCKET_NAME}/${project_id}/MOM/`,
+    Key: fileName,
+    Expires: 157680000 // URL expires in 5 year
+  });
+  return { status: true, data, signedUrl };
 };
 
 const saveFileUploadData = async (
@@ -235,8 +239,8 @@ export const createmom = async (req, res) => {
         if (successfullyUploadedFiles.length > 0) {
           for (let i = 0; i < fileSize.length; i++) {
             fileUrls = successfullyUploadedFiles.map((result) => ({
-              fileUrl: result.data.Location,
-              fileName: decodeURIComponent(result.data.Location.split('/').pop().replace(/\+/g, ' ')),
+              fileUrl: result.signedUrl,
+              fileName: decodeURIComponent(result.data.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${fileSize[i]} KB`,
               date: new Date()

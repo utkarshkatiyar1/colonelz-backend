@@ -5,19 +5,27 @@ import { onlyAlphabetsValidation } from "../../utils/validation.js";
 
 const uploadImage = async (req, fileName, userId, key) => {
   try {
+    // Upload the image to S3
     const data = await s3.upload({
       Bucket: `${process.env.S3_BUCKET_NAME}/${userId}/profile`,
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
-      ACL: 'public-read'
+      // ACL: 'public-read', // Uncomment if you want the file to be publicly accessible
     }).promise();
-    
-    return { status: true, data };
+
+    // Create a signed URL for the uploaded image
+    const signedUrl = s3.getSignedUrl('getObject', {
+      Bucket: `${process.env.S3_BUCKET_NAME}/${userId}/profile`,
+      Key: fileName,
+      Expires: 157680000 // URL expires in 5 year
+    });
+    return { status: true, data, signedUrl };
   } catch (err) {
     return { status: false, err };
   }
 };
+
 
 const updateProfileInDB = async (userId, updates) => {
   try {
@@ -32,7 +40,7 @@ const updateProfileInDB = async (userId, updates) => {
 const setProfileUrlInDB = async (res, response, userId, user_name) => {
   try {
     const updates = {};
-    if (response) updates.userProfile = response.data.Location;
+    if (response) updates.userProfile = response.signedUrl;
     if (user_name) updates.username = user_name;
 
     const updatedUser = await updateProfileInDB(userId, updates);
@@ -41,7 +49,7 @@ const setProfileUrlInDB = async (res, response, userId, user_name) => {
     }
 
     console.log("Profile update successful");
-    return responseData(res, "Profile updated successfully", 200, true, "", updates || response.data.Location);
+    return responseData(res, "Profile updated successfully", 200, true, "", updates || response.signedUrl);
   } catch (error) {
     return responseData(res, "", 403, false, "Server problem");
   }

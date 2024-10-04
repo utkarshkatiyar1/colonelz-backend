@@ -102,7 +102,7 @@ export const getAllProject = async (req, res) => {
     ]);
 
     if (!projects.length) {
-      return responseData(res, "", 404, false, "No projects found");
+      return responseData(res, "", 200, true, "No projects found");
     }
 
     const archive = projects[0].projectsData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;

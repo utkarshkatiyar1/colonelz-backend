@@ -61,14 +61,19 @@ const uploadImage = async (req, file, lead_id, fileName) => {
             Key: fileName,
             Body: file.data,
             ContentType: file.mimetype,
-            ACL: "public-read",
+           
         })
         .promise();
 
     return response
         .then((data) => {
-
-            return { status: true, data };
+            
+            const signedUrl = s3.getSignedUrl('getObject', {
+                Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/Quotation`,
+                Key: fileName,
+                Expires: 157680000 // URL expires in 5 year
+            });
+            return { status: true, data, signedUrl };
         })
         .catch((err) => {
             return { status: false, err };
@@ -274,7 +279,7 @@ export const shareContract = async (req, res) => {
 
                 // Prepare file URLs
                 const fileUrls = [{
-                    fileUrl: response.data.Location,
+                    fileUrl: response.signedUrl,
                     fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
                     fileId: `FL-${generateSixDigitNumber()}`,
                     fileSize: `${quotation.size / 1024} KB`,
@@ -287,7 +292,7 @@ export const shareContract = async (req, res) => {
                         from: process.env.INFO_USER_EMAIL,
                         to: client_email,
                         subject: "Contract Share Notification",
-                        html: createEmailBody(client_name, project_name, site_location, file_url.fileUrl, response.data.Location)
+                        html: createEmailBody(client_name, project_name, site_location, file_url.fileUrl, response.signedUrl)
                     };
 
                     admintransporter.sendMail(mailOptions, async (error) => {

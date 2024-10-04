@@ -17,15 +17,29 @@ function generateSixDigitNumber() {
 }
 
 const uploadFile = async (file, fileName, lead_id, folder_name) => {
-  return s3
-    .upload({
+  try {
+   
+    const data = await s3.upload({
       Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
-      ACL: "public-read",
-    })
-    .promise();
+    }).promise();
+
+  
+
+    // Get the signed URL
+    const signedUrl = s3.getSignedUrl('getObject', {
+      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
+      Key: fileName,
+      Expires: 157680000 // URL expires in 5 years
+    });
+
+    return { status: true, data, signedUrl };
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return { status: false, error: error.message };
+  }
 };
 
 const saveFileUploadData = async (
@@ -157,22 +171,24 @@ const projectFileUpload = async (req, res) => {
         }
 
         const responses = await Promise.all(fileUploadPromises);
-        // console.log(responses)
         const fileUploadResults = responses.map((response) => ({
           status: response.Location ? true : false,
           data: response ? response : response.err,
         }));
-        // console.log(fileUploadResults)
+       
         const successfullyUploadedFiles = fileUploadResults.filter(
           (result) => result.data
         );
 
         let fileUrls
+        
         if (successfullyUploadedFiles.length > 0) {
           for (let i = 0; i < fileSize.length; i++) {
+            console.log(successfullyUploadedFiles[i].data.data.Location)
             fileUrls = successfullyUploadedFiles.map((result) => ({
-              fileUrl: result.data.Location,
-              fileName: decodeURIComponent(result.data.Location.split('/').pop().replace(/\+/g, ' ')),
+              
+              fileUrl: result.data.signedUrl,
+              fileName: decodeURIComponent(result.data.data.Location.split('/').pop().replace(/\+/g, ' ')),
               fileId: `FL-${generateSixDigitNumber()}`,
               fileSize: `${fileSize[i]} KB`,
               date: new Date()
