@@ -125,7 +125,7 @@ export const removeMemberInlead = async (req, res) => {
                             {
                                 $pull: {
                                     "data.$[outer].leadData": {
-                                        lead_id: parseInt(lead_id),
+                                        lead_id:lead_id,
                                     }
                                 }
                             },
