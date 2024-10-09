@@ -40,11 +40,11 @@ export const createUser = async (req, res) => {
             if (!user) {
                 return responseData(res, "", 404, false, "User not found");
             } else {
-                if (user.role === 'ADMIN' || user.role === 'ORGADMIN' || user.role ==='SUPERADMIN') {
-                    // if(user.role ==='ADMIN' && role ==='ADMIN')
-                    //     {
-                    //         return responseData(res, "", 400, false, "You are not allowed to create admin");
-                    //     }
+                if (user.role === 'ADMIN' || user.role ==='SUPERADMIN') {
+                    if(user.role ==='ADMIN' && role ==='ADMIN')
+                        {
+                            return responseData(res, "", 400, false, "You are not allowed to create admin");
+                        }
                     const check_email_or_user_name = await registerModel.find({ $or: [{ email: email }, { username: user_name }] });
                     if (check_email_or_user_name.length < 1) {
 
@@ -235,7 +235,7 @@ export const deleteUser = async (req, res) => {
 export const archiveUser = async (req, res) => {
     try {
         // Fetch users with status: false and project only the necessary fields
-        const users = await registerModel.find({ status: false }, 'username role email _id access').lean();
+        const users = await registerModel.find({ status: false }, 'username role email _id access organization').lean();
 
         if (users.length === 0) {
             return responseData(res, "", 404, false, "No User Found");

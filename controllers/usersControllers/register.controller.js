@@ -267,6 +267,11 @@ export const registerUser = async (req, res) => {
             if (err) {
               responseData(res, "", 400, false, "Something went wrong");
             } else {
+              const refreshtoken = jwt.sign(
+                { userId: result._id, email: result.email },
+                process.env.REFRESH_TOKEN_SECRET,
+                { expiresIn: "1d" } // You can adjust the expiration time
+              );
               const register = new registerModel({
                 username: user_name,
                 userProfile: "",
@@ -275,6 +280,7 @@ export const registerUser = async (req, res) => {
                 password: hash,
                 status: true,
                 role: role,
+                refreshToken:refreshtoken
               });
 
               const result = await register.save();
@@ -285,6 +291,7 @@ export const registerUser = async (req, res) => {
                   process.env.ACCESS_TOKEN_SECRET,
                   { expiresIn: "1d" } // You can adjust the expiration time
                 );
+               
 
                 // Include the access token in the response headers
                 res.header("Authorization", `Bearer ${token}`);
@@ -294,18 +301,20 @@ export const registerUser = async (req, res) => {
                   httpOnly: true,
                   maxAge: 24 * 60 * 60 * 1000, // 1 day
                 });
+                res.cookie("refreshToken", refreshtoken, { maxAge: 604800000, httpOnly: true });
 
                 // Store access token in the database (you can adjust this based on your database schema)
-                const login = new loginModel({
-                  userID: result._id,
-                  token: token,
-                  logInDate: new Date(),
-                });
-                login.save();
+                // const login = new loginModel({
+                //   userID: result._id,
+                //   token: token,
+                //   logInDate: new Date(),
+                // });
+                // login.save();
                 const response = {
                   token: token,
                   username: result.username,
                   id: result._id,
+                  refreshToken:refreshtoken,
                   role: result.role
                 }
 
