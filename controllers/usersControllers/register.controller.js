@@ -110,7 +110,7 @@ export const sendOtp = async (req, res) => {
   else {
     try {
       const checkInfo = await registerModel.find({
-        $and: [{ email: email }, { username: user_name }],
+       email:email
       });
       if (checkInfo.length > 0) {
         responseData(
