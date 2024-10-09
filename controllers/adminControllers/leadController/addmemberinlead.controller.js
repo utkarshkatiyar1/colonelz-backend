@@ -118,7 +118,7 @@ export const removeMemberInlead = async (req, res) => {
                 const find_user = await registerModel.findOne({ username: username });
                 // console.log(find_user)
                 if (find_user) {
-                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.leadData.lead_id": parseInt(lead_id) });
+                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.leadData.lead_id": lead_id });
                     if (find_user_in_lead) {
                         const remove_lead_in_user = await registerModel.findOneAndUpdate(
                             { username: username },
