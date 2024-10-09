@@ -10,16 +10,10 @@ import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
 import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
+import { infotransporter } from "../../utils/function.js";
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
+
 
 
 export const checkEmail = async (req, res) => {
@@ -109,6 +103,10 @@ export const sendOtp = async (req, res) => {
   else if (!onlyAlphabetsValidation(user_name)) {
     responseData(res, "", 400, false, "Invalid username", []);
   }
+  else if( !onlyPasswordPatternValidation(password))
+  {
+    responseData(res, "", 400, false, "Invalid password", []);
+  }
   else {
     try {
       const checkInfo = await registerModel.find({
@@ -158,7 +156,7 @@ export const sendOtp = async (req, res) => {
                 subject: "Email Verification",
                 html: `<p>  Your verrification code is :-  ${otp}</p>`,
               };
-              transporter.sendMail(mailOptions, (error, info) => {
+              infotransporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   responseData(res, "", 400, false, "Failed to send email");
                 } else {
