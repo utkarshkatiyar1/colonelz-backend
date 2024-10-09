@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
-import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
+import { onlyAlphabetsValidation, onlyOrgValidation, onlyPasswordPatternValidation } from "../../utils/validation.js";
 import { infotransporter } from "../../utils/function.js";
 dotenv.config();
 
