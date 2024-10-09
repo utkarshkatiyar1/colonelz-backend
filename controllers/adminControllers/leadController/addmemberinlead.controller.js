@@ -161,10 +161,10 @@ export const listUserInLead = async (req, res) => {
         if (!lead_id) {
             return responseData(res, "", 400, false, "Lead ID is required");
         }
-          const leadId = parseInt(lead_id)
+        //   const leadId = parseInt(lead_id)
         const [findlead, findUser] = await Promise.all([
             leadModel.findOne({lead_id:lead_id }).lean(),
-            registerModel.find({ 'data.leadData.lead_id': leadId }).lean(),
+            registerModel.find({ 'data.leadData.lead_id': lead_id }).lean(),
         ]);
 
         if (!findlead) {
