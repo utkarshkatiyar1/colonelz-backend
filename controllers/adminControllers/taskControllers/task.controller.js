@@ -204,7 +204,7 @@ export const getAllTasks = async (req, res) => {
                 newTaskStatus = 'Completed';
             } else {
                 // If some subtasks are completed and some are canceled, set the task status to Completed
-                newTaskStatus = 'Completed';
+                newTaskStatus = 'In Progress';
             }
 
             if (newTaskStatus !== task.task_status) {
