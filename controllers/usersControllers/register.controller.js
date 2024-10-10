@@ -9,17 +9,11 @@ import jwt from "jsonwebtoken";
 import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
-import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
+import { onlyAlphabetsValidation, onlyOrgValidation, onlyPasswordPatternValidation } from "../../utils/validation.js";
+import { infotransporter } from "../../utils/function.js";
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
+
 
 
 export const checkEmail = async (req, res) => {
@@ -109,10 +103,14 @@ export const sendOtp = async (req, res) => {
   else if (!onlyAlphabetsValidation(user_name)) {
     responseData(res, "", 400, false, "Invalid username", []);
   }
+  else if( !onlyPasswordPatternValidation(password))
+  {
+    responseData(res, "", 400, false, "Invalid password", []);
+  }
   else {
     try {
       const checkInfo = await registerModel.find({
-        $and: [{ email: email }, { username: user_name }],
+       email:email
       });
       if (checkInfo.length > 0) {
         responseData(
@@ -158,7 +156,7 @@ export const sendOtp = async (req, res) => {
                 subject: "Email Verification",
                 html: `<p>  Your verrification code is :-  ${otp}</p>`,
               };
-              transporter.sendMail(mailOptions, (error, info) => {
+              infotransporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   responseData(res, "", 400, false, "Failed to send email");
                 } else {
@@ -269,6 +267,11 @@ export const registerUser = async (req, res) => {
             if (err) {
               responseData(res, "", 400, false, "Something went wrong");
             } else {
+              const refreshtoken = jwt.sign(
+                { userId: result._id, email: result.email },
+                process.env.REFRESH_TOKEN_SECRET,
+                { expiresIn: "1d" } // You can adjust the expiration time
+              );
               const register = new registerModel({
                 username: user_name,
                 userProfile: "",
@@ -277,6 +280,7 @@ export const registerUser = async (req, res) => {
                 password: hash,
                 status: true,
                 role: role,
+                refreshToken:refreshtoken
               });
 
               const result = await register.save();
@@ -287,6 +291,7 @@ export const registerUser = async (req, res) => {
                   process.env.ACCESS_TOKEN_SECRET,
                   { expiresIn: "1d" } // You can adjust the expiration time
                 );
+               
 
                 // Include the access token in the response headers
                 res.header("Authorization", `Bearer ${token}`);
@@ -296,18 +301,20 @@ export const registerUser = async (req, res) => {
                   httpOnly: true,
                   maxAge: 24 * 60 * 60 * 1000, // 1 day
                 });
+                res.cookie("refreshToken", refreshtoken, { maxAge: 604800000, httpOnly: true });
 
                 // Store access token in the database (you can adjust this based on your database schema)
-                const login = new loginModel({
-                  userID: result._id,
-                  token: token,
-                  logInDate: new Date(),
-                });
-                login.save();
+                // const login = new loginModel({
+                //   userID: result._id,
+                //   token: token,
+                //   logInDate: new Date(),
+                // });
+                // login.save();
                 const response = {
                   token: token,
                   username: result.username,
                   id: result._id,
+                  refreshToken:refreshtoken,
                   role: result.role
                 }
 

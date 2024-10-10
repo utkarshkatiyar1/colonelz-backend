@@ -118,14 +118,14 @@ export const removeMemberInlead = async (req, res) => {
                 const find_user = await registerModel.findOne({ username: username });
                 // console.log(find_user)
                 if (find_user) {
-                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.leadData.lead_id": parseInt(lead_id) });
+                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.leadData.lead_id": lead_id });
                     if (find_user_in_lead) {
                         const remove_lead_in_user = await registerModel.findOneAndUpdate(
                             { username: username },
                             {
                                 $pull: {
                                     "data.$[outer].leadData": {
-                                        lead_id: parseInt(lead_id),
+                                        lead_id:lead_id,
                                     }
                                 }
                             },
@@ -161,10 +161,10 @@ export const listUserInLead = async (req, res) => {
         if (!lead_id) {
             return responseData(res, "", 400, false, "Lead ID is required");
         }
-          const leadId = parseInt(lead_id)
+        //   const leadId = parseInt(lead_id)
         const [findlead, findUser] = await Promise.all([
             leadModel.findOne({lead_id:lead_id }).lean(),
-            registerModel.find({ 'data.leadData.lead_id': leadId }).lean(),
+            registerModel.find({ 'data.leadData.lead_id': lead_id }).lean(),
         ]);
 
         if (!findlead) {
