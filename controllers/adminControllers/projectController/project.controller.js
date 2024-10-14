@@ -10,6 +10,7 @@ import {
 } from "../../../utils/validation.js";
 import notificationModel from "../../../models/adminModels/notification.model.js";
 import taskModel from "../../../models/adminModels/task.model.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 dotenv.config();
 function generateSixDigitNumber() {
   const min = 100000;
@@ -49,19 +50,29 @@ function isProjectOlderThan6Months(createdDate) {
 export const getAllProject = async (req, res) => {
   try {
     const id = req.query.id;
+    const org_id = req.query.org_id;
 
     if (!id) {
       return responseData(res, "", 400, false, "User ID is required");
+    }
+    if (!org_id) {
+      return responseData(res, "", 400, false, "Org ID is required", []);
     }
 
     const user = await registerModel.findById(id);
     if (!user) {
       return responseData(res, "", 404, false, "User not found");
     }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
 
     // Use aggregation to count and categorize projects in one go
     const projects = await projectModel.aggregate([
+      { $match: { org_id: org_id }, },
       {
+       
         $project: {
           project_id: 1,
           project_name: 1,
@@ -102,7 +113,7 @@ export const getAllProject = async (req, res) => {
     ]);
 
     if (!projects.length) {
-      return responseData(res, "", 404, false, "No projects found");
+      return responseData(res, "", 200, true, "No projects found");
     }
 
     const archive = projects[0].projectsData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;
@@ -131,7 +142,8 @@ export const getAllProject = async (req, res) => {
 
 
 export const getSingleProject = async (req, res) => {
-  const { project_id, id } = req.query;
+  const { project_id, id, org_id } = req.query;
+  
 
   if (!project_id) {
     return responseData(res, "", 400, false, "Project ID is required.", []);
@@ -140,12 +152,19 @@ export const getSingleProject = async (req, res) => {
   if (!id) {
     return responseData(res, "", 400, false, "User ID is required.", []);
   }
-
+  if(!org_id)
+  {
+    return responseData(res, "", 400, false, "Org ID is required.", []);
+  }
   try {
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     // Fetch the user and project in parallel
     const [user, project] = await Promise.all([
-      registerModel.findById(id).lean(), // Use lean to get plain JavaScript objects
-      projectModel.findOne({ project_id }).lean(),
+      registerModel.findOne({_id:id, organization:org_id}).lean(), // Use lean to get plain JavaScript objects
+      projectModel.findOne({ project_id , org_id:org_id}).lean(),
     ]);
 
     if (!user) {
@@ -158,7 +177,7 @@ export const getSingleProject = async (req, res) => {
 
     // Use aggregation to get task metrics directly from the database
     const taskMetrics = await taskModel.aggregate([
-      { $match: { project_id } },
+      { $match: { project_id, org_id } },
       {
         $group: {
           _id: null,

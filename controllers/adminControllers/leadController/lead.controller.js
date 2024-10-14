@@ -12,6 +12,7 @@ import {
 import registerModel from "../../../models/usersModels/register.model.js";
 import { s3 } from "../../../utils/function.js"
 import archiveModel from "../../../models/adminModels/archive.model.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 
 function generateSixDigitNumber() {
@@ -55,6 +56,7 @@ const saveFileUploadData = async (
     const updateResult = await fileuploadModel.updateOne(
       {
         lead_id: existingFileUploadData.lead_id,
+        org_id:existingFileUploadData.org_id,
         "files.folder_name": existingFileUploadData.folder_name,
       },
       {
@@ -78,7 +80,7 @@ const saveFileUploadData = async (
     } else {
       // If the folder does not exist, create a new folder object
       const updateNewFolderResult = await fileuploadModel.updateOne(
-        { lead_id: existingFileUploadData.lead_id },
+        { lead_id: existingFileUploadData.lead_id , org_id: existingFileUploadData.org_id},
         {
           $push: {
             files: {
@@ -129,6 +131,7 @@ export const createLead = async (req, res) => {
   const userId = req.body.userId;
   const date = req.body.date;
   const lead_manager = req.body.lead_manager;
+  const org_id = req.body.org_id;
 
 
   // vaalidation all input
@@ -161,6 +164,9 @@ export const createLead = async (req, res) => {
   } else if (!status) {
     responseData(res, "", 403, false, "status is required.");
   }
+ else if (!org_id) {
+    return responseData(res, "", 400, false, "Organization Id is required");
+  }
   else if (!onlyAlphabetsValidation(lead_manager) && lead_manager.length >= 3) {
     responseData(
       res,
@@ -174,7 +180,11 @@ export const createLead = async (req, res) => {
 
   else {
     try {
-      const check_email = await leadModel.find({ email: email });
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
+      const check_email = await leadModel.find({ email: email, org_id: org_id });
       if (check_email.length > 0) {
         responseData(res, "", 403, false, "email already exist.");
       }
@@ -185,6 +195,7 @@ export const createLead = async (req, res) => {
 
           let fileUrls = []
           const lead = new leadModel({
+            org_id:org_id,
             name: name,
             lead_id: lead_id,
             lead_manager: lead_manager,
@@ -220,6 +231,7 @@ export const createLead = async (req, res) => {
 
           const fileUploadData = new fileuploadModel({
             lead_id: lead_id,
+            org_id: org_id,
             lead_name: name,
 
             files: [{
@@ -244,7 +256,7 @@ export const createLead = async (req, res) => {
 
 
           await registerModel.findOneAndUpdate(
-            { _id: userId },
+            { _id: userId, organization: org_id },
             {
               $push: {
                 "data.$[outer].leadData": {
@@ -290,7 +302,15 @@ export const createLead = async (req, res) => {
 
 export const getAllLead = async (req, res) => {
   try {
-    const leads = await leadModel.find({})
+    const org_id = req.query.org_id;
+    if (!org_id) {
+      return responseData(res, "", 400, false, "Org ID is required", []);
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    const leads = await leadModel.find({org_id:org_id})
       .select('name lead_id email phone location status date')
       .sort({ createdAt: -1 })
       .lean();
@@ -308,18 +328,26 @@ export const getAllLead = async (req, res) => {
 
 export const getSingleLead = async (req, res) => {
   const lead_id = req.query.lead_id;
+  const org_id = req.query.org_id;
 
   if (!lead_id) {
     return responseData(res, "", 400, false, "Lead ID is required", []);
   }
+ if (!org_id) {
+    return responseData(res, "", 400, false, "Org ID is required", []);
+  }
 
   try {
     // Fetch lead data and check project existence in a single query
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     const [leads, fileUploadExists] = await Promise.all([
-      leadModel.find({ lead_id })
+      leadModel.find({ lead_id, org_id:org_id })
         .select('name lead_id lead_manager email phone location status source date updated_date notes contract  lead_status createdAt contract_Status')
         .lean(),
-      fileuploadModel.exists({ lead_id, project_id: null })
+      fileuploadModel.exists({ lead_id, project_id: null, org_id })
     ]);
 
     if (leads.length === 0) {
@@ -449,7 +477,7 @@ export const leadToProject = async (req, res) => {
   const project_budget = req.body.project_budget;
   const designer = req.body.designer;
   const user_id = req.body.user_id;
-
+  const org_id = req.body.org_id;
 
   if (!lead_id) {
     responseData(res, "", 400, false, "lead_id is required", []);
@@ -485,16 +513,24 @@ export const leadToProject = async (req, res) => {
   else if (!onlyAlphabetsValidation(designer)) {
     responseData(res, "", 400, false, "designer  should be characters ", []);
   }
+  else if(!org_id)
+  {
+    responseData(res, "", 400, false, "org_id is required", []);
+  }
   else {
     try {
-      const check_user = await registerModel.findById(user_id)
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
+      const check_user = await registerModel.findOne({_id:user_id, organization: org_id})
       if (check_user) {
-        const find_lead = await leadModel.find({ lead_id: lead_id, contract_Status: true });
+        const find_lead = await leadModel.find({ lead_id: lead_id, contract_Status: true, org_id:org_id });
         if (find_lead.length > 0) {
-          const find_project = await projectModel.find({ lead_id: lead_id })
+          const find_project = await projectModel.find({ lead_id: lead_id, org_id:org_id })
 
           if (find_project.length > 0) {
-            const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
+            const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }, {org_id: org_id}] })
             if (!check_lead_in_file) {
               responseData(res, "", 400, false, "project already exist for this lead. Activate lead to create another project", []);
             }
@@ -523,7 +559,7 @@ export const leadToProject = async (req, res) => {
 
 
                 const existingFile = await fileuploadModel.findOne({
-                  lead_id: lead_id,
+                  lead_id: lead_id, org_id:org_id
                 });
 
                 const lead_Name = existingFile.name;
@@ -531,6 +567,7 @@ export const leadToProject = async (req, res) => {
                 if (existingFile) {
                   await saveFileUploadData(res, {
                     lead_id,
+                    org_id,
                     lead_Name,
                     folder_name,
                     updated_date: new Date(),
@@ -541,6 +578,7 @@ export const leadToProject = async (req, res) => {
                   const projectID = `COLP-${project_ID}`;
                   const project_data = await projectModel.create({
                     project_name: project_name,
+                    org_id:org_id,
                     project_type: project_type,
                     project_id: projectID,
                     client: {
@@ -563,15 +601,15 @@ export const leadToProject = async (req, res) => {
                     leadmanager: "",
                   });
                   project_data.save();
-                  const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
+                  const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id, org_id:org_id });
                   if (lead_find_in_fileupload.length < 1) {
                     responseData(res, "", 404, false, "lead not found in file manager")
                   }
                   if (lead_find_in_fileupload.length > 0) {
-                    const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
+                    const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id, org_id:org_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
 
                   }
-                  await leadModel.findOneAndUpdate({ lead_id: lead_id },
+                  await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id:org_id },
                     {
                       $set: {
                         lead_status: "project"
@@ -587,7 +625,7 @@ export const leadToProject = async (req, res) => {
                     }
                   )
                   await registerModel.findOneAndUpdate(
-                    { _id: user_id },
+                    { _id: user_id, org_id:org_id },
                     {
                       $push: {
                         "data.$[outer].projectData": {
@@ -642,7 +680,7 @@ export const leadToProject = async (req, res) => {
 
 
               const existingFile = await fileuploadModel.findOne({
-                lead_id: lead_id,
+                lead_id: lead_id,org_id:org_id
               });
 
               const lead_Name = existingFile.name;
@@ -650,6 +688,7 @@ export const leadToProject = async (req, res) => {
               if (existingFile) {
                 await saveFileUploadData(res, {
                   lead_id,
+                  org_id,
                   lead_Name,
                   folder_name,
                   updated_date: new Date(),
@@ -660,6 +699,7 @@ export const leadToProject = async (req, res) => {
                 const projectID = `COL\P-${project_ID}`;
                 const project_data = await projectModel.create({
                   project_name: project_name,
+                  org_id:org_id,
                   project_type: project_type,
                   project_id: projectID,
                   client: {
@@ -682,16 +722,16 @@ export const leadToProject = async (req, res) => {
                   leadmanager: "",
                 });
                 project_data.save();
-                const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id });
+                const lead_find_in_fileupload = await fileuploadModel.find({ lead_id: lead_id, org_id:org_id });
                 if (lead_find_in_fileupload.length < 1) {
                   responseData(res, "", 404, false, "lead not found in file manager")
                 }
                 if (lead_find_in_fileupload.length > 0) {
-                  const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
+                  const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id, org_id:org_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
 
 
                 }
-                await leadModel.findOneAndUpdate({ lead_id: lead_id },
+                await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id:org_id },
                   {
                     $set: {
                       lead_status: "project"
@@ -707,7 +747,7 @@ export const leadToProject = async (req, res) => {
                   }
                 )
                 await registerModel.findOneAndUpdate(
-                  { _id: user_id },
+                  { _id: user_id, org_id:org_id },
                   {
                     $push: {
                       "data.$[outer].projectData": {

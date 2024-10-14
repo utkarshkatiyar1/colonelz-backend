@@ -1,4 +1,5 @@
 import roleModel from "../../../models/adminModels/role.model.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 
@@ -8,6 +9,7 @@ export const createRole = async (req, res) => {
     try {
         const role = req.body.role;
         const access = req.body.access;
+        const org_id = req.body.org_id;
 
 
         const isEmpty = (obj) => {
@@ -22,6 +24,10 @@ export const createRole = async (req, res) => {
             responseData(res, "", 400, false, "Access is required")
 
         }
+        else if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
+        
         else {
 
             if (role === 'ADMIN'
@@ -38,13 +44,17 @@ export const createRole = async (req, res) => {
                 responseData(res, "", 400, false, "This role is predefine")
             }
             else {
-                const checkRole = await roleModel.findOne({ role });
+                const check_org = await orgModel.findOne({ _id: org_id })
+                if (!check_org) {
+                    return responseData(res, "", 404, false, "Org not found");
+                }
+                const checkRole = await roleModel.findOne({ role: role, org_id: org_id });
                 if (checkRole) {
                     responseData(res, "", 400, false, "Role already exists")
 
                 }
                 else {
-                    const newRole = await roleModel.create({ role, access });
+                    const newRole = await roleModel.create({ role, access, org_id });
                     responseData(res, "Role created successfully", 200, true, "")
                 }
             }
@@ -59,26 +69,35 @@ export const createRole = async (req, res) => {
 
 export const getRole = async (req, res) => {
     try {
+        const org_id = req.query.org_id;
+        if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
         // Use aggregation to join roles and users in a single query
-        const rolesWithUsers = await roleModel.aggregate([
-            {
-                $lookup: {
-                    from: 'users', // The name of your user collection
-                    localField: 'role',
-                    foreignField: 'role',
-                    as: 'users'
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    role: 1,
-                    createdAt: 1,
-                    access: 1,
-                    existUser: { $gt: [{ $size: '$users' }, 0] }
-                }
-            }
-        ]);
+        // const rolesWithUsers = await roleModel.aggregate([
+        //     {
+        //         $lookup: {
+        //             from: 'users', // The name of your user collection
+        //             localField: 'role',
+        //             foreignField: 'role',
+        //             as: 'users'
+        //         }
+        //     },
+        //     {
+        //         $project: {
+        //             _id: 1,
+        //             role: 1,
+        //             createdAt: 1,
+        //             access: 1,
+        //             existUser: { $gt: [{ $size: '$user' }, 0] }
+        //         }
+        //     }
+        // ]);
+        const rolesWithUsers = await roleModel.find({org_id:org_id})
 
         responseData(res, "Roles found successfully", 200, true, "", rolesWithUsers);
     } catch (err) {

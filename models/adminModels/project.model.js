@@ -25,7 +25,10 @@ const projectSchema = new mongoose.Schema({
   lead_id: {
     type: String,
   },
-
+  org_id:{
+    type: String,
+    require:true,
+  },
   project_type: {
     type: String,
     require: true,

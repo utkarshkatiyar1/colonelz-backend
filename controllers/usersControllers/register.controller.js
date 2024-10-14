@@ -11,6 +11,8 @@ import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
 import { onlyAlphabetsValidation, onlyOrgValidation, onlyPasswordPatternValidation } from "../../utils/validation.js";
 import { infotransporter } from "../../utils/function.js";
+import orgModel from "../../models/orgmodels/org.model.js";
+import orgusermapModel from "../../models/orgmodels/orgusermap.model.js";
 dotenv.config();
 
 
@@ -267,20 +269,42 @@ export const registerUser = async (req, res) => {
               responseData(res, "", 400, false, "Something went wrong");
             } else {
 
+              const org = await orgModel.create({
+                organization: orgnisation,
+                org_email: "",
+                org_phone: "",
+                org_address_line1: "",
+                org_address_line2: "",
+                org_city: "",
+                org_state: "",
+                org_country: "",
+                org_zipcode: "",
+                org_website: "",
+                org_logo: "",
+                org_status: true,
+
+              })
+
               const register = new registerModel({
                 username: user_name,
                 userProfile: "",
                 email: email,
-                organization: orgnisation,
+                organization: org._id,
                 password: hash,
                 status: true,
                 role: role,
-               
+
               });
+
+
 
               const result = await register.save();
 
               if (result) {
+                await orgusermapModel.create({
+                  org_id: org._id,
+                  user_id: result._id,
+                })
                 const token = jwt.sign(
                   { userId: result._id, email: result.email },
                   process.env.ACCESS_TOKEN_SECRET,
@@ -304,7 +328,7 @@ export const registerUser = async (req, res) => {
                 res.cookie("refreshToken", refreshtoken, { maxAge: 604800000, httpOnly: true });
 
                 // Store access token in the database (you can adjust this based on your database schema)
-                await registerModel.findOneAndUpdate({_id:result._id},
+                await registerModel.findOneAndUpdate({ _id: result._id },
                   {
                     $set: { refreshToken: refreshtoken }
                   }
@@ -318,7 +342,8 @@ export const registerUser = async (req, res) => {
                 const response = {
                   token: token,
                   username: result.username,
-                  id: result._id,
+                  UserID: result._id,
+                  org_id:org._id,
                   refreshToken: refreshtoken,
                   role: result.role
                 }
