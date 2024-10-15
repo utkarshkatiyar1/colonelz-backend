@@ -278,7 +278,7 @@ export const getSingleTask = async (req, res) => {
         const { user_id, project_id, task_id, org_id } = req.query;
 
         // Validate required parameters
-        if (!user_id || !project_id || !task_id, || !org_id) {
+        if (!user_id || !project_id || !task_id || !org_id) {
             return responseData(res, "", 400, false, "User ID, Project ID, and Task ID, Org ID are required", []);
         }
 
