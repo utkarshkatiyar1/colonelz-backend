@@ -4,6 +4,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { onlyEmailValidation } from "../../../utils/validation.js";
 import { admintransporter } from "../../../utils/function.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 
 
@@ -19,7 +20,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
         if (isFirst) {
             // If it's the first entry, push the quotation data directly
             const updatedProject = await projectModel.findOneAndUpdate(
-                { project_id: existingQuotationData.project_id },
+                { project_id: existingQuotationData.project_id, org_id: existingQuotationData.org_id },
                 {
                     $push: { "quotation": existingQuotationData.quotationsData }
                 },
@@ -31,7 +32,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
 
         } else {
             // For subsequent entries, check if the item exists and update accordingly
-            const findProject = await projectModel.findOne({ "quotation.itemId": existingQuotationData.quotationsData.itemId });
+            const findProject = await projectModel.findOne({ "quotation.itemId": existingQuotationData.quotationsData.itemId ,  org_id:  existingQuotationData.org_id});
 
             if (findProject) {
                 let findItem
@@ -40,6 +41,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
                     findItem = await projectModel.findOneAndUpdate(
                         {
                             project_id: existingQuotationData.project_id,
+                            org_id: existingQuotationData.org_id,
                             "quotation.itemId": existingQuotationData.quotationsData.itemId
                         },
                         {
@@ -60,6 +62,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
                     findItem = await projectModel.findOneAndUpdate(
                         {
                             project_id: existingQuotationData.project_id,
+                            org_id: existingQuotationData.org_id,
                             "quotation.itemId": existingQuotationData.quotationsData.itemId
                         },
                         {
@@ -81,7 +84,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
                     updatedQuotationData = findItem.quotation;
                 } else {
                     const updatedProject = await projectModel.findOneAndUpdate(
-                        { project_id: existingQuotationData.project_id },
+                        { project_id: existingQuotationData.project_id,org_id: existingQuotationData.org_id },
                         {
                             $push: { "quotation": existingQuotationData.quotationsData }
                         },
@@ -93,7 +96,7 @@ const storeOrUpdateQuotations = async (res, existingQuotationData, isFirst = fal
 
             } else {
                 const updatedProject = await projectModel.findOneAndUpdate(
-                    { project_id: existingQuotationData.project_id },
+                    { project_id: existingQuotationData.project_id, org_id: existingQuotationData.org_id },
                     {
                         $push: { "quotation": existingQuotationData.quotationsData }
                     },
@@ -122,12 +125,16 @@ export const shareQuotation = async (req, res) => {
         const project_id = req.body.project_id;
         const client_email = req.body.client_email;
         const client_name = req.body.client_name;
+        const org_id = req.body.org_id;
         const type = req.body.type;
-        if (!type || !file_id || !project_id || !user_id) {
+        if (!type || !file_id || !project_id || !user_id ||  !org_id) {
             return responseData(res, "", 400, false, "Missing required fields");
         }
-
-        const check_user = await registerModel.findOne({ _id: user_id })
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
         if (!check_user) {
             return responseData(res, "", 400, false, "User not found");
         }
@@ -135,11 +142,11 @@ export const shareQuotation = async (req, res) => {
             if (!onlyEmailValidation(client_email) || !client_name) {
                 return responseData(res, "", 400, false, "Invalid client email or missing client name");
             }
-            const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id });
+            const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id , org_id: org_id});
             if (!findQuotation) {
                 return responseData(res, "", 403, false, "Quotation file not found");
             }
-            const findProject = await projectModel.findOne({ project_id: project_id });
+            const findProject = await projectModel.findOne({ project_id: project_id, org_id:org_id });
             if (!findProject) {
                 return responseData(res, "", 403, false, "Project not found");
             }
@@ -206,7 +213,7 @@ export const shareQuotation = async (req, res) => {
             <p>Quotation File ID: <strong>${file_id}</strong></p>
             <p>File URL: <a href="${findFile.fileUrl}">View File</a></p>
              <p >
-                 <a href="${approvalLinkClient(project_id, file_id, 'approved')}">Click Here For Action</a> 
+                 <a href="${approvalLinkClient(project_id, file_id, org_id)}">Click Here For Action</a> 
             
                     </p>
             <p>Thank you!</p>
@@ -220,9 +227,10 @@ export const shareQuotation = async (req, res) => {
             let check_status = 0;
             const check_data = await projectModel.findOne({
                 project_id: project_id,
+                org_id:org_id,
                 "quotation.$.itemId": file_id
             })
-            await projectModel.findOneAndUpdate({ project_id: project_id },
+            await projectModel.findOneAndUpdate({ project_id: project_id, org_id: org_id },
                 {
                     $push: {
                         project_updated_by: {
@@ -270,6 +278,7 @@ export const shareQuotation = async (req, res) => {
 
                             const createObj = {
                                 project_id,
+                                org_id,
                                 quotationsData,
                                 client: "client"
                             }
@@ -304,6 +313,7 @@ export const shareQuotation = async (req, res) => {
 
                         const createObj = {
                             project_id,
+                            org_id,
                             quotationsData,
 
                         }
@@ -319,16 +329,17 @@ export const shareQuotation = async (req, res) => {
             const check_status = await registerModel.findOne({
                 "data.quotationData.project_id": project_id,
                 "data.quotationData.quotation_file_id": file_id,
+                organization: org_id
 
 
             });
 
             if (!check_status) {
-                const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id });
+                const findQuotation = await fileuploadModel.findOne({ "files.files.fileId": file_id, org_id: org_id });
                 if (!findQuotation) {
                     return responseData(res, "", 403, false, "Quotation file not found");
                 }
-                const findProject = await projectModel.findOne({ project_id: project_id });
+                const findProject = await projectModel.findOne({ project_id: project_id, org_id: org_id });
                 if (!findProject) {
                     return responseData(res, "", 403, false, "Project not found");
                 }
@@ -337,7 +348,7 @@ export const shareQuotation = async (req, res) => {
                 if (!findFile) {
                     return responseData(res, "", 403, false, "File not found in the specified folder");
                 }
-                await projectModel.findOneAndUpdate({ project_id: project_id },
+                await projectModel.findOneAndUpdate({ project_id: project_id, org_id: org_id },
                     {
                         $push: {
                             project_updated_by: {
@@ -361,6 +372,7 @@ export const shareQuotation = async (req, res) => {
                 if (findProject.quotation.length > 0) {
                     const createObj = {
                         project_id,
+                        org_id,
                         quotationsData,
                         admin: "admin"
 
@@ -371,6 +383,7 @@ export const shareQuotation = async (req, res) => {
                 else {
                     const createObj = {
                         project_id,
+                        org_id,
                         quotationsData,
                     }
                     await storeOrUpdateQuotations(res, createObj, true);
@@ -390,8 +403,8 @@ export const shareQuotation = async (req, res) => {
 };
 
 
-function approvalLinkClient(project_id, file_id, status) {
-    return `${process.env.LOGIN_URL}quotation?project_id=${project_id}&file_id=${file_id}`;
+function approvalLinkClient(project_id, file_id, org_id) {
+    return `${process.env.LOGIN_URL}quotation?project_id=${project_id}&file_id=${file_id}&org_id=${org_id}`;
 }
 
 
@@ -400,9 +413,10 @@ export const updateStatus = async (req, res) => {
         const status = req.body.status;
         const project_id = req.body.project_id;
         const itemId = req.body.file_id;
+        const org_id = req.body.org_id;
         const remark = req.body.remark;
         const check_status = await projectModel.findOne({
-            project_id: project_id,
+            project_id: project_id, org_id: org_id,
             "quotation.$.itemId": itemId
         })
         for (let i = 0; i < check_status.quotation.length; i++) {
@@ -412,7 +426,7 @@ export const updateStatus = async (req, res) => {
                 }
                 else {
                     try {
-                        const filter = { "data.quotationData.quotation_file_id": itemId };
+                        const filter = { "data.quotationData.quotation_file_id": itemId,  org_id: org_id };
                         const update = {
                             $set: { "data.$[outerElem].quotationData.$[innerElem].approval_status": status }
                         };
@@ -438,6 +452,7 @@ export const updateStatus = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
@@ -459,6 +474,7 @@ export const updateStatus = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
@@ -495,9 +511,11 @@ export const updateStatusClient = async (req, res) => {
         const project_id = req.body.project_id;
         const itemId = req.body.file_id;
         const remark = req.body.remark;
+        const org_id = req.body.org_id;
 
         const check_status = await projectModel.findOne({
             project_id: project_id,
+            org_id: org_id,
             "quotation.$.itemId": itemId
         })
         for (let i = 0; i < check_status.quotation.length; i++) {
@@ -511,6 +529,7 @@ export const updateStatusClient = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
@@ -535,6 +554,7 @@ export const updateStatusClient = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
@@ -559,6 +579,7 @@ export const updateStatusClient = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
@@ -594,8 +615,10 @@ export const updateStatusAdmin = async (req, res) => {
         const project_id = req.body.project_id;
         const itemId = req.body.file_id;
         const remark = req.body.remark;
+        const org_id =req.body.org_id;
         const check_status = await projectModel.findOne({
             project_id: project_id,
+            org_id: org_id,
             "quotation.$.itemId": itemId
         })
         for (let i = 0; i < check_status.quotation.length; i++) {
@@ -606,7 +629,7 @@ export const updateStatusAdmin = async (req, res) => {
                 }
                 else {
                     try {
-                        const filter = { "data.quotationData.quotation_file_id": itemId };
+                        const filter = { "data.quotationData.quotation_file_id": itemId, org_id: org_id, };
                         const update = {
                             $set: { "data.$[outerElem].quotationData.$[innerElem].approval_status": status }
                         };
@@ -632,6 +655,7 @@ export const updateStatusAdmin = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
@@ -654,6 +678,7 @@ export const updateStatusAdmin = async (req, res) => {
                         await projectModel.findOneAndUpdate(
                             {
                                 project_id: project_id,
+                                org_id: org_id,
                                 "quotation.$.itemId": itemId
                             },
                             {
