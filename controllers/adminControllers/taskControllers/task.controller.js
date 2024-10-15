@@ -4,6 +4,8 @@ import taskModel from "../../../models/adminModels/task.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import timerModel from "../../../models/adminModels/timer.Model.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
+import { Organizations } from "aws-sdk";
 
 
 function generateSixDigitNumber() {
@@ -14,12 +16,13 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new taskModel({
         project_id,
         task_id,
+        org_id,
         task_name,
         task_description,
         actual_task_start_date,
@@ -38,6 +41,7 @@ const createTaskAndTimer = async (res, check_user, task_assignee, project_id, ta
     const taskTime = new timerModel({
         project_id,
         task_id,
+        org_id,
         task_name,
         task_assignee,
         task_time: '',
@@ -48,7 +52,7 @@ const createTaskAndTimer = async (res, check_user, task_assignee, project_id, ta
     await taskTime.save();
 
     await projectModel.findOneAndUpdate(
-        { project_id },
+        { project_id: project_id, org_id: org_id },
         {
             $push: {
                 project_updated_by: {
@@ -67,6 +71,7 @@ export const createTask = async (req, res) => {
 
     try {
         const user_id = req.body.user_id;
+        const org_id = req.body.org_id;
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
@@ -93,21 +98,25 @@ export const createTask = async (req, res) => {
         if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
         if (!task_assignee) return responseData(res, "", 404, false, "Task assignee required", []);
         if (!reporter) return responseData(res, "", 404, false, "Task reporter required", []);
-
+        if (!org_id) return responseData(res, "", 400, false, "Org Id required");
         // Check if the user exists
-        const check_user = await registerModel.findById({ _id: user_id });
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
         // Check if the project exists
-        const check_project = await projectModel.findOne({ project_id });
+        const check_project = await projectModel.findOne({ project_id: project_id, org_id:org_id });
         if (!check_project) return responseData(res, "", 404, false, "Project not found", []);
 
         // Check if the assignee exists and is active
-        const check_assignee = await registerModel.findOne({ username: task_assignee, status: true });
+        const check_assignee = await registerModel.findOne({ username: task_assignee, status: true, organization:org_id });
         if (!check_assignee) return responseData(res, "", 404, false, "Task assignee is not a registered user", []);
 
         // Check if the reporter exists and is active
-        const check_reporter = await registerModel.findOne({ username: reporter, status: true });
+        const check_reporter = await registerModel.findOne({ username: reporter, status: true, organization: org_id });
         if (!check_reporter) return responseData(res, "", 404, false, "Task reporter is not a registered user", []);
 
         // Validate roles and project association
@@ -115,7 +124,7 @@ export const createTask = async (req, res) => {
 
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
-            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res,  org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
@@ -123,7 +132,7 @@ export const createTask = async (req, res) => {
             const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
             if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
 
-            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
@@ -131,7 +140,7 @@ export const createTask = async (req, res) => {
             if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
 
 
-            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else {
@@ -143,7 +152,7 @@ export const createTask = async (req, res) => {
             if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
 
             // Create task if validation passes
-            await createTaskAndTimer(res, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
     } catch (err) {
@@ -154,25 +163,33 @@ export const createTask = async (req, res) => {
 }
 export const getAllTasks = async (req, res) => {
     try {
-        const { user_id, project_id } = req.query;
+        const { user_id, project_id, org_id } = req.query;
 
         if (!user_id || !project_id) {
             const missingField = !user_id ? "User Id" : "Project Id";
             return responseData(res, "", 404, false, `${missingField} required`, []);
         }
+        if(!org_id)
+        {
+           return responseData(res, "", 400, false, "Org Id required");
+        }
 
-        const check_user = await registerModel.findById(user_id);
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const check_user = await registerModel.findOne({ _id: user_id , organization: org_id});
         if (!check_user) {
             return responseData(res, "", 404, false, "User not found", []);
         }
 
-        const check_project = await projectModel.findOne({ project_id });
+        const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
         if (!check_project) {
             return responseData(res, "", 404, false, "Project not found", []);
         }
 
         // Fetch tasks
-        const tasks = await taskModel.find({ project_id });
+        const tasks = await taskModel.find({ project_id: project_id, org_id: org_id });
         if (!tasks.length) {
             return responseData(res, "Tasks not found", 200, false, "", []);
         }
@@ -210,7 +227,7 @@ export const getAllTasks = async (req, res) => {
             if (newTaskStatus !== task.task_status) {
                 // Update task status if it has changed
                 await taskModel.findOneAndUpdate(
-                    { task_id: task.task_id },
+                    { task_id: task.task_id, org_id: org_id },
                     {
                         $set: {
                             task_status: newTaskStatus,
@@ -223,7 +240,7 @@ export const getAllTasks = async (req, res) => {
         }
 
         // Fetch the updated tasks
-        const updatedTasks = await taskModel.find({ project_id });
+        const updatedTasks = await taskModel.find({ project_id: project_id, org_id: org_id });
 
         // Construct response
         const response = updatedTasks.map(task => ({
@@ -258,11 +275,11 @@ export const getAllTasks = async (req, res) => {
 
 export const getSingleTask = async (req, res) => {
     try {
-        const { user_id, project_id, task_id } = req.query;
+        const { user_id, project_id, task_id, org_id } = req.query;
 
         // Validate required parameters
-        if (!user_id || !project_id || !task_id) {
-            return responseData(res, "", 400, false, "User ID, Project ID, and Task ID are required", []);
+        if (!user_id || !project_id || !task_id, || !org_id) {
+            return responseData(res, "", 400, false, "User ID, Project ID, and Task ID, Org ID are required", []);
         }
 
         // Aggregate to find user, project, and task
@@ -271,6 +288,7 @@ export const getSingleTask = async (req, res) => {
                 $match: {
                     task_id: task_id,
                     project_id: project_id,
+                    org_id: org_id
                 },
             },
             {
@@ -329,6 +347,7 @@ export const updateTask = async (req, res) => {
 
     try {
         const user_id = req.body.user_id;
+        const org_id = req.body.org_id;
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
@@ -372,23 +391,30 @@ export const updateTask = async (req, res) => {
         else if (!reporter) {
             responseData(res, "", 404, false, "Task reporter required", [])
         }
+        else if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
         else {
-            const check_user = await registerModel.findById({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
             }
             else {
-                const check_project = await projectModel.findOne({ project_id: project_id })
+                const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id })
                 if (!check_project) {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id })
+                    const check_task = await taskModel.findOne({ task_id: task_id, org_id: org_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id },
+                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id, org_id: org_id },
                             {
                                 $set: {
                                     task_name: task_name,
@@ -416,7 +442,7 @@ export const updateTask = async (req, res) => {
                         )
 
                         if (update_task) {
-                            await projectModel.findOneAndUpdate({ project_id: project_id },
+                            await projectModel.findOneAndUpdate({ project_id: project_id, org_id: org_id },
                                 {
                                     $push: {
                                         project_updated_by: {
@@ -453,6 +479,7 @@ export const deleteTask = async (req, res) => {
         const user_id = req.body.user_id;
         const project_id = req.body.project_id;
         const task_id = req.body.task_id;
+        const org_id = req.body.org_id;
 
         if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
@@ -464,23 +491,30 @@ export const deleteTask = async (req, res) => {
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
+        else if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
         else {
-            const check_user = await registerModel.findOne({ user_id: user_id });
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id });
             if (!check_user) {
                 responseData(res, "", 404, false, "User not found", [])
             }
             else {
-                const check_project = await projectModel.findOne({ project_id: project_id });
+                const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
                 if (!check_project) {
                     responseData(res, "", 404, false, "Project not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id });
+                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id, org_id: org_id });
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        await projectModel.findOneAndUpdate({ project_id: project_id },
+                        await projectModel.findOneAndUpdate({ project_id: project_id, org_id: org_id },
                             {
                                 $push: {
                                     project_updated_by: {
@@ -492,7 +526,7 @@ export const deleteTask = async (req, res) => {
                                 }
                             }
                         )
-                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id, project_id: project_id })
+                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id, project_id: project_id, org_id: org_id })
                         if (delete_task) {
                             responseData(res, "Task deleted successfully", 200, true, "", [])
                         }
@@ -518,16 +552,24 @@ export const deleteTask = async (req, res) => {
 export const getAllTaskWithData = async (req, res) => {
     try {
         const project_id = req.query.project_id
+        const org_id = req.query.org_id;
         if (!project_id) {
             responseData(res, "", 404, false, "Project id is required", [])
         }
+        else if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
         else {
-            const check_project = await projectModel.findOne({ project_id: project_id });
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
             if (!check_project) {
                 responseData(res, "", 404, false, "Project not found", [])
             }
             else {
-                const check_task = await taskModel.find({ project_id: project_id });
+                const check_task = await taskModel.find({ project_id: project_id, org_id: org_id });
                 if (!check_task) {
                     responseData(res, "", 404, false, "Task not found", [])
                 }
