@@ -1,3 +1,4 @@
+import orgModel from "../../../models/orgmodels/org.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 
@@ -76,6 +77,10 @@ export const getProjectUser = async (req, res) => {
             return responseData(res, "", 404, false, "Org Id required", []);
         }
 
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
         // Fetch project users and senior admins in a single query
         const users = await registerModel.find({
             $or: [

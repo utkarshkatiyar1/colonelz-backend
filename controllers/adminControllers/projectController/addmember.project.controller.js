@@ -2,6 +2,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import mongoose from "mongoose";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 function generatedigitnumber() {
     const length = 6;
