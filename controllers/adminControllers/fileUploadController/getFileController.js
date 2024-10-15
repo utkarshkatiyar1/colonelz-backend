@@ -7,15 +7,14 @@ import orgModel from "../../../models/orgmodels/org.model.js";
 export const getFileData = async (req, res) => {
   try {
     const org_id = req.query.org_id;
-    if(!org_id)
-    {
+    if (!org_id) {
       return responseData(res, "", 404, false, "Org Id required", []);
     }
     const check_org = await orgModel.findOne({ _id: org_id })
     if (!check_org) {
       return responseData(res, "", 404, false, "Org not found");
     }
-    const data = await fileuploadModel.find({org_id: org_id })
+    const data = await fileuploadModel.find({ org_id: org_id })
       .populate('project_id', 'project_id client project_type project_status')
       .populate('lead_id', 'lead_id email status date')
       .select('project_id lead_id lead_name project_name')
@@ -82,12 +81,10 @@ export const getleadData = async (req, res) => {
   try {
     const { lead_id, org_id } = req.query;
     const { user } = req;
-    if(!lead_id)
-    {
+    if (!lead_id) {
       return responseData(res, "", 404, false, "Lead Id required", []);
     }
-    if(!org_id)
-    {
+    if (!org_id) {
       return responseData(res, "", 404, false, "Org Id required", []);
     }
     const check_org = await orgModel.findOne({ _id: org_id })
@@ -103,14 +100,14 @@ export const getleadData = async (req, res) => {
     const files = data.files.map(file => {
       const foldername = file.folder_name.toLowerCase();
 
-      
-      if (foldername === 'contract') {
-        if (!user.access?.contract || !user.access.contract.includes('read') || user.role ==='SUPERADMIN') {
+
+      if (foldername === 'Contract') {
+        if (!user.access?.contract || !user.access.contract.includes('read') || user.role === 'SUPERADMIN') {
           return null;
         }
       }
-      if (foldername === 'quotation') {
-        if (!user.access?.quotation || !user.access.quotation.includes('read')  || user.role === 'SUPERADMIN') {
+      if (foldername === 'Quotation') {
+        if (!user.access?.quotation || !user.access.quotation.includes('read') || user.role === 'SUPERADMIN') {
           return null;
         }
       }
@@ -138,17 +135,15 @@ export const getprojectData = async (req, res) => {
     const project_id = req.query.project_id;
     const { user } = req;
     const org_id = req.query.org_id;
-    if(!project_id)
-    {
+    if (!project_id) {
       return responseData(res, "", 404, false, "Project Id required", []);
     }
-    if(!org_id)
-    {
+    if (!org_id) {
       return responseData(res, "", 404, false, "Org Id required", []);
     }
     const check_org = await orgModel.findOne({ _id: org_id })
     if (!check_org) {
-      
+
     }
     const data = await fileuploadModel.findOne({ project_id, org_id }).lean();
 
@@ -201,8 +196,7 @@ export const getCompanyData = async (req, res) => {
     // }
     const org_id = req.query.org_id;
 
-    if(!org_id)
-    {
+    if (!org_id) {
       return responseData(res, "", 404, false, "Org Id required", []);
     }
     const check_org = await orgModel.findOne({ _id: org_id })
@@ -210,9 +204,9 @@ export const getCompanyData = async (req, res) => {
       return responseData(res, "", 404, false, "Org not found");
     }
 
-    const data = await fileuploadModel.find({org_id: org_id }).lean();
+    const data = await fileuploadModel.find({ org_id: org_id }).lean();
 
-    
+
     if (data.length === 0) {
       return responseData(res, "Data Not Found!", 200, true, "");
     }
@@ -222,7 +216,7 @@ export const getCompanyData = async (req, res) => {
         const files = element.files
           .filter(file => file.folder_name
             //  === type && file.sub_folder_name_first === type2
-            )
+          )
           .map(file => ({
             folder_name: file.folder_name,
             folder_id: file.folder_id,
@@ -235,7 +229,7 @@ export const getCompanyData = async (req, res) => {
 
         return files.length > 0 ? { type: element.type, files } : null;
       }
-      return null; 
+      return null;
     }));
     const filteredTemplateData = templateData.filter(item => item !== null);
 
