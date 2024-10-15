@@ -184,7 +184,16 @@ export const DeleteRole = async (req, res) => {
 
 export const roleWiseAccess = async (req, res) => {
     try {
-        const access = await roleModel.find({}).lean(); // Use lean for better performance
+        const org_id = req.query.org_id;
+        if (!org_id) {
+            return responseData(res, "", 404, false, "Org Id required", []);
+        }
+        // Use lean to get plain JavaScript objects and only fetch the 'role' field
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const access = await roleModel.find({org_id: org_id}).lean(); // Use lean for better performance
 
         if (access.length < 1) {
             return responseData(res, "No role found", 200, true, "");
