@@ -80,9 +80,21 @@ export const getFileData = async (req, res) => {
 
 export const getleadData = async (req, res) => {
   try {
-    const { lead_id } = req.query;
+    const { lead_id, org_id } = req.query;
     const { user } = req;
-    const data = await fileuploadModel.findOne({ lead_id }).lean();
+    if(!lead_id)
+    {
+      return responseData(res, "", 404, false, "Lead Id required", []);
+    }
+    if(!org_id)
+    {
+      return responseData(res, "", 404, false, "Org Id required", []);
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    const data = await fileuploadModel.findOne({ lead_id, org_id }).lean();
 
     if (!data || data.files.length === 0) {
       return responseData(res, "Data Not Found!", 200, true, "");
@@ -93,12 +105,12 @@ export const getleadData = async (req, res) => {
 
       
       if (foldername === 'contract') {
-        if (!user.access?.contract || !user.access.contract.includes('read')) {
+        if (!user.access?.contract || !user.access.contract.includes('read') || user.role ==='SUPERADMIN') {
           return null;
         }
       }
       if (foldername === 'quotation') {
-        if (!user.access?.quotation || !user.access.quotation.includes('read')) {
+        if (!user.access?.quotation || !user.access.quotation.includes('read')  || user.role === 'SUPERADMIN') {
           return null;
         }
       }
@@ -125,7 +137,20 @@ export const getprojectData = async (req, res) => {
   try {
     const project_id = req.query.project_id;
     const { user } = req;
-    const data = await fileuploadModel.findOne({ project_id }).lean();
+    const org_id = req.query.org_id;
+    if(!project_id)
+    {
+      return responseData(res, "", 404, false, "Project Id required", []);
+    }
+    if(!org_id)
+    {
+      return responseData(res, "", 404, false, "Org Id required", []);
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      
+    }
+    const data = await fileuploadModel.findOne({ project_id, org_id }).lean();
 
     if (!data || data.files.length === 0) {
       return responseData(res, "Data Not Found!", 200, true, "");
@@ -135,13 +160,13 @@ export const getprojectData = async (req, res) => {
       const foldername = file.folder_name.toLowerCase();
 
 
-      if (foldername === 'contract') {
-        if (!user.access?.contract || !user.access.contract.includes('read')) {
+      if (foldername === 'Contract') {
+        if (!user.access?.contract || !user.access.contract.includes('read') || user.role === 'SUPERADMIN') {
           return null;
         }
       }
-      if (foldername === 'quotation' || foldername === 'procurement data') {
-        if (!user.access?.quotation || !user.access.quotation.includes('read')) {
+      if (foldername === 'Quotation' || foldername === 'procurement data') {
+        if (!user.access?.quotation || !user.access.quotation.includes('read') || user.role === 'SUPERADMIN') {
           return null;
         }
       }
@@ -174,8 +199,20 @@ export const getCompanyData = async (req, res) => {
     // {
     //   return responseData(res, "", 400, false, "Please Provide Filter!");
     // }
+    const org_id = req.query.org_id;
 
-    const data = await fileuploadModel.find({});
+    if(!org_id)
+    {
+      return responseData(res, "", 404, false, "Org Id required", []);
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+
+    const data = await fileuploadModel.find({org_id: org_id }).lean();
+
+    
     if (data.length === 0) {
       return responseData(res, "Data Not Found!", 200, true, "");
     }
