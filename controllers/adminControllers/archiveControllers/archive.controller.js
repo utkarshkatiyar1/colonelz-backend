@@ -3,7 +3,7 @@ import arvhiveModel from "../../../models/adminModels/archive.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import archiveModel from "../../../models/adminModels/archive.model.js";
-import { s3} from "../../../utils/function.js"
+import { s3 } from "../../../utils/function.js"
 import cron from "node-cron";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import moment from "moment-timezone";
@@ -26,8 +26,7 @@ export const archive = async (req, res) => {
         if (!user_id) {
             responseData(res, "", 400, false, "user_id is required", []);
         }
-        else if (!org_id)
-        {
+        else if (!org_id) {
             responseData(res, "", 400, false, "Org Id is required", []);
         }
         else {
@@ -39,8 +38,8 @@ export const archive = async (req, res) => {
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
-             else if (check_user) {
-                const archive = await arvhiveModel.find({org_id: org_id})
+            else if (check_user) {
+                const archive = await arvhiveModel.find({ org_id: org_id })
                 if (archive.length < 1) {
                     responseData(res, "No data found", 200, false, "", []);
                 }
@@ -153,8 +152,7 @@ export const deletearchive = async (req, res) => {
         else if (!delete_type) {
             responseData(res, "", 400, false, "type and delete_type is required", []);
         }
-        else if(!org_id)
-        {
+        else if (!org_id) {
             responseData(res, "", 400, false, "org id is required", []);
         }
         else {
@@ -450,6 +448,7 @@ const saveFileRestoreDataInLead = async (
             const updateResult = await fileuploadModel.updateOne(
                 {
                     lead_id: existingFileUploadData.lead_id,
+                    org_id: existingFileUploadData.org_id,
                     "files.folder_name": existingFileUploadData.folder_name,
                 },
                 {
@@ -471,7 +470,7 @@ const saveFileRestoreDataInLead = async (
                 // If the folder does not exist, create a new folder object
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { lead_id: existingFileUploadData.lead_id },
+                    { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id, },
                     {
                         $push: {
                             files: {
@@ -502,6 +501,7 @@ const saveFileRestoreDataInLead = async (
             const updateResult = await fileuploadModel.updateOne(
                 {
                     lead_id: existingFileUploadData.lead_id,
+                    org_id: existingFileUploadData.org_id,
                     "files.folder_name": existingFileUploadData.folder_name,
                 },
                 {
@@ -524,7 +524,7 @@ const saveFileRestoreDataInLead = async (
                 // If the folder does not exist, create a new folder object
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { lead_id: existingFileUploadData.lead_id },
+                    { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id, },
                     {
                         $push: {
                             files: {
@@ -571,13 +571,14 @@ const saveFileRestoreDataInProject = async (
 
 ) => {
     try {
-        
+
 
         // Use update query to push data
         if (existingFileUploadData.deleted_type === 'file') {
             const updateResult = await fileuploadModel.updateOne(
                 {
                     project_id: existingFileUploadData.project_id,
+                    org_id: existingFileUploadData.org_id,
                     "files.folder_name": existingFileUploadData.folder_name,
                 },
                 {
@@ -599,7 +600,7 @@ const saveFileRestoreDataInProject = async (
                 // If the folder does not exist, create a new folder object
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { project_id: existingFileUploadData.project_id },
+                    { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
                     {
                         $push: {
                             files: {
@@ -628,11 +629,12 @@ const saveFileRestoreDataInProject = async (
 
         }
         if (existingFileUploadData.deleted_type === "folder") {
-           
+
             const updateResult = await fileuploadModel.updateOne(
                 {
                     project_id: existingFileUploadData.project_id,
                     "files.folder_name": existingFileUploadData.folder_name,
+                    org_id: existingFileUploadData.org_id,
                 },
                 {
                     $push: {
@@ -654,7 +656,7 @@ const saveFileRestoreDataInProject = async (
 
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { project_id: existingFileUploadData.project_id },
+                    { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
                     {
                         $push: {
                             files: {
@@ -711,6 +713,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             const updateResult = await fileuploadModel.updateOne(
                 {
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
                     "files.folder_name": existingFileUploadData.folder_name,
                     "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
@@ -728,6 +731,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             } else {
                 const firstFile = await fileuploadModel.create({
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     files: [
                         {
                             folder_name: existingFileUploadData.folder_name,
@@ -758,6 +762,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             const updateResult = await fileuploadModel.updateOne(
                 {
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
                     "files.folder_name": existingFileUploadData.folder_name,
                     "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
@@ -775,6 +780,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             } else {
                 const firstFile = await fileuploadModel.create({
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     files: [
                         {
                             folder_name: existingFileUploadData.folder_name,
