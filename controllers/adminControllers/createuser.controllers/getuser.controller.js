@@ -65,16 +65,22 @@ export const getUserList = async (req, res) => {
 export const getProjectUser = async (req, res) => {
     try {
         const project_id = req.query.project_id;
+        const org_id= req.query.org_id;
+
 
         if (!project_id) {
             return responseData(res, "", 400, false, "Project ID is required", []);
+        }
+        if(!org_id)
+        {
+            return responseData(res, "", 404, false, "Org Id required", []);
         }
 
         // Fetch project users and senior admins in a single query
         const users = await registerModel.find({
             $or: [
                 { 'data.projectData.project_id': project_id },
-                { role: { $in: ['Senior Architect', 'ADMIN'] }, status: true }
+                { role: { $in: ['Senior Architect', 'ADMIN'] }, status: true, organization: org_id }
             ]
         }).lean(); // Use lean for better performance
 
