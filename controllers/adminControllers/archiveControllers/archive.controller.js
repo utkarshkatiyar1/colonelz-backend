@@ -21,16 +21,25 @@ const getObjectKeyFromUrl = (url) => {
 export const archive = async (req, res) => {
     try {
         const user_id = req.query.user_id;
+        const org_id = req.query.org_id;
         if (!user_id) {
             responseData(res, "", 400, false, "user_id is required", []);
         }
+        else if (!org_id)
+        {
+            responseData(res, "", 400, false, "Org Id is required", []);
+        }
         else {
-            const check_user = await registerModel.findById({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
              else if (check_user) {
-                const archive = await arvhiveModel.find({})
+                const archive = await arvhiveModel.find({org_id: org_id})
                 if (archive.length < 1) {
                     responseData(res, "No data found", 200, false, "", []);
                 }
