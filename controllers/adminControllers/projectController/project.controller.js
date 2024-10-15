@@ -232,6 +232,7 @@ export const updateProjectDetails = async (req, res) => {
   const designer = req.body.designer;
   const user_id = req.body.user_id;
   const client_email = req.body.client_email;
+  const org_id = req.body.org_id;
 
   if (!project_ID) {
     responseData(res, "", 400, false, " Project ID is required.", []);
@@ -251,20 +252,27 @@ export const updateProjectDetails = async (req, res) => {
   else if (!onlyEmailValidation(client_email) && client_email.length > 5) {
     responseData(res, "", 400, false, "client email is invalid", []);
   }
+  else if (!org_id) {
+    return responseData(res, "", 400, false, "Organization Id is required");
+  }
 
   //  *********** add other validation **********//
   else {
     try {
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
       const find_user = await registerModel.find
-        ({ _id: user_id })
+        ({ _id: user_id, organization: org_id })
       if (!find_user) {
         responseData(res, "", 400, false, "user not found.", []);
 
       }
-      const project_find = await projectModel.find({ project_id: project_ID });
+      const project_find = await projectModel.find({ project_id: project_ID, org_id:org_id });
       if (project_find.length > 0) {
         const project_update = await projectModel.findOneAndUpdate(
-          { project_id: project_ID, 'client.client_email': project_find[0].client[0].client_email },
+          { project_id: project_ID, org_id: org_id, 'client.client_email': project_find[0].client[0].client_email },
           {
             $set: {
               project_budget: project_budget,
@@ -328,17 +336,26 @@ export const updateProjectDetails = async (req, res) => {
 export const projectActivity = async (req, res) => {
   try {
     const project_id = req.query.project_id;
+    const org_id = req.query.org_id;
     const page = parseInt(req.query.page, 10) || 1; // Default to page 1
     const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
     const skip = (page - 1) * limit;
 
+
     if (!project_id) {
       return responseData(res, "", false, 400, "ProjectId is required");
     }
+    if (!org_id) {
+      return responseData(res, "", false, 400, "OrgId is required");
+    }
 
     // Fetch project activities and only the project_updated_by field
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     const project = await projectModel
-      .findOne({ project_id: project_id })
+      .findOne({ project_id: project_id, org_id:org_id })
       .select('project_updated_by');
 
     if (!project) {
