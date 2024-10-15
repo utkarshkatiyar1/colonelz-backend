@@ -5,7 +5,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import timerModel from "../../../models/adminModels/timer.Model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
-import { Organizations } from "aws-sdk";
+
 
 
 function generateSixDigitNumber() {
