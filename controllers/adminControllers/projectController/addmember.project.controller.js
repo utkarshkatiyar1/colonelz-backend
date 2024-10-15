@@ -151,14 +151,22 @@ export const removeMemberInProject = async (req, res) => {
 export const listUserInProject = async (req, res) => {
     try {
         const project_id = req.query.project_id;
+        const org_id = req.query.org_id;
 
         if (!project_id) {
             return responseData(res, "", 400, false, "Project ID is required");
         }
+        if (!org_id) {
+            return responseData(res, "", 400, false, "Organization ID is required");
+        }
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
 
         const [findProject, findUser] = await Promise.all([
-            projectModel.findOne({ project_id }, 'project_name project_id timeline_date project_type project_status designer').lean(),
-            registerModel.find({ 'data.projectData.project_id': project_id }, 'username role _id').lean(),
+            projectModel.findOne({ project_id, org_id }, 'project_name project_id timeline_date project_type project_status designer').lean(),
+            registerModel.find({ 'data.projectData.project_id': project_id, organization: org_id }, 'username role _id').lean(),
         ]);
 
         if (!findProject) {
