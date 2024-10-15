@@ -2,6 +2,7 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
 import { s3 } from "../../../utils/function.js"
 import dotenv from "dotenv";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ const saveFileUploadData = async (res, existingFileUploadData, isFirst = false) 
     try {
         if (isFirst) {
             const firstFile = await fileuploadModel.create({
+                org_id: existingFileUploadData.org_id,
                 type: existingFileUploadData.type,
                 files: [
                     {
@@ -55,6 +57,7 @@ const saveFileUploadData = async (res, existingFileUploadData, isFirst = false) 
 
             const updateResult = await fileuploadModel.updateOne(
                 {
+                    org_id: existingFileUploadData.org_id,
                     type: existingFileUploadData.type,
                     "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
                     "files.folder_name": existingFileUploadData.folder_name,
@@ -72,7 +75,9 @@ const saveFileUploadData = async (res, existingFileUploadData, isFirst = false) 
                 responseData(res, "File data updated successfully", 200, true);
             } else {
                 const firstFile = await fileuploadModel.create({
+                    org_id: existingFileUploadData.org_id,
                     type: existingFileUploadData.type,
+
                     files: [
                         {
                             folder_name: existingFileUploadData.folder_name,
@@ -102,10 +107,15 @@ export const templateFileUpload = async (req, res) => {
     const sub_folder_name_first = req.body.sub_folder_name_first;
     const sub_folder_name_second = req.body.sub_folder_name_second;
     const type = req.body.type;
+    const org_id = req.body.org_id;
 
     if (!folder_name || !sub_folder_name_first || !sub_folder_name_second || !type) {
         responseData(res, "", 403, false, "folder name, sub folder names, and type are required", []);
         return;
+    }
+    if(!org_id)
+    {
+        responseData(res, "", 403, false, "Org Id required!", []);
     }
 
     if (type !== "template") {
@@ -114,6 +124,10 @@ export const templateFileUpload = async (req, res) => {
     }
 
     try {
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            responseData(res, "", 404, false, "Org not found!", []);
+        }
         const files = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
 
         if (!files || files.length === 0) {
@@ -159,6 +173,7 @@ export const templateFileUpload = async (req, res) => {
                 if (sub_folder_name_first === "designing" || sub_folder_name_first === "executing" || sub_folder_name_first === "company policies") {
                     const folder_Id = `FOL_ID${generateSixDigitNumber()}`;
                     const check_type = await fileuploadModel.findOne({
+                        org_id: org_id,
                         type: type,
                         "files.folder_name": folder_name,
                         "files.sub_folder_name_first": sub_folder_name_first,
@@ -168,6 +183,7 @@ export const templateFileUpload = async (req, res) => {
                         await saveFileUploadData(res, {
                             folder_name,
                             folder_Id,
+                            org_id,
                             sub_folder_name_first,
                             sub_folder_name_second,
                             updated_Date: fileUrls[0].date,
@@ -178,6 +194,7 @@ export const templateFileUpload = async (req, res) => {
                         await saveFileUploadData(res, {
                             folder_name,
                             folder_Id,
+                            org_id,
                             sub_folder_name_first,
                             sub_folder_name_second,
                             updated_Date: fileUrls[0].date,
@@ -198,6 +215,7 @@ export const templateFileUpload = async (req, res) => {
 export const getSingleTemplateFile = async (req, res) => {
     const file_id = req.query.file_id;
     const folder_id = req.query.folder_id;
+    const org_id = req.query.org_id;
 
     if (!file_id) {
         responseData(res, "", 400, false, "file_id is required");
@@ -205,9 +223,17 @@ export const getSingleTemplateFile = async (req, res) => {
     else if (!folder_id) {
         responseData(res, "", 400, false, "folder_id is required");
     }
+    else if(!org_id)
+    {
+        responseData(res, "", 400, false, "Org Id is required");
+    }
     else {
         try {
-            const find_data = await fileuploadModel.find({ "files.folder_id": folder_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const find_data = await fileuploadModel.find({ "files.folder_id": folder_id, org_id: org_id })
             if (find_data.length > 0) {
 
                 const find_folder = find_data[0].files.find((file) =>

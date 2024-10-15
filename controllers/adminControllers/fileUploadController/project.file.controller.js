@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { responseData } from "../../../utils/respounse.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ const saveFileUploadData = async (
     if (isFirst) {
       const firstFile = await fileuploadModel.create({
         project_id: existingFileUploadData.project_id,
+        org_id: existingFileUploadData.org_id,
         project_name: existingFileUploadData.project_name,
         files: [
           {
@@ -52,6 +54,7 @@ const saveFileUploadData = async (
       const updateResult = await fileuploadModel.updateOne(
         {
           project_id: existingFileUploadData.project_id,
+          org_id: existingFileUploadData.org_id,
           "files.folder_name": existingFileUploadData.folder_name,
         },
         {
@@ -74,7 +77,7 @@ const saveFileUploadData = async (
       } else {
         // If the folder does not exist, create a new folder object
         const updateNewFolderResult = await fileuploadModel.updateOne(
-          { project_id: existingFileUploadData.project_id },
+          { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
           {
             $push: {
               files: {
@@ -115,14 +118,25 @@ const saveFileUploadData = async (
 const projectFileUpload = async (req, res) => {
   const folder_name = req.body.folder_name;
   const project_id = req.body.project_id;
+  const org_id = req.body.org_id;
 
   if (!project_id) {
     responseData(res, "", 403, false, "project Id required!", []);
   } else if (!folder_name) {
     responseData(res, "", 403, false, "folder name required!", []);
-  } else {
+  } 
+  else if(!org_id)
+  {
+    responseData(res, "", 403, false, "Org Id required!", []);
+  }
+  else {
     try {
-      const find_project = await projectModel.find({ project_id: project_id });
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        responseData(res, "", 404, false, "Org not found!", []);
+      }
+
+      const find_project = await projectModel.find({ project_id: project_id, org_id: org_id });
       if (find_project.length < 1) {
         responseData(res, "", 404, false, "project not found!", []);
       }
@@ -183,12 +197,13 @@ const projectFileUpload = async (req, res) => {
 
 
           const existingFile = await fileuploadModel.findOne({
-            project_id: project_id,
+            project_id: project_id, org_id: org_id
           });
 
           if (existingFile) {
             await saveFileUploadData(res, {
               project_id,
+              org_id,
               project_name,
               folder_name,
               updated_Date: fileUrls[0].date,
@@ -199,6 +214,7 @@ const projectFileUpload = async (req, res) => {
               res,
               {
                 project_id,
+                org_id,
                 project_name,
                 folder_name,
                 updated_Date: fileUrls[0].date,
