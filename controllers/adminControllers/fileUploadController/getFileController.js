@@ -2,10 +2,22 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import { responseData } from "../../../utils/respounse.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 export const getFileData = async (req, res) => {
   try {
-    const data = await fileuploadModel.find({})
+    const org_id = req.query.org_id;
+    if(!org_id)
+    {
+      return responseData(res, "", 404, false, "Org Id required", []);
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    const data = await fileuploadModel.find({org_id: org_id })
+      .populate('project_id', 'project_id client project_type project_status')
+      .populate('lead_id', 'lead_id email status date')
       .select('project_id lead_id lead_name project_name')
       .lean();
 
@@ -17,8 +29,8 @@ export const getFileData = async (req, res) => {
     const leadIds = [...new Set(data.map(d => d.lead_id).filter(Boolean))];
 
     const [projects, leads] = await Promise.all([
-      projectModel.find({ project_id: { $in: projectIds } }).select('project_id client project_type project_status').lean(),
-      leadModel.find({ lead_id: { $in: leadIds } }).select('lead_id email status date').lean(),
+      projectModel.find({ project_id: { $in: projectIds }, org_id: org_id }).select('project_id client project_type project_status').lean(),
+      leadModel.find({ lead_id: { $in: leadIds }, org_id: org_id }).select('lead_id email status date').lean(),
     ]);
 
     const projectMap = new Map(projects.map(p => [p.project_id, p]));

@@ -217,8 +217,17 @@ export const roleWiseAccess = async (req, res) => {
 
 export const roleName = async (req, res) => {
     try {
+        const org_id = req.query.org_id;
+        if(!org_id)
+        {
+            return responseData(res, "", 404, false, "Org Id required", []);
+        }
         // Use lean to get plain JavaScript objects and only fetch the 'role' field
-        const roles = await roleModel.find({}, 'role').lean();
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const roles = await roleModel.find({org_id: org_id}, 'role').lean();
 
         if (!roles.length) {
             return responseData(res, "No role found", 200, true, "");
