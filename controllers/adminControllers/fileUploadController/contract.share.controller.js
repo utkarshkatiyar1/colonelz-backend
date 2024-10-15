@@ -7,6 +7,7 @@ import { admintransporter, s3 } from "../../../utils/function.js"
 import orgModel from "../../../models/orgmodels/org.model.js";
 
 
+
 function generateSixDigitNumber() {
     const min = 100000;
     const max = 999999;
@@ -363,11 +364,16 @@ function createEmailBody(client_name, project_name, site_location, contractUrl, 
 
 export const updateStatusAdmin = async (req, res) => {
     try {
-        const file_id = req.params.fileId;
-        const lead_id = req.params.lead_id;
-        const status = req.params.status;
+        const file_id = req.query.fileId;
+        const lead_id = req.query.lead_id;
+        const status = req.query.status;
+        const org_id = req.query.org_id;
 
-        const check_status = await leadModel.findOne({ lead_id: lead_id })
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const check_status = await leadModel.findOne({ lead_id: lead_id, org_id: org_id })
         if (check_status) {
 
             for (let i = 0; i < check_status.contract.length; i++) {
@@ -379,7 +385,7 @@ export const updateStatusAdmin = async (req, res) => {
                     else {
                         try {
 
-                            const filter = { "data.quotationData.contract_file_id": file_id };
+                            const filter = { "data.quotationData.contract_file_id": file_id, organization: org_id };
                             const update = {
                                 $set: { "data.$[outerElem].quotationData.$[innerElem].approval_status": status }
                             };
@@ -401,6 +407,7 @@ export const updateStatusAdmin = async (req, res) => {
                             await leadModel.findOneAndUpdate(
                                 {
                                     lead_id: lead_id,
+                                    org_id: org_id,
                                     "contract.$.itemId": file_id
                                 },
                                 {
@@ -422,6 +429,7 @@ export const updateStatusAdmin = async (req, res) => {
                             await leadModel.findOneAndUpdate(
                                 {
                                     lead_id: lead_id,
+                                    org_id: org_id,
                                     "contract.$.itemId": file_id
                                 },
                                 {
@@ -466,8 +474,14 @@ export const contractStatus = async (req, res) => {
         const lead_id = req.body.lead_id;
         const itemId = req.body.file_id;
         const remark = req.body.remark;
+        const org_id = req.body.org_id;
+        
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
         const check_status = await leadModel.findOne({
-            lead_id: lead_id,
+            lead_id: lead_id, org_id: org_id,
             "contract.$.itemId": itemId
         })
         for (let i = 0; i < check_status.contract.length; i++) {
@@ -478,7 +492,7 @@ export const contractStatus = async (req, res) => {
                 }
                 else {
                     try {
-                        const filter = { "data.quotationData.contract_file_id": itemId };
+                        const filter = { "data.quotationData.contract_file_id": itemId, organization: org_id, };
                         const update = {
                             $set: { "data.$[outerElem].quotationData.$[innerElem].approval_status": status }
                         };
@@ -503,6 +517,7 @@ export const contractStatus = async (req, res) => {
                         await leadModel.findOneAndUpdate(
                             {
                                 lead_id: lead_id,
+                                org_id: org_id,
                                 "contract.$.itemId": itemId
                             },
                             {
@@ -524,6 +539,7 @@ export const contractStatus = async (req, res) => {
                         await leadModel.findOneAndUpdate(
                             {
                                 lead_id: lead_id,
+                                org_id: org_id,
                                 "contract.$.itemId": itemId
                             },
                             {
@@ -556,12 +572,21 @@ export const contractStatus = async (req, res) => {
 export const getContractData = async (req, res) => {
     try {
         const lead_id = req.query.lead_id;
+        const org_id = req.query.org_id;
 
         if (!lead_id) {
             return responseData(res, "", 400, false, "Lead id is required");
         }
+        else if(!org_id)
+        {
+            return responseData(res, "", 400, false, "Org id is required");
+        }
         else {
-            const contractData = await leadModel.find({ lead_id: lead_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const contractData = await leadModel.find({ lead_id: lead_id, org_id: org_id })
             if (contractData) {
 
                 return responseData(res, "Contract data fetched successfully", 200, true, "", contractData[0].contract);
