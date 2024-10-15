@@ -7,6 +7,7 @@ import { s3} from "../../../utils/function.js"
 import cron from "node-cron";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import moment from "moment-timezone";
+import orgModel from "../../../models/orgmodels/org.model.js";
 // Configure AWS SDK
 
 
@@ -138,6 +139,7 @@ async function deleteFolder(bucket, folder) {
 export const deletearchive = async (req, res) => {
     try {
         const user_id = req.body.user_id;
+        const org_id = req.body.org_id;
         const file_id = req.body.file_id;
         const lead_id = req.body.lead_id;
         const project_id = req.body.project_id;
@@ -151,8 +153,16 @@ export const deletearchive = async (req, res) => {
         else if (!delete_type) {
             responseData(res, "", 400, false, "type and delete_type is required", []);
         }
+        else if(!org_id)
+        {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
         else {
-            const check_user = await registerModel.findOne({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
@@ -171,6 +181,7 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
+                                org_id: org_id
 
                             },
 
@@ -184,6 +195,7 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
+                                org_id: org_id
 
                             },
 
@@ -198,7 +210,8 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
 
                         );
@@ -215,7 +228,8 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
 
                         );
@@ -237,6 +251,7 @@ export const deletearchive = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "files.folder_name": folder_name,
+                                org_id: org_id
                             },
 
                         );
@@ -259,6 +274,7 @@ export const deletearchive = async (req, res) => {
                                         { lead_id: lead_id },
                                     ],
                                     "files.folder_name": folder_name,
+                                    org_id: org_id
                                 },
 
                             );
@@ -273,7 +289,8 @@ export const deletearchive = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
 
                         );
@@ -288,7 +305,8 @@ export const deletearchive = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
                         );
                     }
@@ -790,13 +808,21 @@ export const restoreData = async (req, res) => {
         const file_id = req.body.file_id;
         const folder_name = req.body.folder_name;
         const restore_type = req.body.restore_type;
+        const org_id = req.body.org_id;
 
 
         if (!user_id) {
             responseData(res, "", 400, false, "User id is required", []);
         }
+        else if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
         else {
-            const check_user = await registerModel.findById({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "User id is not valid", []);
             }
@@ -813,6 +839,7 @@ export const restoreData = async (req, res) => {
                             { sub_folder_name_first: sub_folder_name_first },
                             { sub_folder_name_second: sub_folder_name_second }
                         ],
+                        org_id: org_id
 
                     },
 
@@ -827,7 +854,8 @@ export const restoreData = async (req, res) => {
                                 { sub_folder_name_first: sub_folder_name_first },
                                 { sub_folder_name_second: sub_folder_name_second }
                             ],
-                            "files.fileId": file_id
+                            "files.fileId": file_id,
+                            org_id: org_id
                         },
 
                     );
@@ -843,6 +871,7 @@ export const restoreData = async (req, res) => {
                                 { sub_folder_name_first: sub_folder_name_first },
                                 { sub_folder_name_second: sub_folder_name_second }
                             ],
+                            org_id: org_id
 
                         },
 
@@ -859,6 +888,7 @@ export const restoreData = async (req, res) => {
                             { lead_id: lead_id },
                         ],
                         "folder_name": folder_name,
+                        org_id: org_id
                     },
 
                 );
@@ -873,7 +903,8 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
                         );
                     }
@@ -886,7 +917,8 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
                         );
                     }
@@ -904,6 +936,7 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
+                                org_id: org_id
                             },
                         );
                     }
@@ -916,6 +949,7 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
+                                org_id: org_id
                             },
                         );
                     }
