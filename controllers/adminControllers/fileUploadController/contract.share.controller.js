@@ -4,6 +4,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { onlyAlphabetsValidation, onlyEmailValidation } from "../../../utils/validation.js";
 import { admintransporter, s3 } from "../../../utils/function.js"
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 
 function generateSixDigitNumber() {
@@ -19,7 +20,7 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
     try {
         if (isFirst) {
             const updatedLead = await leadModel.findOneAndUpdate(
-                { lead_id: existingContractData.lead_id },
+                { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
                 {
                     $push: { "contract": existingContractData.contractData }
                 },
@@ -29,10 +30,10 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
 
         }
         else {
-            const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id });
+            const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
             if (check_lead) {
                 const updatedLead = await leadModel.findOneAndUpdate(
-                    { lead_id: existingContractData.lead_id },
+                    { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
                     {
                         $push: {
                             "contract": existingContractData.contractData
@@ -87,6 +88,7 @@ const saveFileUploadData = async (
         const updateResult = await fileuploadModel.updateOne(
             {
                 lead_id: existingFileUploadData.lead_id,
+                org_id: existingFileUploadData.org_id,
                 "files.folder_name": existingFileUploadData.folder_name,
             },
             {
@@ -110,7 +112,7 @@ const saveFileUploadData = async (
         } else {
             // If the folder does not exist, create a new folder object
             const updateNewFolderResult = await fileuploadModel.updateOne(
-                { lead_id: existingFileUploadData.lead_id },
+                { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id, },
                 {
                     $push: {
                         files: {
@@ -159,38 +161,43 @@ export const shareContract = async (req, res) => {
         const client_name = req.body.client_name;
         const project_name = req.body.project_name;
         const site_location = req.body.site_location;
+        const org_id = req.body.org_id;
 
 
 
-        if (!folder_name || !fileId || !lead_id) {
+        if (!folder_name || !fileId || !lead_id || !org_id) {
             return responseData(res, "", 400, false, "Please enter all fields");
         }
 
         else {
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
             if (type === 'Internal') {
-
-                const check_lead = await leadModel.findOne({ lead_id: lead_id });
+               
+                const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id  });
                 if (!check_lead) {
                     return responseData(res, "", 400, false, "Lead not found");
                 }
                 else {
 
-                    const check_status1 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contract.admin_status": "pending" });
+                    const check_status1 = await leadModel.findOne({ lead_id: lead_id,  org_id: org_id, "contract.itemId": fileId, "contract.admin_status": "pending" });
                     if (check_status1) {
                         return responseData(res, "", 400, false, "This Contract not  closed yet");
                     }
-                    const check_status2 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contract.admin_status": "rejected" });
+                    const check_status2 = await leadModel.findOne({ lead_id: lead_id, org_id: org_id, "contract.itemId": fileId, "contract.admin_status": "rejected" });
                     if (check_status2) {
                         return responseData(res, "", 400, false, "This Contract rejected");
                     }
-                    const check_status3 = await leadModel.findOne({ lead_id: lead_id, "contract.itemId": fileId, "contracts.admin_status": "approved" });
+                    const check_status3 = await leadModel.findOne({ lead_id: lead_id, org_id: org_id, "contract.itemId": fileId, "contracts.admin_status": "approved" });
                     if (check_status3) {
                         return responseData(res, "", 400, false, "This Contract approved");
                     }
 
 
 
-                    const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId });
+                    const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId, org_id: org_id });
                     if (!check_file) {
                         return responseData(res, "", 400, false, "File not found");
                     }
@@ -212,6 +219,7 @@ export const shareContract = async (req, res) => {
 
                             const createObj = {
                                 lead_id,
+                                org_id,
                                 contractData,
                             }
 
@@ -220,6 +228,7 @@ export const shareContract = async (req, res) => {
                         else {
                             const createObj = {
                                 lead_id,
+                                org_id,
                                 contractData,
 
 
@@ -248,13 +257,13 @@ export const shareContract = async (req, res) => {
                 }
 
                 // Check lead existence
-                const check_lead = await leadModel.findOne({ lead_id });
+                const check_lead = await leadModel.findOne({ lead_id, org_id });
                 if (!check_lead) {
                     return responseData(res, "", 400, false, "Invalid lead id");
                 }
 
                 // Check file existence
-                const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId });
+                const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId, org_id: org_id });
                 if (!check_file) {
                     return responseData(res, "", 400, false, "File not found");
                 }
@@ -281,7 +290,7 @@ export const shareContract = async (req, res) => {
                     date: new Date()
                 }];
 
-                const existingFile = await fileuploadModel.findOne({ lead_id });
+                const existingFile = await fileuploadModel.findOne({ lead_id, org_id });
                 if (existingFile) {
                     const mailOptions = {
                         from: process.env.INFO_USER_EMAIL,
@@ -297,6 +306,7 @@ export const shareContract = async (req, res) => {
 
                         await saveFileUploadData(res, {
                             lead_id,
+                            org_id,
                             lead_Name: existingFile.lead_name,
                             folder_name: "Quotation",
                             updated_date: new Date(),
