@@ -448,6 +448,7 @@ export const updateFollowLead = async (req, res) => {
 
         const newNotification = new Notification({
           type: "lead",
+          org_id: org_id,
           notification_id: generateSixDigitNumber(),
           itemId: lead_id,
           message: `Lead status updated: Lead name ${find_lead[0].name} status changed to ${status} on  ${formatedDate}.`,
