@@ -112,7 +112,7 @@ export const getRole = async (req, res) => {
 export const UpdateRole = async (req, res) => {
     try {
         const { role, access } = req.body;
-        const { id } = req.query;
+        const { id, org_id } = req.query;
 
         if (!id) {
             return responseData(res, "", 400, false, "Role id is required");
@@ -125,16 +125,23 @@ export const UpdateRole = async (req, res) => {
         if (!access) {
             return responseData(res, "", 400, false, "Access is required");
         }
+        if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
 
-        const existingRole = await roleModel.findById(id);
+        const existingRole = await roleModel.findOne({_id:id, org_id: org_id});
         if (!existingRole) {
             return responseData(res, "", 404, false, "Role not found for this id");
         }
 
-        const updatedRole = await roleModel.findByIdAndUpdate(id, { role, access }, { new: true });
+        const updatedRole = await roleModel.findOneAndUpdate({_id:id, org_id: org_id}, { role, access }, { new: true });
 
         if (updatedRole) {
-            const usersToUpdate = await registerModel.find({ role: existingRole.role });
+            const usersToUpdate = await registerModel.find({ role: existingRole.role, organization:org_id });
 
             if (usersToUpdate.length > 0) {
                 await Promise.all(usersToUpdate.map(user =>
@@ -157,21 +164,29 @@ export const UpdateRole = async (req, res) => {
 export const DeleteRole = async (req, res) => {
     try {
         const id = req.query.id;
+        const org_id = req.query.org_id;
 
         if (!id) {
             return responseData(res, "", 400, false, "Role id is required");
         }
+         if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
 
-        const check_role = await roleModel.findById(id);
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        const check_role = await roleModel.findOne({_id:id, org_id: org_id});
         if (!check_role) {
             return responseData(res, "", 404, false, "Role not found for this id");
         }
-        const users = await registerModel.find({ role: check_role.role });
+        const users = await registerModel.find({ role: check_role.role, organization: org_id });
         if (users.length > 0) {
             return responseData(res, "", 400, false, "This role cannot be deleted as it is assigned to the user.");
         }
 
-        await roleModel.findByIdAndDelete(id);
+        await roleModel.findOneAndDelete({_id:id, org_id: org_id});
         responseData(res, `${check_role.role} role has been deleted`, 200, true, "");
 
     } catch (err) {

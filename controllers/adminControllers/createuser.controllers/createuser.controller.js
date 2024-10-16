@@ -335,7 +335,7 @@ export const deleteUserArchive = async(req,res) =>{
                 return responseData(res, "", 404, false, "User Not Found");
             }
             else {
-             await registerModel.findOneAndDelete({ _id: user_id })
+             await registerModel.findOneAndDelete({ _id: user_id, organization: user.organization })
              return responseData(res, "User Deleted Successfully", 200, true, "");
              }
 }
@@ -363,16 +363,17 @@ export const updateUserRole = async(req,res) =>{
             return responseData(res, "", 404, false, "User Not Found");
         }
 
-        const check_role = await roleModel.findOne({ role });
+        const check_role = await roleModel.findOne({ role: role, org_id: user.organization });
         if (!check_role) {
             return responseData(res, "", 404, false, "Role Not Found");
         }
 
-        await registerModel.findByIdAndUpdate(user_id, {
+        await registerModel.findOneAndUpdate({_id: user_id, organization: user.organization}, {
             $set: {
                 role:role,
                 access: check_role.access
-            }
+            },
+            
         }, { new: true });
 
         return responseData(res, "User Updated Successfully", 200, true, "");
