@@ -6,6 +6,7 @@ import { responseData } from "../../utils/respounse.js";
 import notificationModel from "../../models/adminModels/notification.model.js";
 import cron from "node-cron";
 import registerModel from "../../models/usersModels/register.model.js";
+import orgModel from "../../models/orgmodels/org.model.js";
 
 function generatedigitnumber() {
   const length = 6;
@@ -20,18 +21,18 @@ function generatedigitnumber() {
 
 
 
-export const notificationForUser = async (req, res, user_name) => {
+export const notificationForUser = async (req, res, user_name, org_id) => {
   try {
-    const find_user = await registerModel.findOne({ username: user_name, status: true });
+    const find_user = await registerModel.findOne({ username: user_name, status: true,organization:org_id });
     if (find_user) {
       for (const item of find_user.data[0].projectData) {
-        let find_notification = await notificationModel.find({ itemId: item.project_id });
+        let find_notification = await notificationModel.find({ itemId: item.project_id, org_id: org_id });
 
         if (find_notification.length > 0) {
 
           for (let i = 0; i < find_notification.length; i++) {
             const add_notification_in_user = await registerModel.findOneAndUpdate(
-              { username: user_name },
+              { username: user_name, organization: org_id },
               {
                 $push: {
                   "data.$[outer].notificationData": find_notification[i]
@@ -92,9 +93,17 @@ const delete_notification_for_user = async (req, res, user_name) => {
 
 const notification = async (req, res) => {
   try {
+    const org_id = req.query.org_id;
+     if(!org_id) {
+  responseData(res, "", 400, false, "org id is required", []);
+}
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     const currentDate = new Date();
 
-    const projects = await projectModel.find({});
+    const projects = await projectModel.find({org_id: org_id});
 
     const notificationData = {
       approachingProjects: [],
@@ -116,6 +125,7 @@ const notification = async (req, res) => {
             // Project end date is approaching
             const approachingProjectNotification = new Notification({
               type: "project",
+              org_id: org_id,
               itemId: project.project_id,
               notification_id:generatedigitnumber(),
               message: `Approaching project deadline: ${project.project_name} (${daysRemaining} days remaining until project completion)`,
@@ -128,6 +138,7 @@ const notification = async (req, res) => {
           else if (daysRemaining == 0) {
             const approachingProjectNotification = new Notification({
               type: "project",
+              org_id: org_id,
               itemId: project.project_id,
               notification_id: generatedigitnumber(),
               message: `Approaching project: ${project.project_name} ( project end date today. Please check )`,
@@ -148,6 +159,7 @@ const notification = async (req, res) => {
           const overdueProjectNotification = new Notification({
             type: "project",
             itemId: project.project_id,
+            org_id: org_id,
             notification_id: generatedigitnumber(),
             message: `Overdue project: ${project.project_name} (Exceeded by ${daysExceeded} days)`,
             status: false,
@@ -157,7 +169,7 @@ const notification = async (req, res) => {
       }
     });
 
-    const leads = await leadModel.find({}); // Fetch all leads
+    const leads = await leadModel.find({ org_id: org_id, }); // Fetch all leads
 
     const outdatedLeads = leads.filter((lead) => {
       // Check if lead date is not updated after seven days
@@ -171,6 +183,7 @@ const notification = async (req, res) => {
         if (daysRemaining == 1) {
           const outdatedLeadNotification = new Notification({
             type: "lead",
+            org_id: org_id,
             itemId: lead.lead_id,
             notification_id: generatedigitnumber(),
             message: `Please check this lead named ${lead.name} for the next update. Only 1 day left.`,
@@ -181,6 +194,7 @@ const notification = async (req, res) => {
         if (daysRemaining == 0) {
           const outdatedLeadNotification = new Notification({
             type: "lead",
+            org_id: org_id,
             itemId: lead.lead_id,
             notification_id: generatedigitnumber(),
             message: `Please check this lead named ${lead.name} for the next update. Today is the meeting date.`,
@@ -264,6 +278,7 @@ cron.schedule(" 0 0 */14 * *", async () => {
 export const getNotification = async (req, res) => {
   try {
     const userId = req.query.userId;
+    const org_id = req.query.org_id;
     const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
     const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 items per page if not provided
 
@@ -271,9 +286,16 @@ export const getNotification = async (req, res) => {
     if (!userId) {
       return responseData(res, "", 400, false, "Bad Request: User ID is required");
     }
+  if (!org_id) {
+      responseData(res, "", 400, false, "org id is required", []);
+    }
 
     // Fetch the user using a lean query
-    const find_user = await registerModel.findById(userId).lean();
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    const find_user = await registerModel.findOne({_id: userId, organization: org_id}).lean();
 
     if (!find_user) {
       return responseData(res, "", 404, false, "User not found");
@@ -281,7 +303,7 @@ export const getNotification = async (req, res) => {
 
     // Fetch notifications with pagination
     const notifications = await notificationModel
-      .find({})
+      .find({org_id: org_id})
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
@@ -321,21 +343,29 @@ export const updateNotification = async (req, res) => {
     const userId = req.body.userId;
     const notification_id = req.body.notification_id;
     const type = req.body.type;
+    const org_id = req.body.org_id;
 
 
     if (!userId) {
       return responseData(res, "", 400, false, "User Id is required");
     }
+    else if (!org_id) {
+      responseData(res, "", 400, false, "org id is required", []);
+    }
     else {
-      const find_user = await registerModel.findById(userId);
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
+      const find_user = await registerModel.findOne({_id:userId, organization: org_id});
       if (!find_user) {
         return responseData(res, "", 404, false, "User not found");
       }
       else {
-        if (find_user.role === "ADMIN" || find_user.role === "Senior Architect") {
+        if (find_user.role === "ADMIN" || find_user.role === "Senior Architect" || find_user.role === "SUPERADMIN" ) {
           if (type === "One") {
             const notification = await Notification.findOneAndUpdate(
-            {notification_id:notification_id},
+            {notification_id:notification_id, org_id: org_id},
               { status: true },
               { new: true }
             );
@@ -344,7 +374,7 @@ export const updateNotification = async (req, res) => {
             if (!notification) {
 
               const notification1 = await registerModel.findOneAndUpdate(
-                { _id: userId, "data.notificationData.notification_id": notification_id },
+                { _id: userId, "data.notificationData.notification_id": notification_id, organization: org_id },
                 { $set: { "data.$[elem].notificationData.$[inner].status": true } },
                 {
                   arrayFilters: [
@@ -374,7 +404,7 @@ export const updateNotification = async (req, res) => {
           } else if (type === "All") {
             // Update status for all notifications
             const { nModified } = await Notification.updateMany(
-              {},
+              {org_id: org_id},
               { status: true }
             );
 
@@ -402,7 +432,7 @@ export const updateNotification = async (req, res) => {
             
             try {
               const result = await registerModel.findOneAndUpdate(
-                { _id: userId, "data.notificationData.notification_id": notification_id },
+                { _id: userId, "data.notificationData.notification_id": notification_id, organization: org_id },
                 { $set: { "data.$[elem].notificationData.$[inner].status": true } },
                 {
                   arrayFilters: [
@@ -425,7 +455,7 @@ export const updateNotification = async (req, res) => {
 
           } else if (type === "All") {
             const notification = await registerModel.findOneAndUpdate(
-              { "_id": userId },
+              { "_id": userId, organization: org_id },
               { "$set": { "data.$[elem].notificationData.$[inner].status": true } },
               {
                 arrayFilters: [

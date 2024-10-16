@@ -59,7 +59,7 @@ export const checkAvailableUserIsAdmin = async (req, res, next) => {
     // Schedule a cron job to send a notification at midnight
     cron.schedule("0 0 * * *", async () => {
       try {
-        await notificationForUser(req, res, user.username);
+        await notificationForUser(req, res, user.username, user.organization);
         console.log("Notification cron job executed successfully");
       } catch (error) {
         console.error("Error executing notification cron job:", error);
