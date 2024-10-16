@@ -388,6 +388,7 @@ export const updateFollowLead = async (req, res) => {
   const content = req.body.content;
   const createdBy = req.body.createdBy;
   const update = req.body.date;
+  const org_id = req.body.org_id;
 
 
   if (!lead_id) {
@@ -400,16 +401,21 @@ export const updateFollowLead = async (req, res) => {
   else if (!userId) {
     responseData(res, "", 400, false, "UserId is required", []);
 
-  } else {
+  } else if(!org_id)
+    {return responseData(res, "", 400, false, "Org Id  required"); 
+    }else {
     try {
 
-
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
       const formatedDate = formatDate(update);
-      const find_lead = await leadModel.find({ lead_id: lead_id });
+      const find_lead = await leadModel.find({ lead_id: lead_id, org_id: org_id });
       if (find_lead.length > 0) {
-        const check_user = await registerModel.findById(userId);
+        const check_user = await registerModel.findOne({_id:userId, organization: org_id});
         const update_Lead = await leadModel.findOneAndUpdate(
-          { lead_id: lead_id },
+          { lead_id: lead_id, org_id: org_id },
           {
             $set: {
               status: status,
@@ -802,6 +808,7 @@ export const leadToMultipleProject = async (req, res) => {
     const lead_id = req.body.lead_id;
     const type = req.body.type;
     const user_id = req.body.user_id;
+    const org_id = req.body.org_id;
 
 
     if (!lead_id) {
@@ -813,19 +820,27 @@ export const leadToMultipleProject = async (req, res) => {
     else if (!user_id) {
       responseData(res, "", 400, false, "user id is required", []);
     }
+    else if(!org_id)
+    {
+      return responseData(res, "", 400, false, "Org Id  required");
+    }
     else {
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
       if (type) {
-        const check_user = await registerModel.findById(user_id)
+        const check_user = await registerModel.findOne({_id:user_id, organization: org_id})
         if (!check_user) {
           responseData(res, "", 400, false, " Invalid user Id", []);
         }
         else {
           if (check_user) {
-            const check_lead = await leadModel.findOne({ lead_id: lead_id })
+            const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id })
             if (!check_lead) {
               responseData(res, "", 404, false, "lead not found", []);
             }
-            const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id }, { project_id: null }] })
+            const check_lead_in_file = await fileuploadModel.findOne({ $and: [{ lead_id: lead_id, org_id: org_id }, { project_id: null }] })
             if (check_lead_in_file) {
               responseData(res, "", 400, false, "lead already activate", []);
             }
@@ -834,6 +849,7 @@ export const leadToMultipleProject = async (req, res) => {
 
               const fileUploadData = new fileuploadModel({
                 lead_id: lead_id,
+                org_id: org_id,
                 lead_name: check_lead.name,
 
                 files: [{
@@ -855,7 +871,7 @@ export const leadToMultipleProject = async (req, res) => {
 
               })
               await leadModel.findOneAndUpdate(
-                { lead_id: lead_id },
+                { lead_id: lead_id, org_id: org_id },
                 {
                   $set: {
                     lead_status: "Follow Up",
@@ -920,6 +936,7 @@ export const updateLead = async (req, res) => {
     const date = req.body.date;
     const lead_manager = req.body.lead_manager;
     const user_id = req.body.user_id;
+    const org_id = req.body.org_id;
 
     if (!onlyAlphabetsValidation(name) && name.length >= 3) {
       responseData(
@@ -953,19 +970,26 @@ export const updateLead = async (req, res) => {
       )
 
     }
+    else if (!org_id) {
+      responseData(res, "", 400, false, "org id is required", []);
+    }
     else {
-      const check_user = await registerModel.findOne({ _id: user_id })
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
+      const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
       if (!check_user) {
         responseData(res, "", 403, false, "user not found.")
       }
       else {
-        const check_lead = await leadModel.findOne({ lead_id: lead_id })
+        const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id })
         if (!check_lead) {
           responseData(res, "", 403, false, "lead not found.")
         }
         else {
           await leadModel.findOneAndUpdate(
-            { lead_id: lead_id },
+            { lead_id: lead_id, org_id: org_id },
             {
               $set: {
                 name: name,
@@ -990,7 +1014,7 @@ export const updateLead = async (req, res) => {
             }
 
           );
-          await fileuploadModel.findOneAndUpdate({ lead_id: lead_id },
+          await fileuploadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
             {
               $set: {
                 lead_name: name
@@ -1061,6 +1085,7 @@ export const deleteInvativeLead = async (req, res) => {
   try {
     const user = req.user;
     const lead_id = req.query.lead_id;
+    const org_id = req.query.org_id;
 
 
     // Validate user and lead_id
@@ -1071,21 +1096,29 @@ export const deleteInvativeLead = async (req, res) => {
     if (!lead_id) {
       return responseData(res, "", 400, false, "lead_id is required.");
     }
+     if (!org_id) {
+      responseData(res, "", 400, false, "org id is required", []);
+    }
 
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     // Check for the lead
-    const check_lead = await leadModel.findOne({ lead_id, status: 'Inactive' });
+    const check_lead = await leadModel.findOne({ lead_id, status: 'Inactive', org_id });
     console.log('Lead found:', check_lead);
 
     if (!check_lead) {
       return responseData(res, "", 404, false, "Lead not found.");
     }
+    
 
     // Perform deletions
     await Promise.all([
       deleteFolder(process.env.S3_BUCKET_NAME, `${lead_id}/`),
-      leadModel.findOneAndDelete({ lead_id, status: 'Inactive' }),
-      fileuploadModel.findOneAndDelete({ lead_id }),
-      archiveModel.deleteMany({ lead_id }),
+      leadModel.findOneAndDelete({ lead_id, org_id, status: 'Inactive' }),
+      fileuploadModel.findOneAndDelete({ lead_id, org_id }),
+      archiveModel.deleteMany({ lead_id, org_id }),
     ]);
 
     return responseData(res, "Lead deleted successfully.", 200, true, "");
@@ -1102,6 +1135,7 @@ export const deleteInvativeLead = async (req, res) => {
 export const leadActivity = async (req, res) => {
   try {
     const lead_id = req.query.lead_id;
+    const org_id = req.query.org_id;
     const page = parseInt(req.query.page, 10) || 1; // Default to page 1
     const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
     const skip = (page - 1) * limit;
@@ -1109,10 +1143,17 @@ export const leadActivity = async (req, res) => {
     if (!lead_id) {
       return responseData(res, "", false, 400, "Lead Id is required");
     }
+     if (!org_id) {
+      responseData(res, "", 400, false, "org id is required", []);
+    }
 
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     // Fetch lead activities and only the lead_update_track field
     const lead = await leadModel
-      .findOne({ lead_id: lead_id })
+      .findOne({ lead_id: lead_id, org_id: org_id })
       .select('lead_update_track');
 
     if (!lead) {
