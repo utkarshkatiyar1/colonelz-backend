@@ -1,4 +1,5 @@
 import leadModel from "../../../models/adminModels/leadModel.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import Mongoose from "mongoose";
@@ -19,6 +20,7 @@ export const AddMemberInLead = async (req, res) => {
     const lead_id = req.body.lead_id;
     const user_name = req.body.user_name;
     const role = req.body.role;
+    const org_id = req.body.org_id;
 
     if (!id) {
         responseData(res, "", 400, false, "Please provide Id");
@@ -26,14 +28,21 @@ export const AddMemberInLead = async (req, res) => {
         responseData(res, "", 400, false, "Please provide lead Id");
     } else if (!user_name) {
         responseData(res, "", 400, false, "Please provide user name");
-    } else {
+    } else if (!org_id) {
+        responseData(res, "", 400, false, "org id is required", []);
+    }
+     else {
         try {
-            const find_user = await registerModel.findOne({ _id: id });
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const find_user = await registerModel.findOne({ _id: id, organization: org_id });
             if (find_user) {
 
-                const find_lead = await leadModel.findOne({ lead_id: lead_id });
+                const find_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
                 if (find_lead) {
-                    const find_user_name = await registerModel.findOne({ username: user_name });
+                    const find_user_name = await registerModel.findOne({ username: user_name, organization: org_id });
                     if (find_user_name) {
                         let leadDataIndex = find_user_name.data.findIndex(item => item.leadData);
                         if (leadDataIndex === -1) {
@@ -46,7 +55,7 @@ export const AddMemberInLead = async (req, res) => {
                         } else {
                             // Add new project details to projectData array
                             const add_project_in_user = await registerModel.findOneAndUpdate(
-                                { username: user_name },
+                                { username: user_name, organization: org_id },
                                 {
                                     $push: {
                                         "data.$[outer].leadData": {
@@ -60,7 +69,7 @@ export const AddMemberInLead = async (req, res) => {
                                 }
                             );
                             await registerModel.updateOne(
-                                { username: user_name },
+                                { username: user_name, organization: org_id },
                                 {
                                     $push: {
                                         "data.$[elem].notificationData": {
@@ -105,6 +114,7 @@ export const removeMemberInlead = async (req, res) => {
 
         const lead_id = req.body.lead_id;
         const username = req.body.username;
+        const org_id = req.body.org_id;
 
         if (!lead_id) {
             responseData(res, "", 400, false, "Lead id is required");
@@ -112,16 +122,23 @@ export const removeMemberInlead = async (req, res) => {
         else if (!username) {
             responseData(res, "", 400, false, "Username is required");
         }
+        else if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
         else {
-            const find_lead = await leadModel.findOne({ lead_id: lead_id });
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const find_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
             if (find_lead) {
-                const find_user = await registerModel.findOne({ username: username });
+                const find_user = await registerModel.findOne({ username: username, organization: org_id });
                 // console.log(find_user)
                 if (find_user) {
-                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.leadData.lead_id": lead_id });
+                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.leadData.lead_id": lead_id, organization: org_id });
                     if (find_user_in_lead) {
                         const remove_lead_in_user = await registerModel.findOneAndUpdate(
-                            { username: username },
+                            { username: username, organization: org_id },
                             {
                                 $pull: {
                                     "data.$[outer].leadData": {
@@ -157,13 +174,21 @@ export const removeMemberInlead = async (req, res) => {
 export const listUserInLead = async (req, res) => {
     try {
         const lead_id = req.query.lead_id;
+        const org_id = req.query.org_id;
 
         if (!lead_id) {
             return responseData(res, "", 400, false, "Lead ID is required");
         }
+         if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
         //   const leadId = parseInt(lead_id)
         const [findlead, findUser] = await Promise.all([
-            leadModel.findOne({lead_id:lead_id }).lean(),
+            leadModel.findOne({lead_id:lead_id, org_id: org_id }).lean(),
             registerModel.find({ 'data.leadData.lead_id': lead_id }).lean(),
         ]);
 
