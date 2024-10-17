@@ -55,15 +55,9 @@ router.route("/get").get(verifyJWT, getBillingShippingDetails)
  *               userId:
  *                 type: string
  *                 example: "uf4y78oy47brt6434re"
- *               billing_address:
+ *               billing_shipping_address:
  *                 type: string
  *                 example: "gonda"
- *               shipping_address:
- *                 type: string
- *                 example: "kanpur"
- *               godown_address:
- *                 type: string
- *                 example: "mumbai"
  *               city:
  *                 type: string
  *                 example: "pune"
