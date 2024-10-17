@@ -271,10 +271,12 @@ export const registerUser = async (req, res) => {
 
               const org = await orgModel.create({
                 organization: orgnisation,
+                email: email,
                 org_email: "",
                 org_phone: "",
-                org_address_line1: "",
-                org_address_line2: "",
+                currency: "",
+                org_address: "",
+                vat_tax_gst_number: "",
                 org_city: "",
                 org_state: "",
                 org_country: "",

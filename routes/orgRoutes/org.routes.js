@@ -59,8 +59,11 @@ router.route("/get").get(verifyJWT, getOrg)
  *                 type: string
  *                 example: "9087654321"
  *               org_phone:
- *                 type: string
+ *                 type: number
  *                 example: "9087654321"
+ *               email:
+ *                 type: string
+ *                 example: "jane.doe@example.com"
  *               org_email:
  *                 type: string
  *                 example: "john.doe@example.com"
