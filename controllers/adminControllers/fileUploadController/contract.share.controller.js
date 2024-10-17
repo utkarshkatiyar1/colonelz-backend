@@ -51,7 +51,7 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
 
 }
 
-const uploadImage = async (req, file, lead_id, fileName) => {
+const uploadImage = async (req, file, lead_id, org_id, fileName) => {
 
     if (typeof fileName !== 'string') {
         fileName = String(fileName);
@@ -59,7 +59,7 @@ const uploadImage = async (req, file, lead_id, fileName) => {
     // console.log(file)
     let response = s3
         .upload({
-            Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/Quotation`,
+            Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/Quotation`,
             Key: fileName,
             Body: file.data,
             ContentType: file.mimetype,
@@ -277,7 +277,7 @@ export const shareContract = async (req, res) => {
                 }
 
                 // Upload quotation image
-                const response = await uploadImage(req, quotation, lead_id, quotation.name);
+                const response = await uploadImage(req, quotation, lead_id,org_id, quotation.name);
                 if (!response.status) {
                     return responseData(res, "", 400, false, "Failed to upload quotation");
                 }

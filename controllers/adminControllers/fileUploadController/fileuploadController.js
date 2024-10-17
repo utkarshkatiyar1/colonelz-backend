@@ -17,10 +17,10 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const uploadFile = async (file, fileName, lead_id, folder_name) => {
+const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
   return s3
     .upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
@@ -173,7 +173,7 @@ const fileupload = async (req, res) => {
           fileSize.push(fileSizeInBytes / 1024)
 
 
-          fileUploadPromises.push(uploadFile(file, fileName, lead_id, folder_name));
+          fileUploadPromises.push(uploadFile(file, fileName, lead_id,org_id, folder_name));
         }
 
 

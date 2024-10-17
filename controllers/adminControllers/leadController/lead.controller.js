@@ -25,10 +25,10 @@ function generateSixDigitNumber() {
 
 
 
-const uploadFile = async (file, fileName, lead_id, folder_name) => {
+const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
   let response = s3
     .upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
@@ -551,7 +551,7 @@ export const leadToProject = async (req, res) => {
               const fileName = file.name;
               const folder_name = `Contract`;
               const fileSizeInBytes = file.size;
-              let response = await uploadFile(file, fileName, lead_id, folder_name)
+              let response = await uploadFile(file, fileName, lead_id,org_id, folder_name)
 
               if (response.status) {
 
@@ -672,7 +672,7 @@ export const leadToProject = async (req, res) => {
             const fileName = file.name;
             const folder_name = `Contract`;
             const fileSizeInBytes = file.size;
-            let response = await uploadFile(file, fileName, lead_id, folder_name)
+            let response = await uploadFile(file, fileName, lead_id,org_id, folder_name)
 
             if (response.status) {
 

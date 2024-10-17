@@ -16,14 +16,14 @@ function generateSixDigitNumber() {
 }
 
 
-const uploadImage = async (req, filePath, lead_id, fileName) => {
+const uploadImage = async (req, filePath, lead_id, org_id, fileName) => {
 
   if (typeof fileName !== 'string') {
     fileName = String(fileName);
   }
   let response = s3
     .upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/contract`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/contract`,
       Key: fileName,
       Body: fs.createReadStream(filePath),
       ContentType: 'application/pdf',
@@ -165,7 +165,7 @@ export const contractShare = async (req, res) => {
           let response;
           try {
 
-            response = await uploadImage(req, filePath, lead_id, contract_pdf.name);
+            response = await uploadImage(req, filePath, lead_id,org_id, contract_pdf.name);
 
             if (response.status) {
 

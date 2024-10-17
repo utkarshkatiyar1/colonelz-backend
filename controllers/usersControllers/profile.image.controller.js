@@ -3,10 +3,10 @@ import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
 import { onlyAlphabetsValidation } from "../../utils/validation.js";
 
-const uploadImage = async (req, fileName, userId, key) => {
+const uploadImage = async (req, fileName, userId,org_id, key) => {
   try {
     const data = await s3.upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${userId}/profile`,
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${userId}/profile`,
       Key: fileName,
       Body: req.files[key].data,
       ContentType: req.files[key].mimetype,
@@ -49,14 +49,23 @@ const setProfileUrlInDB = async (res, response, userId, user_name) => {
 export const profileUpload = async (req, res) => {
   const userId = req.body.userId;
   const user_name = req.body.user_name;
+  const org_id = req.body.org_id;
 
   if (!userId) {
     return responseData(res, "", 400, false, "UserId is required");
   }
+  if(!org_id)
+  {
+    return responseData(res, "", 400, false, "Org id is required");
+  }
 
   try {
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     const file = req.files ? req.files.file : null; 
-
+let data = []
     if (!file) {
       if (!onlyAlphabetsValidation(user_name) || user_name.length <= 3) {
         return responseData(res, "", 400, false, "User Name is not valid");
@@ -66,7 +75,7 @@ export const profileUpload = async (req, res) => {
 
     const fileName = `${Date.now()}_${file.name}`;
     console.log(fileName);
-    const response = await uploadImage(req, fileName, userId, "file");
+    const response = await uploadImage(req, fileName, userId, org_id, "file");
 
     if (response.status) {
       if(!user_name)
@@ -75,6 +84,7 @@ export const profileUpload = async (req, res) => {
       }
       else{
         await setProfileUrlInDB(res, response, userId, user_name);
+        console.log
       }
      
     } else {
