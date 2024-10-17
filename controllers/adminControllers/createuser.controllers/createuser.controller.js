@@ -109,6 +109,10 @@ export const createUser = async (req, res) => {
                                     }
                                     
                                 });
+                                const check_org = await orgModel.findOne({ _id: user.organization })
+                                if (!check_org) {
+                                    return responseData(res, "", 404, false, "Org not found");
+                                }
 
                                 const mailOptions = {
                                     from: process.env.INFO_USER_EMAIL,
@@ -127,7 +131,7 @@ export const createUser = async (req, res) => {
                                         <p>Your login credentials for our system are as follows:</p>
                                         <p><strong>Username:  </strong>${user_name}</p>
                                         <p><strong>Password:  </strong>${password}</p>
-                                         <p><strong>Organisation Name:  </strong>${user.organization}</p>
+                                         <p><strong>Organisation Name:  </strong>${check_org.organization}</p>
                                         <p>Please click on the following link to login:</p>
                                         <p><a href=${process.env.LOGIN_URL}>Login</a></p>
                                         <p>Please use the above credentials to log in to our system.</p>
