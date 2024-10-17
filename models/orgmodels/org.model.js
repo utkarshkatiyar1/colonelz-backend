@@ -4,7 +4,7 @@ const orgSchema = new mongoose.Schema({
 
 
     org_phone: {
-        type: String,
+        type: Number,
         // required: true,
     },
 
@@ -12,15 +12,23 @@ const orgSchema = new mongoose.Schema({
         type: String,
         // required: true,
     },
+    email: {
+        type: String,
+        // required: true,
+    },
+    currency: {
+        type: String,
+        // required: true,
+    },
+    vat_tax_gst_number: {
+        type: String,
+        // required: true,
+    },
     org_website: {
         type: String,
         // required: true,
     },
-    org_address_line1: {
-        type: String,
-        // required: true,
-    },
-    org_address_line2: {
+    org_address: {
         type: String,
         // required: true,
     },

@@ -12,6 +12,7 @@ import fileUpload from "express-fileupload";
 import adminRoutes from "./routes/adminRoutes/adminroutes.js";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/usersRoutes/users.route.js";
+import orgRouter from "./routes/orgRoutes/org.routes.js";
 import session from "express-session";
 import expressWinston from "express-winston";
 import winston, { format } from "winston";
@@ -115,6 +116,7 @@ app.use(expressWinston.logger({
 
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
+app.use("/v1/api/org", orgRouter);
 
 setupSwaggerDocs(app);
 
