@@ -78,7 +78,7 @@ const saveFileUploadData = async (
       } else {
         // If the folder does not exist, create a new folder object
         const updateNewFolderResult = await fileuploadModel.updateOne(
-          { project_id: existingFileUploadData.project_id, org_id: org_id },
+          { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
           {
             $push: {
               files: {

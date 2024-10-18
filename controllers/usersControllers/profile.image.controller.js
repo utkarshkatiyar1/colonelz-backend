@@ -2,6 +2,7 @@ import { s3 } from "../../utils/function.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import { responseData } from "../../utils/respounse.js";
 import { onlyAlphabetsValidation } from "../../utils/validation.js";
+import orgModel from "../../models/orgmodels/org.model.js";
 
 const uploadImage = async (req, fileName, userId,org_id, key) => {
   try {
