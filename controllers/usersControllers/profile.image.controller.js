@@ -52,6 +52,8 @@ export const profileUpload = async (req, res) => {
   const user_name = req.body.user_name;
   const org_id = req.body.org_id;
 
+  console.log(req.body)
+
   if (!userId) {
     return responseData(res, "", 400, false, "UserId is required");
   }
