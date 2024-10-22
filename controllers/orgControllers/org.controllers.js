@@ -97,7 +97,7 @@ export const updateOrg = async (req, res) => {
 
                         const fileName = `${Date.now()}_${file.name}`;
                         console.log(fileName);
-                        const response = await uploadImage(req, fileName, org_id, "org_logo");
+                        const response = await uploadImage(req, fileName, org_id, "file");
 
                         if (response.status) {
                             await setProfileUrlInDB(res, response, org_id, req);
