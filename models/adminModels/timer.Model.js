@@ -31,6 +31,10 @@ const taskWorkSchema = new mongoose.Schema({
         type: String,
 
     },
+    org_id: 
+    { type: String,
+     required: true 
+    },
     task_assignee: {
         type: String,
         required: true,

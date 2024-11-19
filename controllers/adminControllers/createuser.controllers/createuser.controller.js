@@ -5,6 +5,8 @@ import loginModel from "../../../models/usersModels/login.model.js";
 import roleModel from "../../../models/adminModels/role.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import { infotransporter } from "../../../utils/function.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
+import orgusermapModel from "../../../models/orgmodels/orgusermap.model.js";
 
 
 function generateStrongPassword() {
@@ -23,6 +25,7 @@ function generateStrongPassword() {
 
 export const createUser = async (req, res) => {
     const id = req.body.id;
+    const org_id = req.body.org_id;
     const user_name = req.body.user_name;
     const email = req.body.email;
     const role = req.body.role;
@@ -32,10 +35,17 @@ export const createUser = async (req, res) => {
 
     if (!id) {
         return responseData(res, "", 400, false, "Please provide id");
+    } 
+    else if (!org_id) {
+        return responseData(res, "", 400, false, "Please provide org id");
     } else if (!user_name) {
         return responseData(res, "", 400, false, "Please provide user name");
     } else {
         try {
+            const check_org = await orgModel.findOne({ _id: org_id, status: true })
+            if (!check_org) {
+                return responseData(res, "", 400, false, "Please provide valid org id");
+            }
             const user = await registerModel.findOne({ _id: id });
             if (!user) {
                 return responseData(res, "", 404, false, "User not found");
@@ -45,7 +55,8 @@ export const createUser = async (req, res) => {
                         {
                             return responseData(res, "", 400, false, "You are not allowed to create admin");
                         }
-                    const check_email_or_user_name = await registerModel.find({ $or: [{ email: email }, { username: user_name }] });
+                    const check_email_or_user_name = await registerModel.find({email:email });
+                    console.log(check_email_or_user_name)
                     if (check_email_or_user_name.length < 1) {
 
 
@@ -98,6 +109,10 @@ export const createUser = async (req, res) => {
                                     }
                                     
                                 });
+                                const check_org = await orgModel.findOne({ _id: user.organization })
+                                if (!check_org) {
+                                    return responseData(res, "", 404, false, "Org not found");
+                                }
 
                                 const mailOptions = {
                                     from: process.env.INFO_USER_EMAIL,
@@ -116,7 +131,7 @@ export const createUser = async (req, res) => {
                                         <p>Your login credentials for our system are as follows:</p>
                                         <p><strong>Username:  </strong>${user_name}</p>
                                         <p><strong>Password:  </strong>${password}</p>
-                                         <p><strong>Organisation Name:  </strong>${user.organization}</p>
+                                         <p><strong>Organisation Name:  </strong>${check_org.organization}</p>
                                         <p>Please click on the following link to login:</p>
                                         <p><a href=${process.env.LOGIN_URL}>Login</a></p>
                                         <p>Please use the above credentials to log in to our system.</p>
@@ -127,13 +142,17 @@ export const createUser = async (req, res) => {
                                     `,
                                 };
 
-                                infotransporter.sendMail(mailOptions, (error, info) => {
+                                infotransporter.sendMail(mailOptions, async (error, info) => {
                                     if (error) {
                                         console.log(error);
                                         responseData(res, "", 400, false, "Failed to send email");
                                     }
                                      else {
                                         newUser.save();
+                                        await orgusermapModel.create({
+                                            user_id: newUser._id,
+                                            org_id: org_id,
+                                        })
                                         responseData(
                                             res,
                                             "User Created And send credential successfully!",
@@ -146,7 +165,7 @@ export const createUser = async (req, res) => {
                             }
                         });
                     } else {
-                        responseData(res, "", 400, false, "User Already Exist");
+                        responseData(res, "", 400, false, "This email already Exist");
                     }
                 } else {
                     return responseData(res, "", 400, false, "You are not allowed to perform this action");
@@ -198,6 +217,7 @@ export const getUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         const user_id = req.query.userId;
+        const org_id = req.query.org_id;
         const id = req.query.id;
         
         if (!user_id) {
@@ -207,19 +227,24 @@ export const deleteUser = async (req, res) => {
         {
             return responseData(res, "", 400, false, "Id is required");
         }
+        else if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
         else {
             if (id === user_id) {
                 return responseData(res, "", 400, false, "You can not delete yourself");
             }
-
-            const user = await registerModel.findOne({ _id: user_id, status: true })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const user = await registerModel.findOne({ _id: user_id, status: true, organization:org_id })
             if (!user) {
                 return responseData(res, "", 404, false, "User Not Found");
             }
             else {
                 
-                const deletedUser = await registerModel.findOneAndUpdate({ _id: user_id }, { status: false }, { new: true })
-                await loginModel.deleteMany({ userID: user_id })
+                const deletedUser = await registerModel.findOneAndUpdate({ _id: user_id, organization:org_id }, { status: false }, { new: true })
                 return responseData(res, "User Deleted Successfully", 200, true, "");
             }
         }
@@ -234,8 +259,16 @@ export const deleteUser = async (req, res) => {
 
 export const archiveUser = async (req, res) => {
     try {
+        const org_id = req.query.org_id;
+     if (!org_id) {
+    return responseData(res, "", 400, false, "Organization Id is required");
+      }
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
         // Fetch users with status: false and project only the necessary fields
-        const users = await registerModel.find({ status: false }, 'username role email _id access organization').lean();
+        const users = await registerModel.find({ status: false, organization:org_id }, 'username role email _id access ').lean();
 
         if (users.length === 0) {
             return responseData(res, "", 404, false, "No User Found");
@@ -247,7 +280,8 @@ export const archiveUser = async (req, res) => {
             role: user.role,
             email: user.email,
             UserId: user._id,
-            access: user.access
+            access: user.access,
+            organization: user.organization
         }));
 
         return responseData(res, "User Found", 200, true, "", filteredUsers);
@@ -260,18 +294,26 @@ export const archiveUser = async (req, res) => {
 
 export const restoreUser = async(req,res) =>{
     try{
+        const org_id = req.body.org_id;
         const user_id = req.body.user_id;
         if(!user_id)
         {
             return responseData(res, "", 400, false, "User Id is required");
         }
+        else if (!org_id) {
+            return responseData(res, "", 400, false, "Organization Id is required");
+        }
         else{
-            const user = await registerModel.findOne({ _id: user_id, status: false })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const user = await registerModel.findOne({ _id: user_id, status: false, organization: org_id })
             if (!user) {
                 return responseData(res, "", 404, false, "User Not Found");
             }
             else {
-             await registerModel.findOneAndUpdate({ _id: user_id }, { status: true }, { new: true })
+             await registerModel.findOneAndUpdate({ _id: user_id, organization:org_id }, { status: true }, { new: true })
              return responseData(res, "User Restored Successfully", 200, true, "");
               
         }
@@ -297,7 +339,7 @@ export const deleteUserArchive = async(req,res) =>{
                 return responseData(res, "", 404, false, "User Not Found");
             }
             else {
-             await registerModel.findOneAndDelete({ _id: user_id })
+             await registerModel.findOneAndDelete({ _id: user_id, organization: user.organization })
              return responseData(res, "User Deleted Successfully", 200, true, "");
              }
 }
@@ -325,16 +367,17 @@ export const updateUserRole = async(req,res) =>{
             return responseData(res, "", 404, false, "User Not Found");
         }
 
-        const check_role = await roleModel.findOne({ role });
+        const check_role = await roleModel.findOne({ role: role, org_id: user.organization });
         if (!check_role) {
             return responseData(res, "", 404, false, "Role Not Found");
         }
 
-        await registerModel.findByIdAndUpdate(user_id, {
+        await registerModel.findOneAndUpdate({_id: user_id, organization: user.organization}, {
             $set: {
                 role:role,
                 access: check_role.access
-            }
+            },
+            
         }, { new: true });
 
         return responseData(res, "User Updated Successfully", 200, true, "");

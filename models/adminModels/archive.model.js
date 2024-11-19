@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const archiveSchema = new mongoose.Schema({
     lead_id: { type: String },
+    org_id:{type: String},
     project_id: { type: String },
     lead_name: { type: String },
     project_name: { type: String },

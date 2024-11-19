@@ -3,10 +3,11 @@ import arvhiveModel from "../../../models/adminModels/archive.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import archiveModel from "../../../models/adminModels/archive.model.js";
-import { s3} from "../../../utils/function.js"
+import { s3 } from "../../../utils/function.js"
 import cron from "node-cron";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import moment from "moment-timezone";
+import orgModel from "../../../models/orgmodels/org.model.js";
 // Configure AWS SDK
 
 
@@ -21,16 +22,24 @@ const getObjectKeyFromUrl = (url) => {
 export const archive = async (req, res) => {
     try {
         const user_id = req.query.user_id;
+        const org_id = req.query.org_id;
         if (!user_id) {
             responseData(res, "", 400, false, "user_id is required", []);
         }
+        else if (!org_id) {
+            responseData(res, "", 400, false, "Org Id is required", []);
+        }
         else {
-            const check_user = await registerModel.findById({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
-             else if (check_user) {
-                const archive = await arvhiveModel.find({})
+            else if (check_user) {
+                const archive = await arvhiveModel.find({ org_id: org_id })
                 if (archive.length < 1) {
                     responseData(res, "No data found", 200, false, "", []);
                 }
@@ -129,6 +138,7 @@ async function deleteFolder(bucket, folder) {
 export const deletearchive = async (req, res) => {
     try {
         const user_id = req.body.user_id;
+        const org_id = req.body.org_id;
         const file_id = req.body.file_id;
         const lead_id = req.body.lead_id;
         const project_id = req.body.project_id;
@@ -142,8 +152,15 @@ export const deletearchive = async (req, res) => {
         else if (!delete_type) {
             responseData(res, "", 400, false, "type and delete_type is required", []);
         }
+        else if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
         else {
-            const check_user = await registerModel.findOne({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "user not found", []);
             }
@@ -162,6 +179,7 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
+                                org_id: org_id
 
                             },
 
@@ -175,6 +193,7 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
+                                org_id: org_id
 
                             },
 
@@ -189,7 +208,8 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
 
                         );
@@ -206,7 +226,8 @@ export const deletearchive = async (req, res) => {
                                     { sub_folder_name_first: sub_folder_name_first },
                                     { sub_folder_name_second: sub_folder_name_second }
                                 ],
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
 
                         );
@@ -228,6 +249,7 @@ export const deletearchive = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "files.folder_name": folder_name,
+                                org_id: org_id
                             },
 
                         );
@@ -250,6 +272,7 @@ export const deletearchive = async (req, res) => {
                                         { lead_id: lead_id },
                                     ],
                                     "files.folder_name": folder_name,
+                                    org_id: org_id
                                 },
 
                             );
@@ -264,7 +287,8 @@ export const deletearchive = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
 
                         );
@@ -279,7 +303,8 @@ export const deletearchive = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
                         );
                     }
@@ -423,6 +448,7 @@ const saveFileRestoreDataInLead = async (
             const updateResult = await fileuploadModel.updateOne(
                 {
                     lead_id: existingFileUploadData.lead_id,
+                    org_id: existingFileUploadData.org_id,
                     "files.folder_name": existingFileUploadData.folder_name,
                 },
                 {
@@ -444,7 +470,7 @@ const saveFileRestoreDataInLead = async (
                 // If the folder does not exist, create a new folder object
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { lead_id: existingFileUploadData.lead_id },
+                    { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id, },
                     {
                         $push: {
                             files: {
@@ -475,6 +501,7 @@ const saveFileRestoreDataInLead = async (
             const updateResult = await fileuploadModel.updateOne(
                 {
                     lead_id: existingFileUploadData.lead_id,
+                    org_id: existingFileUploadData.org_id,
                     "files.folder_name": existingFileUploadData.folder_name,
                 },
                 {
@@ -497,7 +524,7 @@ const saveFileRestoreDataInLead = async (
                 // If the folder does not exist, create a new folder object
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { lead_id: existingFileUploadData.lead_id },
+                    { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id, },
                     {
                         $push: {
                             files: {
@@ -544,13 +571,14 @@ const saveFileRestoreDataInProject = async (
 
 ) => {
     try {
-        
+
 
         // Use update query to push data
         if (existingFileUploadData.deleted_type === 'file') {
             const updateResult = await fileuploadModel.updateOne(
                 {
                     project_id: existingFileUploadData.project_id,
+                    org_id: existingFileUploadData.org_id,
                     "files.folder_name": existingFileUploadData.folder_name,
                 },
                 {
@@ -572,7 +600,7 @@ const saveFileRestoreDataInProject = async (
                 // If the folder does not exist, create a new folder object
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { project_id: existingFileUploadData.project_id },
+                    { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
                     {
                         $push: {
                             files: {
@@ -601,11 +629,12 @@ const saveFileRestoreDataInProject = async (
 
         }
         if (existingFileUploadData.deleted_type === "folder") {
-           
+
             const updateResult = await fileuploadModel.updateOne(
                 {
                     project_id: existingFileUploadData.project_id,
                     "files.folder_name": existingFileUploadData.folder_name,
+                    org_id: existingFileUploadData.org_id,
                 },
                 {
                     $push: {
@@ -627,7 +656,7 @@ const saveFileRestoreDataInProject = async (
 
 
                 const updateNewFolderResult = await fileuploadModel.updateOne(
-                    { project_id: existingFileUploadData.project_id },
+                    { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
                     {
                         $push: {
                             files: {
@@ -684,6 +713,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             const updateResult = await fileuploadModel.updateOne(
                 {
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
                     "files.folder_name": existingFileUploadData.folder_name,
                     "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
@@ -701,6 +731,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             } else {
                 const firstFile = await fileuploadModel.create({
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     files: [
                         {
                             folder_name: existingFileUploadData.folder_name,
@@ -731,6 +762,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             const updateResult = await fileuploadModel.updateOne(
                 {
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
                     "files.folder_name": existingFileUploadData.folder_name,
                     "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
@@ -748,6 +780,7 @@ const saveFileUploadDataInTemplate = async (res, existingFileUploadData,) => {
             } else {
                 const firstFile = await fileuploadModel.create({
                     type: existingFileUploadData.type,
+                    org_id: existingFileUploadData.org_id,
                     files: [
                         {
                             folder_name: existingFileUploadData.folder_name,
@@ -781,13 +814,21 @@ export const restoreData = async (req, res) => {
         const file_id = req.body.file_id;
         const folder_name = req.body.folder_name;
         const restore_type = req.body.restore_type;
+        const org_id = req.body.org_id;
 
 
         if (!user_id) {
             responseData(res, "", 400, false, "User id is required", []);
         }
+        else if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
         else {
-            const check_user = await registerModel.findById({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 responseData(res, "", 400, false, "User id is not valid", []);
             }
@@ -804,6 +845,7 @@ export const restoreData = async (req, res) => {
                             { sub_folder_name_first: sub_folder_name_first },
                             { sub_folder_name_second: sub_folder_name_second }
                         ],
+                        org_id: org_id
 
                     },
 
@@ -818,7 +860,8 @@ export const restoreData = async (req, res) => {
                                 { sub_folder_name_first: sub_folder_name_first },
                                 { sub_folder_name_second: sub_folder_name_second }
                             ],
-                            "files.fileId": file_id
+                            "files.fileId": file_id,
+                            org_id: org_id
                         },
 
                     );
@@ -834,6 +877,7 @@ export const restoreData = async (req, res) => {
                                 { sub_folder_name_first: sub_folder_name_first },
                                 { sub_folder_name_second: sub_folder_name_second }
                             ],
+                            org_id: org_id
 
                         },
 
@@ -850,6 +894,7 @@ export const restoreData = async (req, res) => {
                             { lead_id: lead_id },
                         ],
                         "folder_name": folder_name,
+                        org_id: org_id
                     },
 
                 );
@@ -864,7 +909,8 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
                         );
                     }
@@ -877,7 +923,8 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
-                                "files.fileId": file_id
+                                "files.fileId": file_id,
+                                org_id: org_id
                             },
                         );
                     }
@@ -895,6 +942,7 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
+                                org_id: org_id
                             },
                         );
                     }
@@ -907,6 +955,7 @@ export const restoreData = async (req, res) => {
                                     { lead_id: lead_id },
                                 ],
                                 "folder_name": folder_name,
+                                org_id: org_id
                             },
                         );
                     }
