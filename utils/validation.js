@@ -37,7 +37,7 @@ export const onlyPhoneNumberValidation = (num_ber) => {
 };
 
 export const onlyOrgValidation = (org)=>{
-  let regex = /^[a-zA-Z.]+$/
+  let regex = /^[a-zA-Z\s.]+$/
   if(regex.test(org))
     {
       return true;
