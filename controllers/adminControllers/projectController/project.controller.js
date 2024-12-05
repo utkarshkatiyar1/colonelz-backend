@@ -70,9 +70,25 @@ export const getAllProject = async (req, res) => {
 
     // Use aggregation to count and categorize projects in one go
     const projects = await projectModel.aggregate([
-      { $match: { org_id: org_id }, },
+      // Match projects belonging to the specified org_id
+      { $match: { org_id: org_id } },
+      // Lookup tasks related to each project
       {
-       
+        $lookup: {
+          from: "task", // Name of the task collection
+          localField: "project_id",
+          foreignField: "project_id",
+          as: "task",
+        },
+      },
+      // Add task count for each project
+      {
+        $addFields: {
+          count_task: { $size: "$task" }, // Count the number of tasks
+        },
+      },
+      // Project necessary fields
+      {
         $project: {
           project_id: 1,
           project_name: 1,
@@ -81,10 +97,12 @@ export const getAllProject = async (req, res) => {
           project_end_date: 1,
           project_type: 1,
           designer: 1,
-          client_name: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
-          client:1,
-        }
+          client_name: { $arrayElemAt: ["$client.client_name", 0] },
+          client: 1,
+          count_task: 1, // Include task count
+        },
       },
+      // Group projects for summary statistics
       {
         $group: {
           _id: null,
@@ -95,9 +113,10 @@ export const getAllProject = async (req, res) => {
           completed: { $sum: { $cond: [{ $eq: ["$project_status", "completed"] }, 1, 0] } },
           commercial: { $sum: { $cond: [{ $eq: ["$project_type", "commercial"] }, 1, 0] } },
           residential: { $sum: { $cond: [{ $eq: ["$project_type", "residential"] }, 1, 0] } },
-          projectsData: { $push: "$$ROOT" }
-        }
+          projectsData: { $push: "$$ROOT" },
+        },
       },
+      // Calculate percentages and project the final structure
       {
         $project: {
           totalProjects: 1,
@@ -108,9 +127,10 @@ export const getAllProject = async (req, res) => {
           commercial: { $multiply: [{ $divide: ["$commercial", "$totalProjects"] }, 100] },
           residential: { $multiply: [{ $divide: ["$residential", "$totalProjects"] }, 100] },
           projectsData: 1,
-        }
-      }
+        },
+      },
     ]);
+    
 
     if (!projects.length) {
       return responseData(res, "", 200, true, "No projects found");
@@ -130,6 +150,7 @@ export const getAllProject = async (req, res) => {
       archive,
       active_Project: activeProjects,
       projects: projects[0].projectsData.reverse(),
+      count_task: projects[0].count_task,
     };
 
     responseData(res, "Projects fetched successfully", 200, true, "", response);

@@ -59,6 +59,9 @@ import { getProjectUser, getUserList } from "../../controllers/adminControllers/
 import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteLeadAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
+import { createLeadTask, deleteLeadTask, getAllLeadTasks, getAllLeadTaskWithData, getSingleLeadTask, updateLeadTask } from "../../controllers/adminControllers/leadTaskControllers/task.controller.js";
+import { createLeadSubTask, deleteLeadSubTask, getAllLeadSubTask, getSingleLeadSubTask, updateLeadSubTask } from "../../controllers/adminControllers/leadTaskControllers/subtask.controller.js";
+import { GetSingleLeadSubtimerController, UpdateLeadSubtimerController } from "../../controllers/adminControllers/leadTimerControllers/timer.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -3601,6 +3604,22 @@ router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
 router.route("/update/subtask/time").put(verifyJWT, UpdateSubtimerController);
 router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
 
+
+router.route("/create/leadtask").post(verifyJWT, createTaskAccess, createLeadTask);
+router.route("/get/all/leadtask").get(verifyJWT, readTaskAccess, getAllLeadTasks);
+router.route("/get/single/leadtask").get(verifyJWT, readTaskAccess, getSingleLeadTask);
+router.route("/update/leadtask").put(verifyJWT, updateTaskAccess, updateLeadTask);
+router.route("/delete/leadtask").delete(verifyJWT, deleteTskAccess, deleteLeadTask);
+router.route("/getleadtask/details").get(verifyJWT, readProjectAccess, getAllLeadTaskWithData);
+
+
+router.route("/create/leadsubtask").post(verifyJWT, createLeadSubTask);
+router.route("/get/all/leadsubtask").get(verifyJWT, getAllLeadSubTask);
+router.route("/get/single/leadsubtask").get(verifyJWT, getSingleLeadSubTask);
+router.route("/update/leadsubtask").put(verifyJWT, updateLeadSubTask);
+router.route("/delete/leadsubtask").delete(verifyJWT, deleteLeadSubTask);
+router.route("/update/leadsubtask/time").put(verifyJWT, UpdateLeadSubtimerController);
+router.route("/get/leadsubtask/time").get(verifyJWT, GetSingleLeadSubtimerController);
 
 
 router.route("/create/role").post(verifyJWT, CreateRoleAccess, createRole);

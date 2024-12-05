@@ -13,6 +13,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import { s3 } from "../../../utils/function.js"
 import archiveModel from "../../../models/adminModels/archive.model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
 
 
 function generateSixDigitNumber() {
@@ -303,24 +304,53 @@ export const createLead = async (req, res) => {
 export const getAllLead = async (req, res) => {
   try {
     const org_id = req.query.org_id;
+    
+    // Check if org_id is provided
     if (!org_id) {
       return responseData(res, "", 400, false, "Org ID is required", []);
     }
-    const check_org = await orgModel.findOne({ _id: org_id })
+
+    // Check if the organization exists
+    const check_org = await orgModel.findOne({ _id: org_id });
     if (!check_org) {
       return responseData(res, "", 404, false, "Org not found");
     }
-    const leads = await leadModel.find({org_id:org_id})
-      .select('name lead_id email phone location status date')
-      .sort({ createdAt: -1 })
-      .lean();
 
+    // Aggregate leads with task count
+    const leads = await leadModel.aggregate([
+      { $match: { org_id: org_id } }, // Match leads with the provided org_id
+      {
+        $lookup: {
+          from: "leadTask", // Collection name for tasks
+          localField: "lead_id",
+          foreignField: "lead_id",
+          as: "leadTask"
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          lead_id: 1,
+          email: 1,
+          phone: 1,
+          location: 1,
+          status: 1,
+          date: 1,
+          count_task: { $size: "$leadTask" } // Calculate task count
+        }
+      },
+      { $sort: { createdAt: -1 } } // Sort leads by createdAt field
+    ]);
+
+    // Return the response in the same format
     responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
     console.error(error); // Log the error for debugging
     responseData(res, "", 500, false, error.message);
   }
 };
+
+
 
 
 
