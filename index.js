@@ -143,7 +143,7 @@ if (cluster.isMaster) {
   // Workers can share any TCP connection
   server.listen(8000, async () => {
     await connect();
-    // await checkEmailServer();
+    await checkEmailServer();
     console.log(`Worker ${process.pid} started and listening on port 8000`);
   });
 }
