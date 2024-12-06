@@ -30,20 +30,6 @@ export const createRole = async (req, res) => {
         
         else {
 
-            if (role === 'ADMIN'
-                || role === 'Site Supervisor'
-                || role === 'Jr.Interior Designer'
-                || role === '3D Visualizer'
-                || role === 'Jr. Executive HR & Marketing'
-                || role === 'Executive Assistant'
-                || role === 'Project Architect'
-                || role === 'Senior Architect'
-
-            ) {
-                // console.log("Role already exists")
-                responseData(res, "", 400, false, "This role is predefine")
-            }
-            else {
                 const check_org = await orgModel.findOne({ _id: org_id })
                 if (!check_org) {
                     return responseData(res, "", 404, false, "Org not found");
@@ -57,7 +43,7 @@ export const createRole = async (req, res) => {
                     const newRole = await roleModel.create({ role, access, org_id });
                     responseData(res, "Role created successfully", 200, true, "")
                 }
-            }
+            
 
         }
     }

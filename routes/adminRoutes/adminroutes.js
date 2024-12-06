@@ -62,6 +62,7 @@ import { verify } from "crypto";
 import { createLeadTask, deleteLeadTask, getAllLeadTasks, getAllLeadTaskWithData, getSingleLeadTask, updateLeadTask } from "../../controllers/adminControllers/leadTaskControllers/task.controller.js";
 import { createLeadSubTask, deleteLeadSubTask, getAllLeadSubTask, getSingleLeadSubTask, updateLeadSubTask } from "../../controllers/adminControllers/leadTaskControllers/subtask.controller.js";
 import { GetSingleLeadSubtimerController, UpdateLeadSubtimerController } from "../../controllers/adminControllers/leadTimerControllers/timer.controller.js";
+import { Alltask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -3611,6 +3612,7 @@ router.route("/get/single/leadtask").get(verifyJWT, readTaskAccess, getSingleLea
 router.route("/update/leadtask").put(verifyJWT, updateTaskAccess, updateLeadTask);
 router.route("/delete/leadtask").delete(verifyJWT, deleteTskAccess, deleteLeadTask);
 router.route("/getleadtask/details").get(verifyJWT, readProjectAccess, getAllLeadTaskWithData);
+router.route("/get/alltask/details").get(verifyJWT, Alltask);
 
 
 router.route("/create/leadsubtask").post(verifyJWT, createLeadSubTask);
