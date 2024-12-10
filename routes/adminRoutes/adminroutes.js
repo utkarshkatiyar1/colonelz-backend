@@ -62,7 +62,7 @@ import { verify } from "crypto";
 import { createLeadTask, deleteLeadTask, getAllLeadTasks, getAllLeadTaskWithData, getSingleLeadTask, updateLeadTask } from "../../controllers/adminControllers/leadTaskControllers/task.controller.js";
 import { createLeadSubTask, deleteLeadSubTask, getAllLeadSubTask, getSingleLeadSubTask, updateLeadSubTask } from "../../controllers/adminControllers/leadTaskControllers/subtask.controller.js";
 import { GetSingleLeadSubtimerController, UpdateLeadSubtimerController } from "../../controllers/adminControllers/leadTimerControllers/timer.controller.js";
-import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, updateOpenTask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
+import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, MoveTask, updateOpenTask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
 import { createOpenSubTask, deleteOpenSubTask, getAllOpenSubTask, getSingleOpenSubTask, updateOpenSubTask } from "../../controllers/adminControllers/taskControllers/opensubtask.controller.js";
 import { GetSingleOpenSubtimerController, UpdateOpenSubtimerController } from "../../controllers/adminControllers/taskControllers/openTimer.controller.js";
 
@@ -3629,6 +3629,7 @@ router.route("/update/opensubtask").put(verifyJWT, updateOpenSubTask);
 router.route("/delete/opensubtask").delete(verifyJWT, deleteOpenSubTask);
 router.route("/update/opensubtask/time").put(verifyJWT, UpdateOpenSubtimerController);
 router.route("/get/opensubtask/time").get(verifyJWT, GetSingleOpenSubtimerController);
+router.route("/move/task").get(verifyJWT, MoveTask);
 
 router.route("/create/leadsubtask").post(verifyJWT, createLeadSubTask);
 router.route("/get/all/leadsubtask").get(verifyJWT, getAllLeadSubTask);
