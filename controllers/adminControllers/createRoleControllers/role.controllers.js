@@ -7,9 +7,14 @@ import { responseData } from "../../../utils/respounse.js";
 
 export const createRole = async (req, res) => {
     try {
-        const role = req.body.role;
+        let role = req.body.role;
         const access = req.body.access;
         const org_id = req.body.org_id;
+
+        const tempRole = role.toUpperCase();  
+        if(tempRole === "ADMIN") {
+            role = tempRole
+        }
 
 
         const isEmpty = (obj) => {

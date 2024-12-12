@@ -655,6 +655,378 @@ export const deleteTskAccess = async (req, res, next) => {
 };
 
 
+// Lead Task Access
+
+export const createLeadTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+        else if (!user.access?.leadtask?.includes('create')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to create task");
+        }
+        else {
+            next();
+        }
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const readLeadTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.leadtask?.includes('read')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to see task");
+        }
+
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const updateLeadTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.leadtask?.includes('update')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to update task");
+        }
+
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const deleteLeadTskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.leadtask?.includes('delete')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete task");
+        }
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+
+// Open Task Access
+
+export const createOpenTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+        else if (!user.access?.opentask?.includes('create')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to create task");
+        }
+        else {
+            next();
+        }
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const readOpenTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.opentask?.includes('read')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to see task");
+        }
+
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const updateOpenTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.opentask?.includes('update')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to update task");
+        }
+
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const deleteOpenTskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.opentask?.includes('delete')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete task");
+        }
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const moveOpenTaskAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to create a lead
+
+        else if (!user.access?.opentask?.includes('move')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete task");
+        }
+        else {
+            next();
+        }
+
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
 // Contract Access
 
 export const createContractAccess = async (req, res, next) => {

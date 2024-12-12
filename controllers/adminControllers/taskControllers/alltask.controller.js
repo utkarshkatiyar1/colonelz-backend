@@ -56,76 +56,158 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, task_na
 
 export const Alltask = async (req, res) => {
     try {
-        const { org_id, task_assignee, task_status, task_priority } = req.query;
+        const { org_id, task_assignee, task_status, task_priority, user_id } = req.query;
+        const user = req.user
+
 
         if (!org_id) {
             return responseData(res, "", 400, false, "org_id is required", []);
         }
-        const [projectTasks, leadTasks, openTasks] = await Promise.all([
-            taskModel.find({ org_id }),    
-            leadTaskModel.find({ org_id }),
-            openTaskModel.find({ org_id }) 
-        ]);
-        const [projects, leads] = await Promise.all([
-            projectModel.find({ org_id, project_id: { $in: projectTasks.map(task => task.project_id) } }),
-            leadModel.find({ org_id, lead_id: { $in: leadTasks.map(task => task.lead_id) } }),
-        ]);
-        const projectTaskDetails = projectTasks.map(task => {
-            const project = projects.find(p => p.project_id === task.project_id);
-            return {
-                project_id: task.project_id,
-                name: project ? project.project_name : "Unknown",
-                type: "project type",
-                task_id: task.task_id,
-                org_id: task.org_id,
-                task_name: task.task_name,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date,
-                task_end_date: task.estimated_task_end_date
-            };
-        });
-        const leadTaskDetails = leadTasks.map(task => {
-            const lead = leads.find(l => l.lead_id === task.lead_id);
-            return {
-                lead_id: task.lead_id,
-                name: lead ? lead.name : "Unknown",
-                type: "lead type",
-                task_id: task.task_id,
-                org_id: task.org_id,
-                task_name: task.task_name,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date,
-                task_end_date: task.estimated_task_end_date
-            };
-        });
 
-        const openTaskDetails = openTasks.map(task => {
-            return {
-                name: "Unknown",
-                type: "open type",
-                task_id: task.task_id,
-                org_id: task.org_id,
-                task_name: task.task_name,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date,
-                task_end_date: task.estimated_task_end_date
-            };
-        });
+        // console.log(user)
+
+        if(user.role === 'SUPERADMIN' || user.role === 'ADMIN') {
+            const [projectTasks, leadTasks, openTasks] = await Promise.all([
+                taskModel.find({ org_id }),    
+                leadTaskModel.find({ org_id }),
+                openTaskModel.find({ org_id }) 
+            ]);
+            const [projects, leads] = await Promise.all([
+                projectModel.find({ org_id, project_id: { $in: projectTasks.map(task => task.project_id) } }),
+                leadModel.find({ org_id, lead_id: { $in: leadTasks.map(task => task.lead_id) } }),
+            ]);
+            const projectTaskDetails = projectTasks.map(task => {
+                const project = projects.find(p => p.project_id === task.project_id);
+                return {
+                    project_id: task.project_id,
+                    name: project ? project.project_name : "Unknown",
+                    type: "project type",
+                    task_id: task.task_id,
+                    org_id: task.org_id,
+                    task_name: task.task_name,
+                    task_status: task.task_status,
+                    task_priority: task.task_priority,
+                    task_assignee: task.task_assignee,
+                    task_start_date: task.estimated_task_start_date,
+                    task_end_date: task.estimated_task_end_date
+                };
+            });
+            const leadTaskDetails = leadTasks.map(task => {
+                const lead = leads.find(l => l.lead_id === task.lead_id);
+                return {
+                    lead_id: task.lead_id,
+                    name: lead ? lead.name : "Unknown",
+                    type: "lead type",
+                    task_id: task.task_id,
+                    org_id: task.org_id,
+                    task_name: task.task_name,
+                    task_status: task.task_status,
+                    task_priority: task.task_priority,
+                    task_assignee: task.task_assignee,
+                    task_start_date: task.estimated_task_start_date,
+                    task_end_date: task.estimated_task_end_date
+                };
+            });
+    
+            const openTaskDetails = openTasks.map(task => {
+                return {
+                    name: "Unknown",
+                    type: "open type",
+                    task_id: task.task_id,
+                    org_id: task.org_id,
+                    task_name: task.task_name,
+                    task_status: task.task_status,
+                    task_priority: task.task_priority,
+                    task_assignee: task.task_assignee,
+                    task_start_date: task.estimated_task_start_date,
+                    task_end_date: task.estimated_task_end_date
+                };
+            });
+    
+            
+            const allTasks = [...projectTaskDetails, ...leadTaskDetails, ...openTaskDetails];
+            const filterConditions = {};
+            if (task_assignee) filterConditions.task_assignee = task_assignee;
+            if (task_status) filterConditions.task_status = task_status;
+            if (task_priority) filterConditions.task_priority = task_priority;
+            const filteredTasks = filterTasks(allTasks, filterConditions);
+            return responseData(res, "All tasks fetched successfully", 200, true, "", filteredTasks);
+
+        } else {
+            const [projectTasks, leadTasks, openTasks] = await Promise.all([
+                taskModel.find({ org_id }),    
+                leadTaskModel.find({ org_id }),
+                openTaskModel.find({ org_id }) 
+            ]);
+            const assignedProjectAndLead = await registerModel.find({ _id: user_id,organization: org_id })
+
+            const [projects, leads] = await Promise.all([
+                projectModel.find({ org_id, project_id: { $in: assignedProjectAndLead[0].data[0].projectData.map(p => p.project_id) } }),
+                leadModel.find({ org_id, lead_id: { $in: assignedProjectAndLead[0].data[0].leadData.map(l => l.lead_id) } }),
+            ]);
+            
+            console.log(assignedProjectAndLead)
+
+            const projectTaskDetails = projectTasks.map(task => {
+                const project = projects.find(p => p.project_id === task.project_id);
+                return {
+                    project_id: task.project_id,
+                    name: project ? project.project_name : "Unknown",
+                    type: "project type",
+                    task_id: task.task_id,
+                    org_id: task.org_id,
+                    task_name: task.task_name,
+                    task_status: task.task_status,
+                    task_priority: task.task_priority,
+                    task_assignee: task.task_assignee,
+                    task_start_date: task.estimated_task_start_date,
+                    task_end_date: task.estimated_task_end_date
+                };
+            });
+
+            const leadTaskDetails = leadTasks.map(task => {
+                const lead = leads.find(l => l.lead_id === task.lead_id);
+                return {
+                    lead_id: task.lead_id,
+                    name: lead ? lead.name : "Unknown",
+                    type: "lead type",
+                    task_id: task.task_id,
+                    org_id: task.org_id,
+                    task_name: task.task_name,
+                    task_status: task.task_status,
+                    task_priority: task.task_priority,
+                    task_assignee: task.task_assignee,
+                    task_start_date: task.estimated_task_start_date,
+                    task_end_date: task.estimated_task_end_date
+                };
+            });
+
+            const openTaskDetails = openTasks.map(task => {
+                return {
+                    name: "Unknown",
+                    type: "open type",
+                    task_id: task.task_id,
+                    org_id: task.org_id,
+                    task_name: task.task_name,
+                    task_status: task.task_status,
+                    task_priority: task.task_priority,
+                    task_assignee: task.task_assignee,
+                    task_start_date: task.estimated_task_start_date,
+                    task_end_date: task.estimated_task_end_date
+                };
+            });
+
+            const allTasks = [...projectTaskDetails, ...leadTaskDetails, ...openTaskDetails];
+            const filterConditions = {};
+            if (task_assignee) filterConditions.task_assignee = task_assignee;
+            if (task_status) filterConditions.task_status = task_status;
+            if (task_priority) filterConditions.task_priority = task_priority;
+            const filteredTasks = filterTasks(allTasks, filterConditions);
+            return responseData(res, "All tasks fetched successfully", 200, true, "", filteredTasks);
+
+        }
 
         
-        const allTasks = [...projectTaskDetails, ...leadTaskDetails, ...openTaskDetails];
-        const filterConditions = {};
-        if (task_assignee) filterConditions.task_assignee = task_assignee;
-        if (task_status) filterConditions.task_status = task_status;
-        if (task_priority) filterConditions.task_priority = task_priority;
-        const filteredTasks = filterTasks(allTasks, filterConditions);
-        return responseData(res, "All tasks fetched successfully", 200, true, "", filteredTasks);
 
     } catch (error) {
         console.log(error);
@@ -420,7 +502,7 @@ export const MoveTask = async (req, res) => {
         }
 
         // Helper function to check assignee and reporter
-        const checkAssigneeAndReporter = async (task, projectIdOrLeadId, type) => {
+        const checkAssignee = async (task, projectIdOrLeadId, type) => {
             const assigneeData = type === "project"
                 ? await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id })
                 : await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id });
@@ -430,16 +512,26 @@ export const MoveTask = async (req, res) => {
             return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
                 .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
         };
+        const checkReporter = async (task, projectIdOrLeadId, type) => {
+            const assigneeData = type === "project"
+                ? await registerModel.findOne({ username: task.reporter, status: true, organization: org_id })
+                : await registerModel.findOne({ username: task.reporter, status: true, organization: org_id });
+
+            if (!assigneeData) return null;
+
+            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
+                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+        };
 
         // Check for the appropriate assignee and reporter
-        const task_assignee = await checkAssigneeAndReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
+        const task_assignee = await checkAssignee(check_task, project_id || lead_id, project_id ? "project" : "lead");
         if (!task_assignee) {
             return responseData(res, "", 404, false, `Task assignee is not found in the ${project_id ? "project" : "lead"}`, []);
         }
 
         let task_reporter;
         if (check_task.reporter) {
-            task_reporter = await checkAssigneeAndReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
+            task_reporter = await checkReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
         }
 
         if (!task_reporter) {
