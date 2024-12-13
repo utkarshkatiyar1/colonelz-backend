@@ -501,6 +501,11 @@ export const MoveTask = async (req, res) => {
             return responseData(res, "", 404, false, "Task not found", []);
         }
 
+        console.log(check_task)
+
+
+        // return responseData(res, "", 404, false, "Task not found", []);
+
         // Helper function to check assignee and reporter
         const checkAssignee = async (task, projectIdOrLeadId, type) => {
             const assigneeData = type === "project"
@@ -524,18 +529,71 @@ export const MoveTask = async (req, res) => {
         };
 
         // Check for the appropriate assignee and reporter
-        const task_assignee = await checkAssignee(check_task, project_id || lead_id, project_id ? "project" : "lead");
-        if (!task_assignee) {
-            return responseData(res, "", 404, false, `Task assignee is not found in the ${project_id ? "project" : "lead"}`, []);
+        if(!check_task.task_assignee && check_task.task_assignee !== '') {
+            const task_assignee = await checkAssignee(check_task, project_id || lead_id, project_id ? "project" : "lead");
+            if (!task_assignee) {
+                return responseData(res, "", 404, false, `Task assignee is not found in the ${project_id ? "project" : "lead"}`, []);
+            }
+
         }
 
-        let task_reporter;
-        if (check_task.reporter) {
-            task_reporter = await checkReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
+        if(!check_task.reporter && check_task.reporter !== '') {
+            let task_reporter;
+            if (check_task.reporter) {
+                task_reporter = await checkReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
+            }
+    
+            if (!task_reporter) {
+                return responseData(res, "", 404, false, "Reporter not found in the project or lead", []);
+            }
+
         }
 
-        if (!task_reporter) {
-            return responseData(res, "", 404, false, "Reporter not found in the project or lead", []);
+
+        const checkSubtaskAssignee = async (task, projectIdOrLeadId, type) => {
+            const assigneeData = type === "project"
+                ? await registerModel.findOne({ username: task.sub_task_assignee, status: true, organization: org_id })
+                : await registerModel.findOne({ username: task.sub_task_assignee, status: true, organization: org_id });
+
+            if (!assigneeData) return null;
+
+            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
+                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+        };
+
+        const checkSubtaskReporter = async (task, projectIdOrLeadId, type) => {
+            const assigneeData = type === "project"
+                ? await registerModel.findOne({ username: task.sub_task_reporter, status: true, organization: org_id })
+                : await registerModel.findOne({ username: task.sub_task_reporter, status: true, organization: org_id });
+
+            if (!assigneeData) return null;
+
+            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
+                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+        };
+
+        for (const subtask of check_task.subtasks) {          
+
+            if(!subtask.sub_task_assignee && subtask.sub_task_assignee !== '') {
+                const subtask_assignee = await checkSubtaskAssignee(subtask, project_id || lead_id, project_id ? "project" : "lead");
+                if (!subtask_assignee) {
+                    return responseData(res, "", 404, false, `Subtask assignee is not found in the ${project_id ? "project" : "lead"}`, []);
+                }
+    
+            }
+    
+            if(!subtask.sub_task_reporter && subtask.sub_task_reporter !== '') {
+                let subtask_reporter;
+                if (subtask.sub_task_reporter) {
+                    subtask_reporter = await checkSubtaskReporter(subtask, project_id || lead_id, project_id ? "project" : "lead");
+                }
+        
+                if (!subtask_reporter) {
+                    return responseData(res, "", 404, false, "Subtask Reporter not found in the project or lead", []);
+                }
+    
+            }
+
         }
 
         // Create the new task in the appropriate model (lead or project)
