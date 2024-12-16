@@ -146,7 +146,7 @@ export const Alltask = async (req, res) => {
                 leadModel.find({ org_id, lead_id: { $in: assignedProjectAndLead[0].data[0].leadData.map(l => l.lead_id) } }),
             ]);
             
-            console.log(assignedProjectAndLead)
+            // console.log(assignedProjectAndLead)
 
             const projectTaskDetails = projectTasks.map(task => {
                 const project = projects.find(p => p.project_id === task.project_id);
@@ -501,7 +501,7 @@ export const MoveTask = async (req, res) => {
             return responseData(res, "", 404, false, "Task not found", []);
         }
 
-        console.log(check_task)
+        // console.log(check_task)
 
 
         // return responseData(res, "", 404, false, "Task not found", []);
@@ -529,12 +529,11 @@ export const MoveTask = async (req, res) => {
         };
 
         // Check for the appropriate assignee and reporter
-        if(!check_task.task_assignee && check_task.task_assignee !== '') {
+        if(check_task.task_assignee) {
             const task_assignee = await checkAssignee(check_task, project_id || lead_id, project_id ? "project" : "lead");
             if (!task_assignee) {
                 return responseData(res, "", 404, false, `Task assignee is not found in the ${project_id ? "project" : "lead"}`, []);
             }
-
         }
 
         if(!check_task.reporter && check_task.reporter !== '') {
@@ -574,7 +573,7 @@ export const MoveTask = async (req, res) => {
 
         for (const subtask of check_task.subtasks) {          
 
-            if(!subtask.sub_task_assignee && subtask.sub_task_assignee !== '') {
+            if(subtask.sub_task_assignee) {
                 const subtask_assignee = await checkSubtaskAssignee(subtask, project_id || lead_id, project_id ? "project" : "lead");
                 if (!subtask_assignee) {
                     return responseData(res, "", 404, false, `Subtask assignee is not found in the ${project_id ? "project" : "lead"}`, []);
@@ -582,7 +581,7 @@ export const MoveTask = async (req, res) => {
     
             }
     
-            if(!subtask.sub_task_reporter && subtask.sub_task_reporter !== '') {
+            if(subtask.sub_task_reporter) {
                 let subtask_reporter;
                 if (subtask.sub_task_reporter) {
                     subtask_reporter = await checkSubtaskReporter(subtask, project_id || lead_id, project_id ? "project" : "lead");
