@@ -55,9 +55,15 @@ export const createUser = async (req, res) => {
                         {
                             return responseData(res, "", 400, false, "You are not allowed to create admin");
                         }
-                    const check_email_or_user_name = await registerModel.find({email:email });
-                    console.log(check_email_or_user_name)
+                    const check_email_or_user_name = await registerModel.find({email:email});
+                    console.log("check_email_or_user_name", check_email_or_user_name)
                     if (check_email_or_user_name.length < 1) {
+
+                        const check_username = await registerModel.findOne({username:user_name, organization:org_id});
+
+                        if(check_username) {
+                            return responseData(res, "", 400, false, "This username already exist");
+                        }
 
 
                         const password = generateStrongPassword();
@@ -165,7 +171,7 @@ export const createUser = async (req, res) => {
                             }
                         });
                     } else {
-                        responseData(res, "", 400, false, "This email already Exist");
+                        responseData(res, "", 400, false, "This username or email already Exist");
                     }
                 } else {
                     return responseData(res, "", 400, false, "You are not allowed to perform this action");

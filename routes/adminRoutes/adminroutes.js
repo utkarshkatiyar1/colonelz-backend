@@ -45,7 +45,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser, updateUserRole } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember, listUserInProject, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, isAdmin } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, checkOpenTaskReadAccess, isAdmin } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -56,9 +56,15 @@ import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask,
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
 import { GetSingleSubtimerController, UpdateSubtimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
 import { getProjectUser, getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
-import { createAddMember, createContractAccess, createLeadAccess, createMomAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteLeadAccess, deleteMomAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readMomAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateMomAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
+import { createAddMember, createContractAccess, createLeadAccess, createLeadTaskAccess, createMomAccess, createOpenTaskAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteLeadAccess, deleteLeadTskAccess, deleteMomAccess, deleteOpenTskAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, moveOpenTaskAccess, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readLeadTaskAccess, readMomAccess, readOpenTaskAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateLeadTaskAccess, updateMomAccess, updateOpenTaskAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
+import { createLeadTask, deleteLeadTask, getAllLeadTasks, getAllLeadTaskWithData, getSingleLeadTask, updateLeadTask } from "../../controllers/adminControllers/leadTaskControllers/task.controller.js";
+import { createLeadSubTask, deleteLeadSubTask, getAllLeadSubTask, getSingleLeadSubTask, updateLeadSubTask } from "../../controllers/adminControllers/leadTaskControllers/subtask.controller.js";
+import { GetSingleLeadSubtimerController, UpdateLeadSubtimerController } from "../../controllers/adminControllers/leadTimerControllers/timer.controller.js";
+import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, MoveTask, updateOpenTask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
+import { createOpenSubTask, deleteOpenSubTask, getAllOpenSubTask, getSingleOpenSubTask, updateOpenSubTask } from "../../controllers/adminControllers/taskControllers/opensubtask.controller.js";
+import { GetSingleOpenSubtimerController, UpdateOpenSubtimerController } from "../../controllers/adminControllers/taskControllers/openTimer.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -3601,6 +3607,37 @@ router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
 router.route("/update/subtask/time").put(verifyJWT, UpdateSubtimerController);
 router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
 
+
+router.route("/create/leadtask").post(verifyJWT, createLeadTaskAccess, createLeadTask);
+router.route("/get/all/leadtask").get(verifyJWT, readLeadTaskAccess, getAllLeadTasks);
+router.route("/get/single/leadtask").get(verifyJWT, readLeadTaskAccess, getSingleLeadTask);
+router.route("/update/leadtask").put(verifyJWT, updateLeadTaskAccess, updateLeadTask);
+router.route("/delete/leadtask").delete(verifyJWT, deleteLeadTskAccess, deleteLeadTask);
+router.route("/getleadtask/details").get(verifyJWT, readLeadAccess, getAllLeadTaskWithData);
+
+
+router.route("/get/alltask/details").get(verifyJWT, checkOpenTaskReadAccess, Alltask);
+router.route("/create/opentask").post(verifyJWT, createOpenTaskAccess, createOpenTask);
+router.route("/get/single/opentask").get(verifyJWT, readOpenTaskAccess, getSingleOpenTask);
+router.route("/update/opentask").put(verifyJWT, updateOpenTaskAccess, updateOpenTask);
+router.route("/delete/opentask").delete(verifyJWT, deleteOpenTskAccess, deleteOpenTask);
+router.route("/move/task").post(verifyJWT, moveOpenTaskAccess, MoveTask);
+
+router.route("/create/opensubtask").post(verifyJWT, createOpenSubTask);
+router.route("/get/all/opensubtask").get(verifyJWT, getAllOpenSubTask);
+router.route("/get/single/opensubtask").get(verifyJWT, getSingleOpenSubTask);
+router.route("/update/opensubtask").put(verifyJWT, updateOpenSubTask);
+router.route("/delete/opensubtask").delete(verifyJWT, deleteOpenSubTask);
+router.route("/update/opensubtask/time").put(verifyJWT, UpdateOpenSubtimerController);
+router.route("/get/opensubtask/time").get(verifyJWT, GetSingleOpenSubtimerController);
+
+router.route("/create/leadsubtask").post(verifyJWT, createLeadSubTask);
+router.route("/get/all/leadsubtask").get(verifyJWT, getAllLeadSubTask);
+router.route("/get/single/leadsubtask").get(verifyJWT, getSingleLeadSubTask);
+router.route("/update/leadsubtask").put(verifyJWT, updateLeadSubTask);
+router.route("/delete/leadsubtask").delete(verifyJWT, deleteLeadSubTask);
+router.route("/update/leadsubtask/time").put(verifyJWT, UpdateLeadSubtimerController);
+router.route("/get/leadsubtask/time").get(verifyJWT, GetSingleLeadSubtimerController);
 
 
 router.route("/create/role").post(verifyJWT, CreateRoleAccess, createRole);
