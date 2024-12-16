@@ -59,7 +59,7 @@ export const createUser = async (req, res) => {
                     console.log("check_email_or_user_name", check_email_or_user_name)
                     if (check_email_or_user_name.length < 1) {
 
-                        const check_username = await registerModel.find({username:user_name, organization:org_id});
+                        const check_username = await registerModel.findOne({username:user_name, organization:org_id});
 
                         if(check_username) {
                             return responseData(res, "", 400, false, "This username already exist");
