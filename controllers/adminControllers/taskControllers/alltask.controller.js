@@ -536,7 +536,7 @@ export const MoveTask = async (req, res) => {
             }
         }
 
-        if(!check_task.reporter && check_task.reporter !== '') {
+        if(check_task.reporter) {
             let task_reporter;
             if (check_task.reporter) {
                 task_reporter = await checkReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
