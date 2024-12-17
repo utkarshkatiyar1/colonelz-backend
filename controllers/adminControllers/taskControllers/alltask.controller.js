@@ -352,12 +352,12 @@ export const updateOpenTask = async (req, res) => {
         else if (!task_status) {
             responseData(res, "", 404, false, "Task status required", [])
         }
-        else if (!task_assignee) {
-            responseData(res, "", 404, false, "Task assignee required", [])
-        }
-        else if (!reporter) {
-            responseData(res, "", 404, false, "Task reporter required", [])
-        }
+        // else if (!task_assignee) {
+        //     responseData(res, "", 404, false, "Task assignee required", [])
+        // }
+        // else if (!reporter) {
+        //     responseData(res, "", 404, false, "Task reporter required", [])
+        // }
         else if (!org_id) {
             return responseData(res, "", 400, false, "Organization Id is required");
         }
