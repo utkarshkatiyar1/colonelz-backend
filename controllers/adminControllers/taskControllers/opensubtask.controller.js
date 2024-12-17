@@ -291,8 +291,8 @@ export const updateOpenSubTask = async (req, res) => {
             { key: estimated_sub_task_start_date, message: "Sub task start date required" },
             { key: estimated_sub_task_end_date, message: "Sub task end date required" },
             { key: sub_task_status, message: "Sub task status required" },
-            { key: sub_task_assignee, message: "Sub task assignee required" },
-            { key: sub_task_reporter, message: "Sub task reporter required" }
+            // { key: sub_task_assignee, message: "Sub task assignee required" },
+            // { key: sub_task_reporter, message: "Sub task reporter required" }
         ];
 
         for (let field of requiredFields) {
@@ -319,10 +319,16 @@ export const updateOpenSubTask = async (req, res) => {
             return responseData(res, "", 400, false, "The task has been canceled");
         }
 
-        if(check_task?.task_assignee || check_task?.task_createdBy) {
-            const isAuthorized = [check_task.task_assignee, check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-    
-            if (!isAuthorized) {
+        if(check_task?.task_assignee) {
+            const isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if (!isTask_assigneeAuthorized) {
+                return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+            }
+        }
+
+        if(check_task?.task_createdBy) {
+            const isTask_createdBy = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if (!isTask_createdBy) {
                 return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
             }
         }
