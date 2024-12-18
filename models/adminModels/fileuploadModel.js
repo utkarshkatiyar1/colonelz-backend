@@ -7,6 +7,10 @@ const fileuploadSchema = new mongoose.Schema({
     type: String,
     // require:true,
   },
+  org_id:{
+    type:String,
+    require:true,
+  },
   lead_id: {
     type: String,
     default: null,

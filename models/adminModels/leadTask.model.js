@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 
-const SubtaskSchema = new mongoose.Schema({
+const LeadSubtaskSchema = new mongoose.Schema({
     sub_task_id: { type: String, required: true },
     org_id: { type: String, required: true },
     sub_task_name: { type: String, required: true },
@@ -20,12 +20,12 @@ const SubtaskSchema = new mongoose.Schema({
     remark:[]
 });
 
-const TaskSchema = new mongoose.Schema({
-    project_id: { type: String, required: true },
+const LeadTaskSchema = new mongoose.Schema({
+    lead_id: { type: String, required: true },
     task_id: { type: String, required: true },
     org_id: { type: String, required: true },
     task_name: { type: String, required: true },
-    task_assignee: { type: String},
+    task_assignee: { type: String },
     task_status: { type: String, required: true },
     estimated_task_start_date: { type: String, required: true },
     estimated_task_end_date: { type: String, required: true },
@@ -37,8 +37,8 @@ const TaskSchema = new mongoose.Schema({
     task_createdOn: { type: Date, required: true },
     reporter: { type: String},
     task_updatedBy: [],
-    subtasks: [SubtaskSchema]
+    subtasks: [LeadSubtaskSchema]
 
 });
 
-export default mongoose.model("task", TaskSchema, "task");
+export default mongoose.model("leadTask", LeadTaskSchema, "leadTask");

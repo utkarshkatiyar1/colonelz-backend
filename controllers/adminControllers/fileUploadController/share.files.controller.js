@@ -4,6 +4,7 @@ import { responseData } from "../../../utils/respounse.js";
 import { onlyEmailValidation } from "../../../utils/validation.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { infotransporter } from "../../../utils/function.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 function validateEmailArray(emailArray) {
     for (let i = 0; i < emailArray.length; i++) {
@@ -29,6 +30,8 @@ export const shareFile = async (req, res) => {
         const body = req.body.body;
         const type = req.body.type;
         const user_id = req.body.user_id;
+        const org_id = req.body.org_id;
+
 
         const isValid = validateEmailArray(email);
 
@@ -37,11 +40,18 @@ export const shareFile = async (req, res) => {
             return responseData(res, "", 400, false, "File ID is required", null);
         } else if (!isValid) {
             return responseData(res, "", 400, false, "Invalid email address", null);
-        } else {
+        }else if(!org_id)
+        {
+            return responseData(res, "", 400, false, "Org ID is required", null);
+        }
+         else {
             let findfiles;
             let attachments = [];
-
-            const check_user = await registerModel.findOne({ _id: user_id })
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                responseData(res, "", 404, false, "Org not found!", []);
+            }
+            const check_user = await registerModel.findOne({ _id: user_id, organization: org_id })
             if (!check_user) {
                 return responseData(res, "", 404, false, "User not found", null);
             }
@@ -49,6 +59,7 @@ export const shareFile = async (req, res) => {
             if (type === 'template') {
                 findfiles = await fileuploadModel.findOne({
                     "files.folder_id": folderId,
+                    org_id: org_id
                 });
                 for (let i = 0; i < findfiles.files.length; i++) {
                     for (let j = 0; j < findfiles.files[i].files.length; j++) {
@@ -59,6 +70,7 @@ export const shareFile = async (req, res) => {
                 }
             } else {
                 findfiles = await fileuploadModel.findOne({
+                    org_id: org_id,
                     $or: [
                         { project_id: projectId },
                         { lead_id: leadId },

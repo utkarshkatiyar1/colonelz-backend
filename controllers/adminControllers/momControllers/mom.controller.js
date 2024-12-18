@@ -3,6 +3,7 @@ import projectModel from "../../../models/adminModels/project.model.js";
 import { s3 } from "../../../utils/function.js"
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 
 
@@ -15,16 +16,17 @@ function generateSixDigitNumber() {
 }
 
 
-const uploadFile = async (file, fileName, project_id, mom_id) => {
-  const data = await s3.upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${project_id}/MOM/`,
+const uploadFile = async (file, fileName, project_id, org_id, mom_id) => {
+  const data = await s3
+    .upload({
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${project_id}/MOM/${mom_id}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
     })
     .promise();
   const signedUrl = s3.getSignedUrl('getObject', {
-    Bucket: `${process.env.S3_BUCKET_NAME}/${project_id}/MOM/`,
+    Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${project_id}/MOM/${mom_id}`,
     Key: fileName,
     Expires: 157680000 // URL expires in 5 year
   });
@@ -41,6 +43,7 @@ const saveFileUploadData = async (
       const firstFile = await fileuploadModel.create({
         project_id: existingFileUploadData.project_id,
         project_name: existingFileUploadData.project_Name,
+        org_id: existingFileUploadData.org_id,
         files: [
           {
             folder_name: existingFileUploadData.folder_name,
@@ -56,6 +59,7 @@ const saveFileUploadData = async (
       const updateResult = await fileuploadModel.updateOne(
         {
           project_id: existingFileUploadData.project_id,
+          org_id: existingFileUploadData.org_id,
           "files.folder_name": existingFileUploadData.folder_name,
         },
         {
@@ -79,7 +83,7 @@ const saveFileUploadData = async (
       } else {
         // If the folder does not exist, create a new folder object
         const updateNewFolderResult = await fileuploadModel.updateOne(
-          { project_id: existingFileUploadData.project_id },
+          { project_id: existingFileUploadData.project_id, org_id: existingFileUploadData.org_id },
           {
             $push: {
               files: {
@@ -119,8 +123,18 @@ const saveFileUploadData = async (
 
 export const getAllProjectMom = async (req, res) => {
   try {
+    const org_id = req.query.org_id;
+    if(!org_id)
+    {
+      return responseData(res, "", 400, false, "Please provide organization id");
+      
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     // Fetch projects with the mom data, projecting only necessary fields
-    const projects = await projectModel.find({})
+    const projects = await projectModel.find({org_id: org_id})
       .select('project_id project_name client mom') // Select only necessary fields
       .sort({ createdAt: -1 })
       .lean(); // Use lean() to get plain JavaScript objects
@@ -163,6 +177,7 @@ export const createmom = async (req, res) => {
     let organisor = req.body.organisor;
     let attendees = req.body.attendees;
     const remark = req.body.remark;
+    const org_id = req.body.org_id;
     let client_names;
     let organisors;
     let others;
@@ -192,12 +207,21 @@ export const createmom = async (req, res) => {
       responseData(res, "", 400, false, "Each client_name entry must be a valid string containing only alphabets and spaces");
     } else if (!validateClientNames(organisors)) {
       responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
-    } else {
-      const check_user = await registerModel.findOne({ _id: user_id })
+    }
+    else if(!org_id)
+    {
+      responseData(res, "", 400, false, "Please provide organization id");
+    }
+     else {
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
+      const check_user = await registerModel.findOne({ _id: user_id, organization:org_id  })
       if (!check_user) {
         responseData(res, "", 400, false, "User Not Found");
       }
-      const check_project = await projectModel.find({ project_id: project_id });
+      const check_project = await projectModel.find({ project_id: project_id, org_id:org_id });
       if (check_project.length > 0) {
         const mom_id = `COl-M-${generateSixDigitNumber()}`; // generate meeting id
         let mom_data;
@@ -218,7 +242,7 @@ export const createmom = async (req, res) => {
             const fileSizeInBytes = file.size;
             fileSize.push(fileSizeInBytes / 1024)
             fileUploadPromises.push(
-              uploadFile(file, fileName, project_id, mom_id)
+              uploadFile(file, fileName, project_id,org_id, mom_id)
             );
           }
 
@@ -252,7 +276,7 @@ export const createmom = async (req, res) => {
           }
 
           const update_mom = await projectModel.findOneAndUpdate(
-            { project_id: project_id },
+            { project_id: project_id, org_id:org_id },
             {
               $push: {
                 mom: {
@@ -276,7 +300,7 @@ export const createmom = async (req, res) => {
             },
             { new: true }
           );
-          await projectModel.findOneAndUpdate({ project_id: project_id },
+          await projectModel.findOneAndUpdate({ project_id: project_id, org_id:org_id },
             {
               $push: {
                 project_updated_by: {
@@ -297,6 +321,7 @@ export const createmom = async (req, res) => {
           if (existingFile) {
             await saveFileUploadData(res, {
               project_id,
+              org_id,
               project_Name,
               folder_name,
               updated_date: new Date(),
@@ -307,6 +332,7 @@ export const createmom = async (req, res) => {
               res,
               {
                 project_id,
+                org_id,
                 project_Name,
                 folder_name,
                 updated_date: new Date(),
@@ -326,7 +352,7 @@ export const createmom = async (req, res) => {
           );
         } else {
           const update_mom = await projectModel.findOneAndUpdate(
-            { project_id: project_id },
+            { project_id: project_id, org_id:org_id },
             {
               $push: {
                 mom: {
@@ -350,7 +376,7 @@ export const createmom = async (req, res) => {
             },
             { new: true }
           );
-          await projectModel.findOneAndUpdate({ project_id: project_id },
+          await projectModel.findOneAndUpdate({ project_id: project_id, org_id:org_id },
             {
               $push: {
                 project_updated_by: {
@@ -384,9 +410,22 @@ export const createmom = async (req, res) => {
 
 export const getAllMom = async (req, res) => {
   try {
-    const { project_id } = req.query;
+    const { project_id, org_id } = req.query;
+    
+    if(!project_id)
+    {
+      responseData(res, "", 400, false, "Project Id required");
+    }
+    if(!org_id)
+    {
+      responseData(res, "", 400, false, "Org Id required");
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     const check_project = await projectModel
-      .find({ project_id })
+      .find({ project_id:project_id, org_id:org_id })
       .sort({ createdAt: -1 });
 
     if (check_project.length === 0) {
@@ -420,8 +459,25 @@ export const getSingleMom = async (req, res) => {
   try {
     const project_id = req.query.project_id;
     const mom_id = req.query.mom_id;
+    const org_id = req.query.org_id;
 
-    const check_project = await projectModel.find({ project_id: project_id });
+    if(!project_id)
+    {
+      responseData(res, "", 400, false, "Project Id required");
+    }
+    if(!mom_id)
+    {
+      responseData(res, "", 400, false, "Mom Id required");
+    }
+    if(!org_id)
+    {
+      responseData(res, "", 400, false, "Org Id required");
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    const check_project = await projectModel.find({ project_id: project_id, org_id:org_id });
     if (check_project.length > 0) {
       const check_mom = check_project[0].mom.filter(
         (mom) => mom.mom_id.toString() === mom_id
@@ -459,6 +515,7 @@ export const updateMom = async (req, res) => {
   try {
     const project_id = req.query.project_id;
     const mom_id = req.query.mom_id;
+    const org_id = req.query.org_id;
     const description = req.body.remark;
     const meetingDate = req.body.meetingdate;
     const location = req.body.location;
@@ -491,12 +548,19 @@ export const updateMom = async (req, res) => {
     } else if (!validateClientNames(organisors)) {
       responseData(res, "", 400, false, "Each organisor name entry must be a valid string containing only alphabets and spaces");
     }
+    else if (!org_id) {
+      return responseData(res, "", 400, false, "Organization Id is required");
+    }
     else {
       if (!user) {
         responseData(res, "", 404, false, "User Not Found");
 
       }
-      const check_project = await projectModel.findOne({ project_id: project_id });
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
+      const check_project = await projectModel.findOne({ project_id: project_id, org_id:org_id });
       if (check_project) {
         const check_mom = check_project.mom.filter(
           (mom) => mom.mom_id.toString() === mom_id
@@ -504,6 +568,7 @@ export const updateMom = async (req, res) => {
         if (check_mom) {
           await projectModel.findOneAndUpdate({
             project_id: project_id,
+            org_id:org_id,
             'mom.mom_id': mom_id
           }, {
             $set: {
@@ -521,7 +586,7 @@ export const updateMom = async (req, res) => {
 
           )
 
-          await projectModel.findOneAndUpdate({ project_id: project_id },
+          await projectModel.findOneAndUpdate({ project_id: project_id, org_id:org_id },
             {
               $push: {
                 project_updated_by: {
@@ -555,7 +620,7 @@ export const updateMom = async (req, res) => {
 
 export const deleteMom = async (req, res) => {
   try {
-    const { project_id, mom_id } = req.body;
+    const { project_id, mom_id, org_id } = req.body;
     const user = req.user;
 
     if (!project_id) {
@@ -565,12 +630,20 @@ export const deleteMom = async (req, res) => {
     if (!mom_id) {
       return responseData(res, "", 404, false, "MOM Id is required");
     }
+    if (!org_id) {
+      return responseData(res, "", 400, false, "Organization Id is required");
+    }
 
     if (!user) {
       return responseData(res, "", 404, false, "User Not Found");
     }
 
-    const check_project = await projectModel.findOne({ project_id });
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    const check_project = await projectModel.findOne({ project_id:project_id, org_id:org_id });
+    
     if (!check_project) {
       return responseData(res, "", 404, false, "Project Not Found");
     }
@@ -581,14 +654,14 @@ export const deleteMom = async (req, res) => {
     }
 
     await projectModel.findOneAndUpdate(
-      { "mom.mom_id": mom_id },
+      { "mom.mom_id": mom_id, org_id:org_id },
       {
         $pull: { mom: { mom_id } }
       }
     );
 
     await projectModel.findOneAndUpdate(
-      { project_id },
+      { project_id:project_id, org_id:org_id },
       {
         $push: {
           project_updated_by: {

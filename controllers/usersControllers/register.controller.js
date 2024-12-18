@@ -9,17 +9,13 @@ import jwt from "jsonwebtoken";
 import { responseData } from "../../utils/respounse.js";
 import registerModel from "../../models/usersModels/register.model.js";
 import loginModel from "../../models/usersModels/login.model.js";
-import { onlyAlphabetsValidation, onlyOrgValidation } from "../../utils/validation.js";
+import { onlyAlphabetsValidation, onlyOrgValidation, onlyPasswordPatternValidation } from "../../utils/validation.js";
+import { infotransporter } from "../../utils/function.js";
+import orgModel from "../../models/orgmodels/org.model.js";
+import orgusermapModel from "../../models/orgmodels/orgusermap.model.js";
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.HOST,
-  port: process.env.EMAIL_PORT,
-  auth: {
-    user: process.env.USER_NAME,
-    pass: process.env.API_KEY,
-  },
-});
+
 
 
 export const checkEmail = async (req, res) => {
@@ -109,10 +105,13 @@ export const sendOtp = async (req, res) => {
   else if (!onlyAlphabetsValidation(user_name)) {
     responseData(res, "", 400, false, "Invalid username", []);
   }
+  else if (!onlyPasswordPatternValidation(password)) {
+    responseData(res, "", 400, false, "Invalid password", []);
+  }
   else {
     try {
       const checkInfo = await registerModel.find({
-        $and: [{ email: email }, { username: user_name }],
+        email: email
       });
       if (checkInfo.length > 0) {
         responseData(
@@ -158,7 +157,7 @@ export const sendOtp = async (req, res) => {
                 subject: "Email Verification",
                 html: `<p>  Your verrification code is :-  ${otp}</p>`,
               };
-              transporter.sendMail(mailOptions, (error, info) => {
+              infotransporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   responseData(res, "", 400, false, "Failed to send email");
                 } else {
@@ -269,24 +268,56 @@ export const registerUser = async (req, res) => {
             if (err) {
               responseData(res, "", 400, false, "Something went wrong");
             } else {
+
+              const org = await orgModel.create({
+                organization: orgnisation,
+                email: email,
+                org_email: "",
+                org_phone: "",
+                currency: "",
+                org_address: "",
+                vat_tax_gst_number: "",
+                org_city: "",
+                org_state: "",
+                org_country: "",
+                org_zipcode: "",
+                org_website: "",
+                org_logo: "",
+                org_status: true,
+
+              })
+
               const register = new registerModel({
                 username: user_name,
                 userProfile: "",
                 email: email,
-                organization: orgnisation,
+                organization: org._id,
                 password: hash,
                 status: true,
                 role: role,
+
               });
+
+
 
               const result = await register.save();
 
               if (result) {
+                await orgusermapModel.create({
+                  org_id: org._id,
+                  user_id: result._id,
+                })
                 const token = jwt.sign(
                   { userId: result._id, email: result.email },
                   process.env.ACCESS_TOKEN_SECRET,
                   { expiresIn: "1d" } // You can adjust the expiration time
                 );
+                const refreshtoken = jwt.sign(
+                  { userId: result._id, email: result.email },
+                  process.env.REFRESH_TOKEN_SECRET,
+                  { expiresIn: "1d" } // You can adjust the expiration time
+                );
+
 
                 // Include the access token in the response headers
                 res.header("Authorization", `Bearer ${token}`);
@@ -296,18 +327,26 @@ export const registerUser = async (req, res) => {
                   httpOnly: true,
                   maxAge: 24 * 60 * 60 * 1000, // 1 day
                 });
+                res.cookie("refreshToken", refreshtoken, { maxAge: 604800000, httpOnly: true });
 
                 // Store access token in the database (you can adjust this based on your database schema)
-                const login = new loginModel({
-                  userID: result._id,
-                  token: token,
-                  logInDate: new Date(),
-                });
-                login.save();
+                await registerModel.findOneAndUpdate({ _id: result._id },
+                  {
+                    $set: { refreshToken: refreshtoken }
+                  }
+                )
+                // const login = new loginModel({
+                //   userID: result._id,
+                //   token: token,
+                //   logInDate: new Date(),
+                // });
+                // login.save();
                 const response = {
                   token: token,
                   username: result.username,
-                  id: result._id,
+                  UserID: result._id,
+                  org_id:org._id,
+                  refreshToken: refreshtoken,
                   role: result.role
                 }
 

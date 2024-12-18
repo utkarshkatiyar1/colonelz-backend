@@ -2,6 +2,7 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import projectModel from "../../../models/adminModels/project.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import mongoose from "mongoose";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 function generatedigitnumber() {
     const length = 6;
@@ -18,6 +19,7 @@ export const addMember = async (req, res) => {
     const project_id = req.body.project_id;
     const user_name = req.body.user_name;
     const role = req.body.role;
+    const org_id = req.body.org_id;
 
     if (!id) {
         responseData(res, "", 400, false, "Please provide Id");
@@ -25,14 +27,21 @@ export const addMember = async (req, res) => {
         responseData(res, "", 400, false, "Please provide project Id");
     } else if (!user_name) {
         responseData(res, "", 400, false, "Please provide user name");
-    } else {
+    } else if (!org_id) {
+        responseData(res, "", 400, false, "org id is required", []);
+    }
+     else {
         try {
-            const find_user = await registerModel.findOne({ _id: id });
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const find_user = await registerModel.findOne({ _id: id, organization: org_id });
             if (find_user) {
                  
-                    const find_project = await projectModel.findOne({ project_id: project_id });
+                    const find_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
                     if (find_project) {
-                        const find_user_name = await registerModel.findOne({ username: user_name });
+                        const find_user_name = await registerModel.findOne({ username: user_name, organization: org_id });
                         if (find_user_name) {
                             let projectDataIndex = find_user_name.data.findIndex(item => item.projectData);
                             if (projectDataIndex === -1) {
@@ -45,7 +54,7 @@ export const addMember = async (req, res) => {
                             } else {
                                 // Add new project details to projectData array
                                 const add_project_in_user = await registerModel.findOneAndUpdate(
-                                    { username: user_name },
+                                    { username: user_name, organization: org_id },
                                     {
                                         $push: {
                                             "data.$[outer].projectData": {
@@ -59,7 +68,7 @@ export const addMember = async (req, res) => {
                                     }
                                 );
                                 await registerModel.updateOne(
-                                    { username: user_name },
+                                    { username: user_name, organization: org_id },
                                     {
                                         $push: {
                                             "data.$[elem].notificationData": {
@@ -99,6 +108,7 @@ export const removeMemberInProject = async (req, res) => {
 
         const project_id = req.body.project_id;
         const username = req.body.username;
+        const org_id = req.body.org_id;
 
         if (!project_id) {
             responseData(res, "", 400, false, "Project id is required");
@@ -106,16 +116,23 @@ export const removeMemberInProject = async (req, res) => {
         else if (!username) {
             responseData(res, "", 400, false, "Username is required");
         }
+        else if (!org_id) {
+            responseData(res, "", 400, false, "org id is required", []);
+        }
         else {
-            const find_lead = await projectModel.findOne({ project_id: project_id });
+            const check_org = await orgModel.findOne({ _id: org_id })
+            if (!check_org) {
+                return responseData(res, "", 404, false, "Org not found");
+            }
+            const find_lead = await projectModel.findOne({ project_id: project_id, org_id: org_id });
             if (find_lead) {
-                const find_user = await registerModel.findOne({ username: username });
+                const find_user = await registerModel.findOne({ username: username, organization: org_id });
                 // console.log(find_user)
                 if (find_user) {
-                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.projectData.project_id":project_id });
+                    const find_user_in_lead = await registerModel.findOne({ username: username, "data.projectData.project_id":project_id, organization: org_id });
                     if (find_user_in_lead) {
                         const remove_lead_in_user = await registerModel.findOneAndUpdate(
-                            { username: username },
+                            { username: username, organization: org_id },
                             {
                                 $pull: {
                                     "data.$[outer].projectData": {
@@ -151,14 +168,22 @@ export const removeMemberInProject = async (req, res) => {
 export const listUserInProject = async (req, res) => {
     try {
         const project_id = req.query.project_id;
+        const org_id = req.query.org_id;
 
         if (!project_id) {
             return responseData(res, "", 400, false, "Project ID is required");
         }
+        if (!org_id) {
+            return responseData(res, "", 400, false, "Organization ID is required");
+        }
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
 
         const [findProject, findUser] = await Promise.all([
-            projectModel.findOne({ project_id }, 'project_name project_id timeline_date project_type project_status designer').lean(),
-            registerModel.find({ 'data.projectData.project_id': project_id }, 'username role _id').lean(),
+            projectModel.findOne({ project_id, org_id }, 'project_name project_id timeline_date project_type project_status designer').lean(),
+            registerModel.find({ 'data.projectData.project_id': project_id, organization: org_id }, 'username role _id').lean(),
         ]);
 
         if (!findProject) {
