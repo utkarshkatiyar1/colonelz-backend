@@ -6,14 +6,21 @@ import orgModel from "../../models/orgmodels/org.model.js";
 
 const uploadImage = async (req, fileName, org_id, key) => {
     try {
-        const data = await s3.upload({
+        const data = await s3
+            .upload({
+                Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/logo/`,
+                Key: fileName,
+                Body: req.files[key].data,
+                ContentType: req.files[key].mimetype,
+
+            })
+            .promise();
+        const signedUrl = s3.getSignedUrl('getObject', {
             Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/logo/`,
             Key: fileName,
-            Body: req.files[key].data,
-            ContentType: req.files[key].mimetype,
-        }).promise();
-
-        return { status: true, data };
+            Expires: 157680000 // URL expires in 5 year
+        });
+        return { status: true, data, signedUrl };
     } catch (err) {
         return { status: false, err };
     }
@@ -32,7 +39,8 @@ const updateProfileInDB = async (org_id, updates) => {
 const setProfileUrlInDB = async (res, response, org_id, req) => {
     try {
         const updates = { ...req.body };
-        if (response) updates.org_logo = response.data.Location;
+        if (response) updates.org_logo = response.signedUrl;
+        console.log(response)
 
         const updatedUser = await updateProfileInDB(org_id, updates);
         if (!updatedUser) {
@@ -50,8 +58,6 @@ export const updateOrg = async (req, res) => {
     const userId = req.body.userId;
     const org_id = req.body.org_id;
 
-    console.log(req.body)
-    // const user_name = req.body.user_name;
 
     if (!userId) {
         return responseData(res, "", 400, false, "UserId is required");
@@ -96,7 +102,6 @@ export const updateOrg = async (req, res) => {
                         }
 
                         const fileName = `${Date.now()}_${file.name}`;
-                        console.log(fileName);
                         const response = await uploadImage(req, fileName, org_id, "file");
 
                         if (response.status) {
