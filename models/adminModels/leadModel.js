@@ -19,7 +19,10 @@ const lead = new mongoose.Schema({
     type: String,
     required: true,
   },
-
+  org_id:{
+    type:String,
+    require:true,
+  },
   lead_manager: {
     type: String,
     required: true,
@@ -28,7 +31,6 @@ const lead = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
   },
   phone: {
     type: String,

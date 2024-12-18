@@ -10,6 +10,7 @@ import {
 } from "../../../utils/validation.js";
 import notificationModel from "../../../models/adminModels/notification.model.js";
 import taskModel from "../../../models/adminModels/task.model.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 dotenv.config();
 function generateSixDigitNumber() {
   const min = 100000;
@@ -49,18 +50,44 @@ function isProjectOlderThan6Months(createdDate) {
 export const getAllProject = async (req, res) => {
   try {
     const id = req.query.id;
+    const org_id = req.query.org_id;
 
     if (!id) {
       return responseData(res, "", 400, false, "User ID is required");
+    }
+    if (!org_id) {
+      return responseData(res, "", 400, false, "Org ID is required", []);
     }
 
     const user = await registerModel.findById(id);
     if (!user) {
       return responseData(res, "", 404, false, "User not found");
     }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
 
     // Use aggregation to count and categorize projects in one go
     const projects = await projectModel.aggregate([
+      // Match projects belonging to the specified org_id
+      { $match: { org_id: org_id } },
+      // Lookup tasks related to each project
+      {
+        $lookup: {
+          from: "task", // Name of the task collection
+          localField: "project_id",
+          foreignField: "project_id",
+          as: "task",
+        },
+      },
+      // Add task count for each project
+      {
+        $addFields: {
+          count_task: { $size: "$task" }, // Count the number of tasks
+        },
+      },
+      // Project necessary fields
       {
         $project: {
           project_id: 1,
@@ -70,10 +97,12 @@ export const getAllProject = async (req, res) => {
           project_end_date: 1,
           project_type: 1,
           designer: 1,
-          client_name: { $arrayElemAt: ["$client.client_name", 0] }, // Get first client's name directly
-          client:1,
-        }
+          client_name: { $arrayElemAt: ["$client.client_name", 0] },
+          client: 1,
+          count_task: 1, // Include task count
+        },
       },
+      // Group projects for summary statistics
       {
         $group: {
           _id: null,
@@ -84,9 +113,10 @@ export const getAllProject = async (req, res) => {
           completed: { $sum: { $cond: [{ $eq: ["$project_status", "completed"] }, 1, 0] } },
           commercial: { $sum: { $cond: [{ $eq: ["$project_type", "commercial"] }, 1, 0] } },
           residential: { $sum: { $cond: [{ $eq: ["$project_type", "residential"] }, 1, 0] } },
-          projectsData: { $push: "$$ROOT" }
-        }
+          projectsData: { $push: "$$ROOT" },
+        },
       },
+      // Calculate percentages and project the final structure
       {
         $project: {
           totalProjects: 1,
@@ -97,9 +127,10 @@ export const getAllProject = async (req, res) => {
           commercial: { $multiply: [{ $divide: ["$commercial", "$totalProjects"] }, 100] },
           residential: { $multiply: [{ $divide: ["$residential", "$totalProjects"] }, 100] },
           projectsData: 1,
-        }
-      }
+        },
+      },
     ]);
+    
 
     if (!projects.length) {
       return responseData(res, "", 200, true, "No projects found");
@@ -119,6 +150,7 @@ export const getAllProject = async (req, res) => {
       archive,
       active_Project: activeProjects,
       projects: projects[0].projectsData.reverse(),
+      count_task: projects[0].count_task,
     };
 
     responseData(res, "Projects fetched successfully", 200, true, "", response);
@@ -131,7 +163,8 @@ export const getAllProject = async (req, res) => {
 
 
 export const getSingleProject = async (req, res) => {
-  const { project_id, id } = req.query;
+  const { project_id, id, org_id } = req.query;
+  
 
   if (!project_id) {
     return responseData(res, "", 400, false, "Project ID is required.", []);
@@ -140,12 +173,19 @@ export const getSingleProject = async (req, res) => {
   if (!id) {
     return responseData(res, "", 400, false, "User ID is required.", []);
   }
-
+  if(!org_id)
+  {
+    return responseData(res, "", 400, false, "Org ID is required.", []);
+  }
   try {
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     // Fetch the user and project in parallel
     const [user, project] = await Promise.all([
-      registerModel.findById(id).lean(), // Use lean to get plain JavaScript objects
-      projectModel.findOne({ project_id }).lean(),
+      registerModel.findOne({_id:id, organization:org_id}).lean(), // Use lean to get plain JavaScript objects
+      projectModel.findOne({ project_id , org_id:org_id}).lean(),
     ]);
 
     if (!user) {
@@ -158,7 +198,7 @@ export const getSingleProject = async (req, res) => {
 
     // Use aggregation to get task metrics directly from the database
     const taskMetrics = await taskModel.aggregate([
-      { $match: { project_id } },
+      { $match: { project_id, org_id } },
       {
         $group: {
           _id: null,
@@ -213,6 +253,7 @@ export const updateProjectDetails = async (req, res) => {
   const designer = req.body.designer;
   const user_id = req.body.user_id;
   const client_email = req.body.client_email;
+  const org_id = req.body.org_id;
 
   if (!project_ID) {
     responseData(res, "", 400, false, " Project ID is required.", []);
@@ -232,20 +273,27 @@ export const updateProjectDetails = async (req, res) => {
   else if (!onlyEmailValidation(client_email) && client_email.length > 5) {
     responseData(res, "", 400, false, "client email is invalid", []);
   }
+  else if (!org_id) {
+    return responseData(res, "", 400, false, "Organization Id is required");
+  }
 
   //  *********** add other validation **********//
   else {
     try {
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        return responseData(res, "", 404, false, "Org not found");
+      }
       const find_user = await registerModel.find
-        ({ _id: user_id })
+        ({ _id: user_id, organization: org_id })
       if (!find_user) {
         responseData(res, "", 400, false, "user not found.", []);
 
       }
-      const project_find = await projectModel.find({ project_id: project_ID });
+      const project_find = await projectModel.find({ project_id: project_ID, org_id:org_id });
       if (project_find.length > 0) {
         const project_update = await projectModel.findOneAndUpdate(
-          { project_id: project_ID, 'client.client_email': project_find[0].client[0].client_email },
+          { project_id: project_ID, org_id: org_id, 'client.client_email': project_find[0].client[0].client_email },
           {
             $set: {
               project_budget: project_budget,
@@ -309,17 +357,26 @@ export const updateProjectDetails = async (req, res) => {
 export const projectActivity = async (req, res) => {
   try {
     const project_id = req.query.project_id;
+    const org_id = req.query.org_id;
     const page = parseInt(req.query.page, 10) || 1; // Default to page 1
     const limit = parseInt(req.query.limit, 10) || 5; // Default to 5 items per page
     const skip = (page - 1) * limit;
 
+
     if (!project_id) {
       return responseData(res, "", false, 400, "ProjectId is required");
     }
+    if (!org_id) {
+      return responseData(res, "", false, 400, "OrgId is required");
+    }
 
     // Fetch project activities and only the project_updated_by field
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
     const project = await projectModel
-      .findOne({ project_id: project_id })
+      .findOne({ project_id: project_id, org_id:org_id })
       .select('project_updated_by');
 
     if (!project) {

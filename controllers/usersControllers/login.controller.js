@@ -32,6 +32,7 @@ const insertLogInData = async (res, user) => {
       userID: user._id,
       token,
       refreshToken,
+      org_id: user.organization,
       role: user.role,
     });
   } catch (error) {
@@ -41,28 +42,42 @@ const insertLogInData = async (res, user) => {
 };
 
 export const login = async (req, res) => {
-  const { user_name, password } = req.body;
+  const { email, password } = req.body;
+  const io = req.io;
 
-  if (!user_name || !password) {
-    return responseData(res, "", 400, false, `${!user_name ? "Username" : "Password"} is required`);
+  if (!email) {
+    responseData(res, "", 400, false, "email is required");
+    return;
+  }
+
+  if (!password) {
+    responseData(res, "", 400, false, "Password is required");
+    return;
   }
 
   try {
-    const user = await registerModel.findOne({ username: user_name, status: true });
+    const user = await registerModel.findOne({ email: email, status: true });
+
 
     if (!user) {
-      return responseData(res, "", 404, false, "Username or password does not match");
+      responseData(res, "", 404, false, "email or password does not match");
+      return;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) {
-      return responseData(res, "", 403, false, "Username or password does not match");
-    }
+    bcrypt.compare(password, user.password, async (_err, result) => {
 
-    await insertLogInData(res, user);
-  } catch (error) {
-    console.error("Internal server error:", error);
+      if (!result) {
+        responseData(res, "", 401, false, "email or password does not match");
+        return;
+      }
+
+      insertLogInData(res, user);
+
+
+    });
+  } catch (err) {
     responseData(res, "", 500, false, "Internal server error");
+    console.log(err);
   }
 };

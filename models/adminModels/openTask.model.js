@@ -20,8 +20,7 @@ const SubtaskSchema = new mongoose.Schema({
     remark:[]
 });
 
-const TaskSchema = new mongoose.Schema({
-    project_id: { type: String, required: true },
+const OpenTaskSchema = new mongoose.Schema({
     task_id: { type: String, required: true },
     org_id: { type: String, required: true },
     task_name: { type: String, required: true },
@@ -41,4 +40,4 @@ const TaskSchema = new mongoose.Schema({
 
 });
 
-export default mongoose.model("task", TaskSchema, "task");
+export default mongoose.model("opentask", OpenTaskSchema, "opentask");

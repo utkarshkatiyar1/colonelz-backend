@@ -13,11 +13,7 @@ const SubtasktimeSchema = new mongoose.Schema({
     sub_task_current: { type: String, required: true },
 });
 
-const taskWorkSchema = new mongoose.Schema({
-    project_id: {
-        type: String,
-        required: true,
-    },
+const openTaskWorkSchema = new mongoose.Schema({
     task_id: {
         type: String,
         required: true,
@@ -44,4 +40,4 @@ const taskWorkSchema = new mongoose.Schema({
         default: Date.now,
     },
 });
-export default mongoose.model("taskWork", taskWorkSchema, "taskWork");
+export default mongoose.model("openTaskWork", openTaskWorkSchema, "openTaskWork");

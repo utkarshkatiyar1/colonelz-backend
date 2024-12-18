@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { responseData } from "../../../utils/respounse.js";
+import orgModel from "../../../models/orgmodels/org.model.js";
 
 dotenv.config();
 
@@ -16,9 +17,10 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const uploadFile = async (file, fileName, lead_id, folder_name) => {
-   const  data = await s3.upload({
-      Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
+const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
+  const data = await s3
+    .upload({
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
       Key: fileName,
       Body: file.data,
       ContentType: file.mimetype,
@@ -26,7 +28,7 @@ const uploadFile = async (file, fileName, lead_id, folder_name) => {
     })
     .promise();
   const signedUrl = s3.getSignedUrl('getObject', {
-    Bucket: `${process.env.S3_BUCKET_NAME}/${lead_id}/${folder_name}`,
+    Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
     Key: fileName,
     Expires: 157680000 // URL expires in 5 year
   });
@@ -44,6 +46,7 @@ const saveFileUploadData = async (
     if (isFirst) {
       const firstFile = await fileuploadModel.create({
         lead_id: existingFileUploadData.lead_id,
+        org_id: existingFileUploadData.org_id,
         lead_name: existingFileUploadData.lead_Name,
         files: [
           {
@@ -59,6 +62,7 @@ const saveFileUploadData = async (
       const updateResult = await fileuploadModel.updateOne(
         {
           lead_id: existingFileUploadData.lead_id,
+          org_id: existingFileUploadData.org_id,
           "files.folder_name": existingFileUploadData.folder_name,
         },
         {
@@ -82,7 +86,7 @@ const saveFileUploadData = async (
         // If the folder does not exist, create a new folder object
 
         const updateNewFolderResult = await fileuploadModel.updateOne(
-          { lead_id: existingFileUploadData.lead_id },
+          { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id },
           {
             $push: {
               files: {
@@ -126,6 +130,7 @@ const saveFileUploadData = async (
 const fileupload = async (req, res) => {
   const folder_name = req.body.folder_name;
   const lead_id = req.body.lead_id;
+  const org_id = req.body.org_id
 
   if (!lead_id) {
     responseData(res, "", 403, false, "lead Id required!", []);
@@ -133,9 +138,17 @@ const fileupload = async (req, res) => {
   else if (!folder_name) {
     responseData(res, "", 403, false, "folder name required!", []);
   }
+  else if (!org_id) {
+    responseData(res, "", 403, false, "Org Id required!", []);
+  }
   else {
     try {
-      const find_lead = await leadModel.find({ lead_id: lead_id });
+      const check_org = await orgModel.findOne({ _id: org_id })
+      if (!check_org) {
+        responseData(res, "", 404, false, "Org not found!", []);
+      }
+
+      const find_lead = await leadModel.find({ lead_id: lead_id, org_id: org_id });
       if (find_lead.length < 1) {
         responseData(res, "", 404, false, "lead not found!", []);
       }
@@ -167,12 +180,12 @@ const fileupload = async (req, res) => {
           fileSize.push(fileSizeInBytes / 1024)
 
 
-          fileUploadPromises.push(uploadFile(file, fileName, lead_id, folder_name));
+          fileUploadPromises.push(uploadFile(file, fileName, lead_id,org_id, folder_name));
         }
 
 
         const responses = await Promise.all(fileUploadPromises);
-        console.log(responses)
+        
 
         const fileUploadResults = responses.map((response) => ({
           status: response.Location ? true : false,
@@ -199,7 +212,7 @@ const fileupload = async (req, res) => {
 
 
           const existingFile = await fileuploadModel.findOne({
-            lead_id: lead_id,
+            lead_id: lead_id, org_id: org_id
           });
 
           if (existingFile) {
@@ -209,6 +222,7 @@ const fileupload = async (req, res) => {
 
             await saveFileUploadData(res, {
               lead_id,
+              org_id,
               lead_Name,
               folder_name,
               updated_Date: fileUrls[0].date,
@@ -219,6 +233,7 @@ const fileupload = async (req, res) => {
               res,
               {
                 lead_id,
+                org_id,
                 lead_Name,
                 folder_name,
                 updated_Date: new Date(),

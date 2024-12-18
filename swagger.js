@@ -13,7 +13,7 @@ const options = {
     },
     // apis: ['./routes/**/*.js'],
 
-    apis: ['./routes/usersRoutes/users.route.js', './routes/adminRoutes/adminroutes.js'], // Path to the API route files
+    apis: ['./routes/usersRoutes/users.route.js', './routes/adminRoutes/adminroutes.js', './routes/orgRoutes/org.routes.js', './routes/orgRoutes/bill.routes.js'], // Path to the API route files
 };
 
 const swaggerSpec = swaggerJsdoc(options);

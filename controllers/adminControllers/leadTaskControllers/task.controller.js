@@ -5,6 +5,9 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import timerModel from "../../../models/adminModels/timer.Model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import leadModel from "../../../models/adminModels/leadModel.js";
+import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
+import leadTimerModel from "../../../models/adminModels/leadTimer.Model.js";
 
 
 
@@ -16,11 +19,11 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res,org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
-    const task = new taskModel({
-        project_id,
+    const task = new leadTaskModel({
+        lead_id,
         task_id,
         org_id,
         task_name,
@@ -38,8 +41,8 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project
         subtasks: []
     });
 
-    const taskTime = new timerModel({
-        project_id,
+    const taskTime = new leadTimerModel({
+        lead_id,
         task_id,
         org_id,
         task_name,
@@ -51,11 +54,11 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project
     await task.save();
     await taskTime.save();
 
-    await projectModel.findOneAndUpdate(
-        { project_id: project_id, org_id: org_id },
+    await leadModel.findOneAndUpdate(
+        { lead_id: lead_id, org_id: org_id },
         {
             $push: {
-                project_updated_by: {
+                lead_update_track: {
                     username: check_user.username,
                     role: check_user.role,
                     message: `has created new task ${task_name}.`,
@@ -64,15 +67,14 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project
             }
         }
     );
-
     responseData(res, "Task created successfully", 200, true, "", []);
 };
-export const createTask = async (req, res) => {
+export const createLeadTask = async (req, res) => {
 
     try {
         const user_id = req.body.user_id;
         const org_id = req.body.org_id;
-        const project_id = req.body.project_id;
+        const lead_id = req.body.lead_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const actual_task_start_date = req.body.actual_task_start_date;
@@ -82,9 +84,13 @@ export const createTask = async (req, res) => {
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
         const reporter = req.body.reporter;
+        // if(task_assignee === reporter)
+        // {
+        //     return responseData(res, "", 404, false, "The task assignee and the person who reported the task should not be the same.", []);
+        // }
 
         if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
-        if (!project_id) return responseData(res, "", 404, false, "Project Id required", []);
+        if (!lead_id) return responseData(res, "", 404, false, "Lead Id required", []);
         if (!onlyAlphabetsValidation(task_name) || task_name.length < 3) {
             return responseData(res, "", 404, false, "Task Name should be alphabets and at least 3 characters long", []);
         }
@@ -103,12 +109,9 @@ export const createTask = async (req, res) => {
         const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
-        // Check if the project exists
-        const check_project = await projectModel.findOne({ project_id: project_id, org_id:org_id });
-        if (!check_project) return responseData(res, "", 404, false, "Project not found", []);
-
-
-        
+        // Check if the lead exists
+        const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id:org_id });
+        if (!check_lead) return responseData(res, "", 404, false, "Lead not found", []);
 
         // Check if the assignee exists and is active
         let check_assignee = {};
@@ -119,7 +122,6 @@ export const createTask = async (req, res) => {
         }
 
         // Check if the reporter exists and is active
-
         let check_reporter = {};
 
         if(reporter !== '') {
@@ -135,49 +137,46 @@ export const createTask = async (req, res) => {
             return ['Senior Architect', 'ADMIN'].includes(user.role)
         };
 
+
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
-            await createTaskAndTimer(res,  org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res,  org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
 
             if(task_assignee !== '') {
-                const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
-                if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
+                const existLead = check_assignee.data[0].leadData.find((item) => item.lead_id === lead_id);
+                if (!existLead) return responseData(res, "", 404, false, "Task assignee is not part of this lead", []);
             }
-
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
+
             if(reporter !== '') {
-                const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
-                if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
+                const exitsreportlead = check_reporter.data[0].leadData.find((item) => item.lead_id === lead_id);
+                if (!exitsreportlead) return responseData(res, "", 404, false, "Reporter is not part of this lead", []);
             }
 
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else {
-            // Check project association for assignee and reporter
+            // Check lead association for assignee and reporter
             if(task_assignee !== '') {
-                const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
-                if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
+                const existLead = check_assignee.data[0].leadData.find((item) => item.lead_id === lead_id);
+                if (!existLead) return responseData(res, "", 404, false, "Task assignee is not part of this lead", []);
             }
 
             if(reporter !== '') {
-                const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
-                if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
+                const exitsreportlead = check_reporter.data[0].leadData.find((item) => item.lead_id === lead_id);
+                if (!exitsreportlead) return responseData(res, "", 404, false, "Reporter is not part of this lead", []);
             }
             // Create task if validation passes
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
-
-        
-
-        
 
     } catch (err) {
         console.log(err);
@@ -185,12 +184,12 @@ export const createTask = async (req, res) => {
     }
 
 }
-export const getAllTasks = async (req, res) => {
+export const getAllLeadTasks = async (req, res) => {
     try {
-        const { user_id, project_id, org_id } = req.query;
+        const { user_id, lead_id, org_id } = req.query;
 
-        if (!user_id || !project_id) {
-            const missingField = !user_id ? "User Id" : "Project Id";
+        if (!user_id || !lead_id) {
+            const missingField = !user_id ? "User Id" : "Lead Id";
             return responseData(res, "", 404, false, `${missingField} required`, []);
         }
         if(!org_id)
@@ -207,13 +206,13 @@ export const getAllTasks = async (req, res) => {
             return responseData(res, "", 404, false, "User not found", []);
         }
 
-        const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
-        if (!check_project) {
-            return responseData(res, "", 404, false, "Project not found", []);
+        const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
+        if (!check_lead) {
+            return responseData(res, "", 404, false, "Lead not found", []);
         }
 
         // Fetch tasks
-        const tasks = await taskModel.find({ project_id: project_id, org_id: org_id });
+        const tasks = await leadTaskModel.find({ lead_id: lead_id, org_id: org_id });
         if (!tasks.length) {
             return responseData(res, "Tasks not found", 200, false, "", []);
         }
@@ -250,7 +249,7 @@ export const getAllTasks = async (req, res) => {
 
             if (newTaskStatus !== task.task_status) {
                 // Update task status if it has changed
-                await taskModel.findOneAndUpdate(
+                await leadTaskModel.findOneAndUpdate(
                     { task_id: task.task_id, org_id: org_id },
                     {
                         $set: {
@@ -264,11 +263,11 @@ export const getAllTasks = async (req, res) => {
         }
 
         // Fetch the updated tasks
-        const updatedTasks = await taskModel.find({ project_id: project_id, org_id: org_id });
+        const updatedTasks = await leadTaskModel.find({ lead_id: lead_id, org_id: org_id });
 
         // Construct response
         const response = updatedTasks.map(task => ({
-            project_id: task.project_id,
+            lead_id: task.lead_id,
             task_id: task.task_id,
             task_name: task.task_name,
             actual_task_start_date: task.actual_task_start_date,
@@ -295,32 +294,30 @@ export const getAllTasks = async (req, res) => {
 
 
 
-
-
-export const getSingleTask = async (req, res) => {
+export const getSingleLeadTask = async (req, res) => {
     try {
-        const { user_id, project_id, task_id, org_id } = req.query;
+        const { user_id, lead_id, task_id, org_id } = req.query;
 
         // Validate required parameters
-        if (!user_id || !project_id || !task_id || !org_id) {
-            return responseData(res, "", 400, false, "User ID, Project ID, and Task ID, Org ID are required", []);
+        if (!user_id || !lead_id || !task_id || !org_id) {
+            return responseData(res, "", 400, false, "User ID, Lead ID, and Task ID, Org ID are required", []);
         }
 
         // Aggregate to find user, project, and task
-        const result = await taskModel.aggregate([
+        const result = await leadTaskModel.aggregate([
             {
                 $match: {
                     task_id: task_id,
-                    project_id: project_id,
+                    lead_id: lead_id,
                     org_id: org_id
                 },
             },
             {
                 $lookup: {
-                    from: "projects", // Assuming the collection name for projects
-                    localField: "project_id",
-                    foreignField: "project_id",
-                    as: "project_info",
+                    from: "Lead", // Assuming the collection name for leads
+                    localField: "lead_id",
+                    foreignField: "lead_id",
+                    as: "lead_info",
                 },
             },
             {
@@ -333,7 +330,7 @@ export const getSingleTask = async (req, res) => {
             },
             {
                 $project: {
-                    project_id: 1,
+                    lead_id: 1,
                     task_id: 1,
                     task_name: 1,
                     task_description: 1,
@@ -348,7 +345,7 @@ export const getSingleTask = async (req, res) => {
                     task_assignee: 1,
                     task_createdBy: 1,
                     number_of_subtasks: { $size: "$subtasks" },
-                    project_name: { $arrayElemAt: ["$project_info.project_name", 0] },
+                    lead_name: { $arrayElemAt: ["$lead_info.lead_name", 0] },
                     assignee_name: { $arrayElemAt: ["$assignee_info.name", 0] }, // Adjust based on your user schema
                 },
             },
@@ -367,12 +364,12 @@ export const getSingleTask = async (req, res) => {
 
 
 
-export const updateTask = async (req, res) => {
+export const updateLeadTask = async (req, res) => {
 
     try {
         const user_id = req.body.user_id;
         const org_id = req.body.org_id;
-        const project_id = req.body.project_id;
+        const lead_id = req.body.lead_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const actual_task_start_date = req.body.actual_task_start_date;
@@ -387,8 +384,8 @@ export const updateTask = async (req, res) => {
         if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
         }
-        else if (!project_id) {
-            responseData(res, "", 404, false, "Project Id required", [])
+        else if (!lead_id) {
+            responseData(res, "", 404, false, "Lead Id required", [])
         }
         else if (!onlyAlphabetsValidation(task_name) && task_name.length > 3) {
             responseData(res, "", 404, false, "Task Name should be alphabets", [])
@@ -428,17 +425,17 @@ export const updateTask = async (req, res) => {
                 responseData(res, "", 404, false, "User not found", [])
             }
             else {
-                const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id })
-                if (!check_project) {
-                    responseData(res, "", 404, false, "Project not found", [])
+                const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id })
+                if (!check_lead) {
+                    responseData(res, "", 404, false, "Lead not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, org_id: org_id })
+                    const check_task = await leadTaskModel.findOne({ task_id: task_id, org_id: org_id })
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id, org_id: org_id },
+                        const update_task = await leadTaskModel.findOneAndUpdate({ task_id: task_id, lead_id: lead_id, org_id: org_id },
                             {
                                 $set: {
                                     task_name: task_name,
@@ -466,10 +463,10 @@ export const updateTask = async (req, res) => {
                         )
 
                         if (update_task) {
-                            await projectModel.findOneAndUpdate({ project_id: project_id, org_id: org_id },
+                            await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
                                 {
                                     $push: {
-                                        project_updated_by: {
+                                        lead_update_track: {
                                             username: check_user.username,
                                             role: check_user.role,
                                             message: `has updated task ${task_name}.`,
@@ -498,18 +495,18 @@ export const updateTask = async (req, res) => {
     }
 }
 
-export const deleteTask = async (req, res) => {
+export const deleteLeadTask = async (req, res) => {
     try {
         const user_id = req.body.user_id;
-        const project_id = req.body.project_id;
+        const lead_id = req.body.lead_id;
         const task_id = req.body.task_id;
         const org_id = req.body.org_id;
 
         if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
         }
-        else if (!project_id) {
-            responseData(res, "", 404, false, "Project Id required", [])
+        else if (!lead_id) {
+            responseData(res, "", 404, false, "Lead Id required", [])
         }
 
         else if (!task_id) {
@@ -528,20 +525,20 @@ export const deleteTask = async (req, res) => {
                 responseData(res, "", 404, false, "User not found", [])
             }
             else {
-                const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
-                if (!check_project) {
-                    responseData(res, "", 404, false, "Project not found", [])
+                const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
+                if (!check_lead) {
+                    responseData(res, "", 404, false, "Lead not found", [])
                 }
                 else {
-                    const check_task = await taskModel.findOne({ task_id: task_id, project_id: project_id, org_id: org_id });
+                    const check_task = await leadTaskModel.findOne({ task_id: task_id, lead_id: lead_id, org_id: org_id });
                     if (!check_task) {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        await projectModel.findOneAndUpdate({ project_id: project_id, org_id: org_id },
+                        await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
                             {
                                 $push: {
-                                    project_updated_by: {
+                                    lead_update_track: {
                                         username: check_user.username,
                                         role: check_user.role,
                                         message: `has deleted task ${check_task.task_name}.`,
@@ -550,7 +547,7 @@ export const deleteTask = async (req, res) => {
                                 }
                             }
                         )
-                        const delete_task = await taskModel.findOneAndDelete({ task_id: task_id, project_id: project_id, org_id: org_id })
+                        const delete_task = await leadTaskModel.findOneAndDelete({ task_id: task_id, lead_id: lead_id, org_id: org_id })
                         if (delete_task) {
                             responseData(res, "Task deleted successfully", 200, true, "", [])
                         }
@@ -573,12 +570,12 @@ export const deleteTask = async (req, res) => {
 }
 
 
-export const getAllTaskWithData = async (req, res) => {
+export const getAllLeadTaskWithData = async (req, res) => {
     try {
-        const project_id = req.query.project_id
+        const lead_id = req.query.lead_id
         const org_id = req.query.org_id;
-        if (!project_id) {
-            responseData(res, "", 404, false, "Project id is required", [])
+        if (!lead_id) {
+            responseData(res, "", 404, false, "Lead id is required", [])
         }
         else if (!org_id) {
             return responseData(res, "", 400, false, "Organization Id is required");
@@ -588,12 +585,12 @@ export const getAllTaskWithData = async (req, res) => {
             if (!check_org) {
                 return responseData(res, "", 404, false, "Org not found");
             }
-            const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
-            if (!check_project) {
-                responseData(res, "", 404, false, "Project not found", [])
+            const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
+            if (!check_lead) {
+                responseData(res, "", 404, false, "Lead not found", [])
             }
             else {
-                const check_task = await taskModel.find({ project_id: project_id, org_id: org_id });
+                const check_task = await leadTaskModel.find({ lead_id: lead_id, org_id: org_id });
                 if (!check_task) {
                     responseData(res, "", 404, false, "Task not found", [])
                 }
