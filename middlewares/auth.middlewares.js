@@ -236,7 +236,7 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
         count_task: count_task
       };
     }));
-    console.log(projectData)
+    // console.log(projectData)
     // Categorize projects by status
     const categorizedProjects = projects1.reduce(
       (acc, project) => {

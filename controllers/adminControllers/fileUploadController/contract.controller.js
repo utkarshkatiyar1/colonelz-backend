@@ -15,6 +15,39 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
+const storeOrUpdateContract = async (res, existingContractData, isFirst = false) => {
+    try {
+        if (isFirst) {
+            const updatedLead = await leadModel.findOneAndUpdate(
+                { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
+                {
+                    $push: { "contract": existingContractData.contractData }
+                },
+                { new: true } // Return the updated document
+            );
+            return responseData(res, `Contract shared successfully`, 200, true, "");
+
+        }
+        else {
+            const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
+            if (check_lead) {
+                const updatedLead = await leadModel.findOneAndUpdate(
+                    { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
+                    {
+                        $push: {
+                            "contract": existingContractData.contractData
+                        }
+                    }
+                )
+                return responseData(res, `Contract shared successfully`, 200, true, "");
+            }
+        }
+    }
+    catch (err) {
+        return responseData(res, "", 403, false, "Error occured while storing contract");
+    }
+
+}
 
 const uploadImage = async (req, filePath, lead_id, org_id, fileName) => {
 
@@ -169,14 +202,23 @@ export const contractShare = async (req, res) => {
 
             if (response.status) {
 
-
+              const fileId = `FL-${generateSixDigitNumber()}`;
+              const fileName = decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' '));
               let fileUrls = [{
                 fileUrl: response.data.Location,
-                fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
-                fileId: `FL-${generateSixDigitNumber()}`,
+                fileName: fileName,
+                fileId: fileId,
                 fileSize: `${contract_pdf.size / 1024} KB`,
                 date: new Date()
               }]
+
+              const contractData = {
+                itemId: fileId,
+                admin_status: "notsend",
+                file_name: fileName,
+                files: response.data.Location,
+                remark: "",
+              };
 
 
               const existingFile = await fileuploadModel.findOne({
@@ -221,6 +263,25 @@ export const contractShare = async (req, res) => {
                   console.log('Local PDF file deleted successfully');
                 }
               });
+
+              if (lead.contract.length < 1) {
+
+                const createObj = {
+                    lead_id,
+                    org_id,
+                    contractData,
+                }
+
+                await storeOrUpdateContract(res, createObj, true);
+              }
+              else {
+                  const createObj = {
+                      lead_id,
+                      org_id,
+                      contractData,
+                  }
+                  await storeOrUpdateContract(res, createObj);
+              }
 
             } else {
               console.log(response)

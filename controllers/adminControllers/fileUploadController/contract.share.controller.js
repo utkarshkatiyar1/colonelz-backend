@@ -28,28 +28,41 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
                 { new: true } // Return the updated document
             );
             return responseData(res, `Contract shared successfully`, 200, true, "");
+        } else {
+            // Find and update the specific contract in the array
+            const updatedLead = await leadModel.findOneAndUpdate(
+                {
+                    lead_id: existingContractData.lead_id,
+                    org_id: existingContractData.org_id,
+                    "contract.itemId": existingContractData.contractData.itemId
+                },
+                {
+                    $set: {
+                        "contract.$.admin_status": "pending"
+                    }
+                },
+                { new: true } // Return the updated document
+            );
 
-        }
-        else {
-            const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
-            if (check_lead) {
-                const updatedLead = await leadModel.findOneAndUpdate(
+            if (updatedLead) {
+                return responseData(res, `Contract updated successfully`, 200, true, "");
+            } else {
+                // If no contract found, create a new one
+                const newContract = await leadModel.findOneAndUpdate(
                     { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
                     {
-                        $push: {
-                            "contract": existingContractData.contractData
-                        }
-                    }
-                )
+                        $push: { "contract": existingContractData.contractData }
+                    },
+                    { new: true } // Return the updated document
+                );
                 return responseData(res, `Contract shared successfully`, 200, true, "");
             }
         }
+    } catch (err) {
+        return responseData(res, "", 403, false, "Error occurred while storing contract");
     }
-    catch (err) {
-        return responseData(res, "", 403, false, "Error occured while storing contract");
-    }
+};
 
-}
 
 const uploadImage = async (req, file, lead_id, org_id, fileName) => {
 
@@ -163,6 +176,7 @@ export const shareContract = async (req, res) => {
         const project_name = req.body.project_name;
         const site_location = req.body.site_location;
         const org_id = req.body.org_id;
+        console.log('folder_name', folder_name)
 
 
 
@@ -183,15 +197,47 @@ export const shareContract = async (req, res) => {
                 }
                 else {
 
-                    const check_status1 = await leadModel.findOne({ lead_id: lead_id,  org_id: org_id, "contract.itemId": fileId, "contract.admin_status": "pending" });
+                    // const check_status1 = await leadModel.findOne({ lead_id: lead_id,  org_id: org_id, "contract.itemId": fileId, "contract.admin_status": "pending" });
+                    const check_status1 = await leadModel.findOne({
+                        lead_id: lead_id,
+                        org_id: org_id,
+                        contract: {
+                            $elemMatch: {
+                                itemId: fileId,
+                                admin_status: "pending"
+                            }
+                        }
+                    });
+
                     if (check_status1) {
                         return responseData(res, "", 400, false, "This Contract not  closed yet");
                     }
-                    const check_status2 = await leadModel.findOne({ lead_id: lead_id, org_id: org_id, "contract.itemId": fileId, "contract.admin_status": "rejected" });
+                    // const check_status2 = await leadModel.findOne({ lead_id: lead_id, org_id: org_id, "contract.itemId": fileId, "contract.admin_status": "rejected" });
+                    const check_status2 = await leadModel.findOne({
+                        lead_id: lead_id,
+                        org_id: org_id,
+                        contract: {
+                            $elemMatch: {
+                                itemId: fileId,
+                                admin_status: "rejected"
+                            }
+                        }
+                    });
                     if (check_status2) {
                         return responseData(res, "", 400, false, "This Contract rejected");
                     }
-                    const check_status3 = await leadModel.findOne({ lead_id: lead_id, org_id: org_id, "contract.itemId": fileId, "contracts.admin_status": "approved" });
+                    // const check_status3 = await leadModel.findOne({ lead_id: lead_id, org_id: org_id, "contract.itemId": fileId, "contracts.admin_status": "approved" });
+                    const check_status3 = await leadModel.findOne({
+                        lead_id: lead_id,
+                        org_id: org_id,
+                        contract: {
+                            $elemMatch: {
+                                itemId: fileId,
+                                admin_status: "approved"
+                            }
+                        }
+                    });
+        
                     if (check_status3) {
                         return responseData(res, "", 400, false, "This Contract approved");
                     }

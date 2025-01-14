@@ -23,9 +23,9 @@ const createSubTaskAndTimer = async (data, res) => {
         const sub_task_id = `STK-${generateSixDigitNumber()}`;
 
 
-        console.log(task_id)
-        console.log(project_id)
-        console.log(org_id)
+        // console.log(task_id)
+        // console.log(project_id)
+        // console.log(org_id)
 
         const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id, org_id: org_id }, {
             $push: {
@@ -39,7 +39,7 @@ const createSubTaskAndTimer = async (data, res) => {
                 }
             }
         }, { new: true, useFindAndModify: false });
-        console.log(update_task)
+        // console.log(update_task)
 
         if (update_task) {
             await timerModel.findOneAndUpdate({ project_id: project_id, task_id: task_id, org_id:org_id }, {
