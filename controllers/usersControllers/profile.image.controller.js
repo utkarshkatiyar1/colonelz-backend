@@ -61,7 +61,7 @@ export const profileUpload = async (req, res) => {
   const user_name = req.body.user_name;
   const org_id = req.body.org_id;
 
-  console.log(req.body)
+  // console.log(req.body)
 
   if (!userId) {
     return responseData(res, "", 400, false, "UserId is required");
@@ -86,9 +86,8 @@ let data = []
     }
 
     const fileName = `${Date.now()}_${file.name}`;
-    console.log(fileName);
+    // console.log(fileName);
     const response = await uploadImage(req, fileName, userId, org_id, "file");
-
     if (response.status) {
       if(!user_name)
       {
@@ -100,7 +99,7 @@ let data = []
       }
      
     } else {
-      console.log(response);
+      // console.log(response);
       return responseData(res, "", 500, false, "Image upload failed");
     }
 

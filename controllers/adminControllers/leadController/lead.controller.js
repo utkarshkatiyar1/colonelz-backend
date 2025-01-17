@@ -340,6 +340,7 @@ export const getAllLead = async (req, res) => {
           location: 1,
           status: 1,
           date: 1,
+          lead_status: 1,
           count_task: { $size: "$leadTask" } // Calculate task count
         }
       },

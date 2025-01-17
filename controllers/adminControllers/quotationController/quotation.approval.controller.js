@@ -404,7 +404,7 @@ export const shareQuotation = async (req, res) => {
 
 
 function approvalLinkClient(project_id, file_id, org_id) {
-    return `${process.env.LOGIN_URL}quotation?project_id=${project_id}&file_id=${file_id}&org_id=${org_id}`;
+    return `${process.env.LOGIN_URL}/quotation?project_id=${project_id}&file_id=${file_id}&org_id=${org_id}`;
 }
 
 

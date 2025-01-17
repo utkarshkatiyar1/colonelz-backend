@@ -247,7 +247,7 @@ const fileupload = async (req, res) => {
         } else {
           res.send({
             message: "",
-            statuscode: 500,
+            code: 500,
             status: false,
             errormessage: "Error uploading files",
             data: [],
@@ -257,7 +257,7 @@ const fileupload = async (req, res) => {
     } catch (err) {
       res.send({
         message: "",
-        statuscode: 500,
+        code: 500,
         status: false,
         errormessage: err.message,
         data: [],

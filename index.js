@@ -21,6 +21,7 @@ import cluster from 'cluster';
 import os from 'os';
 import setupSwaggerDocs from "./swagger.js";
 import { checkEmailServer } from "./utils/function.js";
+import { checkS3BucketConnection } from "./utils/function.js";
 
 dotenv.config();
 
@@ -147,6 +148,7 @@ if (cluster.isMaster) {
   // Workers can share any TCP connection
   server.listen(8000, async () => {
     await connect();
+    await checkS3BucketConnection();
     await checkEmailServer();
     console.log(`Worker ${process.pid} started and listening on port 8000`);
   });

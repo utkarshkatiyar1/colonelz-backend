@@ -58,6 +58,8 @@ export const updateOrg = async (req, res) => {
     const userId = req.body.userId;
     const org_id = req.body.org_id;
 
+    console.log(req.body)
+    // const user_name = req.body.user_name;
 
     if (!userId) {
         return responseData(res, "", 400, false, "UserId is required");
@@ -94,7 +96,7 @@ export const updateOrg = async (req, res) => {
                         if (!file) {
 
 
-                            console.log("file k ander if")
+                            // console.log("file k ander if")
                             // if (!onlyAlphabetsValidation(user_name) || user_name.length <= 3) {
                             //   return responseData(res, "", 400, false, "User Name is not valid");
                             // }
@@ -102,6 +104,7 @@ export const updateOrg = async (req, res) => {
                         }
 
                         const fileName = `${Date.now()}_${file.name}`;
+                        console.log(fileName);
                         const response = await uploadImage(req, fileName, org_id, "file");
 
                         if (response.status) {
