@@ -7,6 +7,8 @@ import orgModel from "../../../models/orgmodels/org.model.js";
 export const deleteFile = async (req, res) => {
     const { org_id, lead_id, project_id, folder_name, file_id: fileIds, type } = req.body;
 
+    // console.log('fileid', fileIds)
+
     if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
         return responseData(res, "", 400, false, "Please provide an array of fileIds");
     }
@@ -40,19 +42,21 @@ export const deleteFile = async (req, res) => {
 
             const file = fileGroup.files.find(file => file.fileId === fileId);
             const updateQuery = type === "template"
-                ? { "files.sub_folder_name_second": folder_name }
+                ? { "files.sub_folder_name_second": folder_name, "files.files.fileId": fileId, org_id:org_id  }
                 : { $or: [{ project_id }, { lead_id }], "files.folder_name": folder_name, 'files.files.fileId': fileId, org_id: org_id };
 
+            // console.log(updateQuery);
+            
 
             const filesDatas = await fileuploadModel.findOne(query);
 
-            console.log("Before Update:", filesDatas);
+            // console.log("Before Update:", filesDatas);
             const data = await fileuploadModel.findOneAndUpdate(
                 updateQuery,
-                { $pull: { "files.$.files": { fileId } } },
+                { $pull: { "files.$[].files": { fileId } } },
                 { new: true }
             );
-            console.log("After Update:", data);
+            // console.log("After Update:", data.files[0].files);
 
             if (data) {
                 const archiveData = {
