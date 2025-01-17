@@ -40,3 +40,21 @@ export const checkEmailServer = async (req, res) => {
         console.error("Error verifying email server:", error);
     }
 };
+
+export async function checkS3BucketConnection() {
+    try {
+        await s3.headBucket({ Bucket: process.env.S3_BUCKET_NAME }).promise();
+        console.log(`Bucket "${process.env.S3_BUCKET_NAME}" is accessible.`);
+    } catch (error) {
+        if (error.code === 'NotFound') {
+            console.error(`Bucket "${process.env.S3_BUCKET_NAME}" does not exist.`);
+        } else if (error.code === 'Forbidden') {
+            console.error(`Access to bucket "${process.env.S3_BUCKET_NAME}" is forbidden. Check permissions.`);
+            console.log("Error", error);
+        } else if (error.code === 'UnknownEndpoint') {
+            console.error(`Invalid region or endpoint for bucket "${process.env.S3_BUCKET_NAME}".`);
+        } else {
+            console.error(`Error accessing bucket "${process.env.S3_BUCKET_NAME}":`, error.message);
+        }
+    }
+}
