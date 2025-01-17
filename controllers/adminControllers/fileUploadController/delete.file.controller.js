@@ -49,7 +49,7 @@ export const deleteFile = async (req, res) => {
             console.log("Before Update:", filesDatas);
             const data = await fileuploadModel.findOneAndUpdate(
                 updateQuery,
-                { $pull: { "files.$[].files": { fileId } } },
+                { $pull: { "files.$.files": { fileId } } },
                 { new: true }
             );
             console.log("After Update:", data);
