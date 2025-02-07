@@ -11,6 +11,7 @@ import {
 import notificationModel from "../../../models/adminModels/notification.model.js";
 import taskModel from "../../../models/adminModels/task.model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import leadModel from "../../../models/adminModels/leadModel.js";
 dotenv.config();
 function generateSixDigitNumber() {
   const min = 100000;
@@ -156,6 +157,133 @@ export const getAllProject = async (req, res) => {
     responseData(res, "Projects fetched successfully", 200, true, "", response);
   } catch (error) {
     console.error(error.message); // Log the error for debugging
+    responseData(res, "", 500, false, "Error in fetching projects");
+  }
+};
+
+
+export const getAllProjectByLeadId = async (req, res) => {
+  try {
+    const id = req.query.id;
+    const org_id = req.query.org_id;
+    const lead_id = req.query.lead_id;
+
+    if (!id) {
+      return responseData(res, "", 400, false, "User ID is required");
+    }
+    if (!org_id) {
+      return responseData(res, "", 400, false, "Org ID is required", []);
+    }
+    if (!lead_id) {
+      return responseData(res, "", 400, false, "Lead ID is required");
+    }
+
+    const user = await registerModel.findById(id);
+    if (!user) {
+      return responseData(res, "", 404, false, "User not found");
+    }
+
+    const check_org = await orgModel.findOne({ _id: org_id });
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+
+    const leadData = await leadModel.findOne({ lead_id });
+    if (!leadData) {
+      return responseData(res, "", 404, false, "Lead not found");
+    }
+
+    // **Aggregation to filter projects by lead_id and count tasks**
+    const projects = await projectModel.aggregate([
+      // Match projects belonging to the specified org_id and lead_id
+      { $match: { org_id: org_id, lead_id: lead_id } },
+
+      // Lookup tasks related to each project
+      {
+        $lookup: {
+          from: "task", // Task collection
+          localField: "project_id",
+          foreignField: "project_id",
+          as: "task",
+        },
+      },
+
+      // Add task count for each project
+      {
+        $addFields: {
+          count_task: { $size: "$task" }, // Count the number of tasks
+        },
+      },
+
+      // Project necessary fields
+      {
+        $project: {
+          project_id: 1,
+          project_name: 1,
+          project_status: 1,
+          project_start_date: 1,
+          project_end_date: 1,
+          project_type: 1,
+          designer: 1,
+          client_name: { $arrayElemAt: ["$client.client_name", 0] },
+          client: 1,
+          count_task: 1, // Include task count
+        },
+      },
+
+      // Group projects for summary statistics
+      {
+        $group: {
+          _id: null,
+          totalProjects: { $sum: 1 },
+          execution: { $sum: { $cond: [{ $eq: ["$project_status", "executing"] }, 1, 0] } },
+          design: { $sum: { $cond: [{ $eq: ["$project_status", "designing"] }, 1, 0] } },
+          designAndExecution: { $sum: { $cond: [{ $eq: ["$project_status", "design & execution"] }, 1, 0] } },
+          completed: { $sum: { $cond: [{ $eq: ["$project_status", "completed"] }, 1, 0] } },
+          commercial: { $sum: { $cond: [{ $eq: ["$project_type", "commercial"] }, 1, 0] } },
+          residential: { $sum: { $cond: [{ $eq: ["$project_type", "residential"] }, 1, 0] } },
+          projectsData: { $push: "$$ROOT" },
+        },
+      },
+
+      // Calculate percentages and project the final structure
+      {
+        $project: {
+          totalProjects: 1,
+          execution: 1,
+          design: 1,
+          designAndExecution: 1,
+          completed: 1,
+          commercial: { $multiply: [{ $divide: ["$commercial", "$totalProjects"] }, 100] },
+          residential: { $multiply: [{ $divide: ["$residential", "$totalProjects"] }, 100] },
+          projectsData: 1,
+        },
+      },
+    ]);
+
+    if (!projects.length) {
+      return responseData(res, "", 200, true, "No projects found for the given Lead ID");
+    }
+
+    const archive = projects[0].projectsData.filter(p => isProjectOlderThan6Months(p.project_end_date)).length;
+    const activeProjects = projects[0].totalProjects - projects[0].completed;
+
+    const response = {
+      total_Project: projects[0].totalProjects,
+      Execution_Phase: projects[0].execution,
+      Design_Phase: projects[0].design,
+      Design_Execution: projects[0].designAndExecution,
+      completed: projects[0].completed,
+      commercial: projects[0].commercial.toFixed(2),
+      residential: projects[0].residential.toFixed(2),
+      archive,
+      active_Project: activeProjects,
+      projects: projects[0].projectsData.reverse(),
+    };
+
+    responseData(res, "Projects fetched successfully", 200, true, "", response);
+  } catch (error) {
+    console.error(error.message);
     responseData(res, "", 500, false, "Error in fetching projects");
   }
 };

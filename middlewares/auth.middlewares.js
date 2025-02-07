@@ -293,7 +293,107 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
       projects: projectData,
     };
 
-    return responseData(res, "User data found", 200, true, "", response);
+    return responseData(res, "User not found", 200, true, "", response);
+  } catch (err) {
+    console.error("Error in checkAvailableUserIsAdmininProject:", err);
+    return responseData(res, "", 500, false, "Internal Server Error");
+  }
+};
+
+export const checkAvailableUserIsAdmininProjectByLeadid = async (req, res, next) => {
+  try {
+    const { role, data } = req.user;
+
+    // If user has admin privileges, proceed to the next middleware
+    if (['ADMIN', 'Senior Architect', 'ORGADMIN', 'SUPERADMIN'].includes(role)) {
+      return next();
+    }
+
+    // Get project IDs related to the user
+    // const projectIds = data?.[0]?.projectData.map(item => item.project_id) || [];
+
+    // // Fetch projects in a single query
+    // const projects1 = await projectModel.find({ project_id: { $in: projectIds } }).lean();
+    
+     
+
+    // const projectData =  await Promise.all (projects1.map(async (project) => {
+    //   const count_task = await taskModel.countDocuments({ project_id: project.project_id });
+    //   const {
+    //     project_id, project_name, project_status, project_start_date, project_end_date, project_type, designer, client,
+    //   } = project;
+
+    //   return {
+    //     project_id,
+    //     project_name,
+    //     project_status,
+    //     project_start_date,
+    //     project_end_date,
+    //     client_name: client[0]?.client_name || "",
+    //     project_type,
+    //     designer,
+    //     client,
+    //     count_task: count_task
+    //   };
+    // }));
+    // // console.log(projectData)
+    // // Categorize projects by status
+    // const categorizedProjects = projects1.reduce(
+    //   (acc, project) => {
+    //     const projectItem = {
+    //       project_name: project.project_name,
+    //       project_id: project.project_id,
+    //       client_name: project.client?.[0]?.client_name || '',
+    //       project_type: project.project_type,
+    //       project_status: project.project_status,
+    //     };
+
+    //     switch (project.project_status) {
+    //       case "executing":
+    //         acc.execution.push(projectItem);
+    //         break;
+    //       case "designing":
+    //         acc.design.push(projectItem);
+    //         break;
+    //       case "completed":
+    //         acc.completed.push(projectItem);
+    //         break;
+    //       case "design & execution":
+    //         acc.design_execution.push(projectItem);
+    //       default:
+    //         break;
+    //     }
+    //     switch (project.project_type) {
+    //       case "residential":
+    //         acc.residential.push(projectItem);
+    //         break;
+    //       case "commercial":
+    //         acc.commercial.push(projectItem);
+    //         break;
+    //       default:
+    //         break;
+    //     }
+
+    //     return acc;
+    //   },
+    //   { execution: [], design: [], completed: [], residential: [], commercial: [], design_execution: [] }
+    // );
+
+    // const totalProjects = projects1.length;
+    // const completedProjects = categorizedProjects.completed.length;
+    // const response = {
+    //   total_Project: totalProjects,
+    //   Execution_Phase: categorizedProjects.execution.length,
+    //   Design_Phase: categorizedProjects.design.length,
+    //   Design_Execution: categorizedProjects.design_execution.length,
+    //   residential: ((categorizedProjects.residential.length / totalProjects) * 100).toFixed(2),
+    //   commercial: ((categorizedProjects.commercial.length / totalProjects) * 100).toFixed(2),
+    //   completed: completedProjects,
+    //   active_Project: totalProjects - completedProjects,
+    //   projects: projectData,
+    // };
+
+    return responseData(res, "You are not a ADMIN, SUPERADMIN, Senior Architect", 401, true, "", response);
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdmininProject:", err);
     return responseData(res, "", 500, false, "Internal Server Error");

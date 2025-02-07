@@ -208,7 +208,7 @@ export const contractShare = async (req, res) => {
               let fileUrls = [{
                 fileUrl: response.signedUrl,
                 fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
-                fileId: `FL-${generateSixDigitNumber()}`,
+                fileId: fileId,
                 fileSize: `${contract_pdf.size / 1024} KB`,
                 date: new Date()
               }]
