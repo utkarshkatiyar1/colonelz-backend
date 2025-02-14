@@ -84,9 +84,9 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
             // Save the updated approval document
             await approval.save();
 
-            const project_id = check_lead.project_id ? check_lead.project_id : "";
+            
 
-            await createOrUpdateTimeline(existingContractData.lead_id, project_id, existingContractData.org_id, leadUpdate, {}, res);
+            await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
 
             infotransporter.sendMail(mailOptions, async (error, info) => {
                 if (error) {
@@ -148,9 +148,9 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
 
                 await approval.save();
 
-                const project_id = check_lead.project_id ? check_lead.project_id : "";
+                
 
-                await createOrUpdateTimeline(existingContractData.lead_id, project_id, existingContractData.org_id, leadUpdate, {}, res);
+                await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
 
                 infotransporter.sendMail(mailOptions, async (error, info) => {
                     if (error) {
@@ -185,8 +185,7 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
                 // Save the updated approval document
                 await approval.save();
 
-                const project_id = check_lead.project_id ? check_lead.project_id : "";
-                await createOrUpdateTimeline(existingContractData.lead_id, project_id, existingContractData.org_id, leadUpdate, {}, res);
+                await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
 
                 infotransporter.sendMail(mailOptions, async (error, info) => {
                     if (error) {
