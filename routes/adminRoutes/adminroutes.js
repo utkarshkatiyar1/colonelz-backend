@@ -19,6 +19,7 @@ import {
   deleteInvativeLead,
   getAllLead,
   getSingleLead,
+  getTimeline,
   leadActivity,
   leadToMultipleProject,
   leadToProject,
@@ -67,6 +68,7 @@ import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, MoveTask, u
 import { createOpenSubTask, deleteOpenSubTask, getAllOpenSubTask, getSingleOpenSubTask, updateOpenSubTask } from "../../controllers/adminControllers/taskControllers/opensubtask.controller.js";
 import { GetSingleOpenSubtimerController, UpdateOpenSubtimerController } from "../../controllers/adminControllers/taskControllers/openTimer.controller.js";
 import { createImage, getAllMainImage, getImage } from "../../controllers/adminControllers/threeImageControllers/threeImage.controller.js";
+import { addUserToFile, getFilesForUser } from "../../controllers/adminControllers/leadController/approval.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -1242,6 +1244,8 @@ router.route("/get/lead/activity").get(verifyJWT, leadActivity);
  */
 
 router.route("/create/lead").post(verifyJWT, createLeadAccess, createLead);
+router.route("/adduser/approval").post(verifyJWT, addUserToFile);
+router.route("/getfile/approval").get(verifyJWT, getFilesForUser);
 /**
  * @swagger
  * paths:
@@ -2501,6 +2505,7 @@ router.route("/remove/member/lead").post(verify, deleteAddMember, removeMemberIn
  */
 
 router.route("/get/userlist/lead").get(verifyJWT, listUserInLead);
+router.route("/get/timeline/lead").get(verifyJWT, getTimeline);
 /**
  * @swagger
  * paths:

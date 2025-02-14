@@ -199,18 +199,22 @@ export const getUser = async (req, res) => {
             return responseData(res, "", 400, false, "You are not allowed to perform this action");
         }
 
-        const users = await registerModel.find({ status: true, organization: check_user.organization }).select('username role email _id');
+        const users = await registerModel.find({ status: true, organization: check_user.organization }).select('username role email _id access');
 
         if (!users.length) {
             return responseData(res, "", 404, false, "No User Found");
         }
+        console.log("users", users)
 
         const filteredUsers = users.map(user => ({
             username: user.username,
             role: user.role,
             email: user.email,
             UserId: user._id,
+            access: user.access,
         }));
+
+        console.log("filteredUsers", filteredUsers)
 
         return responseData(res, "All users found", 200, true, "", filteredUsers);
 

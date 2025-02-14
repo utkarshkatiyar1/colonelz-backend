@@ -186,7 +186,9 @@ export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
           location: lead.location,
           status: lead.status,
           date: lead.date,
-          count_task
+          count_task,
+          hasPendingContract: lead.contract.some(item => item.admin_status === "pending"),
+
         }
   }));
 

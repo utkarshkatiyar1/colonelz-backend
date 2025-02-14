@@ -14,6 +14,8 @@ import { s3 } from "../../../utils/function.js"
 import archiveModel from "../../../models/adminModels/archive.model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
 import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
+import TimelineModel from "../../../models/adminModels/timeline.model.js";
+import { createOrUpdateTimeline } from "../../../utils/timeline.utils.js";
 
 
 function generateSixDigitNumber() {
@@ -199,6 +201,8 @@ export const createLead = async (req, res) => {
         if (check_user) {
 
           let fileUrls = []
+          const newDate = new Date();
+
           const lead = new leadModel({
             org_id: org_id,
             name: name,
@@ -226,7 +230,7 @@ export const createLead = async (req, res) => {
                 username: check_user.username,
                 role: check_user.role,
                 message: ` has created lead ${name} .`,
-                updated_date: new Date()
+                updated_date: newDate,
               }
             ],
             lead_status: status,
@@ -258,7 +262,16 @@ export const createLead = async (req, res) => {
 
           })
 
+          const leadUpdate = {
+            username: check_user.username,
+            role: check_user.role,
+            message: ` has created lead ${name} .`,
+            updated_date: newDate,
+            tag: [],
+            type: 'creation',
+          }
 
+          await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
 
           await registerModel.findOneAndUpdate(
             { _id: userId, organization: org_id },
@@ -341,7 +354,15 @@ export const getAllLead = async (req, res) => {
           status: 1,
           date: 1,
           lead_status: 1,
-          count_task: { $size: "$leadTask" } // Calculate task count
+          count_task: { $size: "$leadTask" }, // Calculate task count
+          // contract: 1,
+          hasPendingContract: { // Calculate if any contract has "pending" admin_status
+            $cond: [
+              { $gt: [ { $size: { $filter: { input: "$contract", as: "item", cond: { $eq: ["$$item.admin_status", "pending"] } } } }, 0 ] },
+              true,
+              false
+            ]
+          }
         }
       },
       { $sort: { createdAt: -1 } } // Sort leads by createdAt field
@@ -449,6 +470,7 @@ export const updateFollowLead = async (req, res) => {
       const find_lead = await leadModel.find({ lead_id: lead_id, org_id: org_id });
       if (find_lead.length > 0) {
         const check_user = await registerModel.findOne({ _id: userId, organization: org_id });
+        const newDate = new Date();
         const update_Lead = await leadModel.findOneAndUpdate(
           { lead_id: lead_id, org_id: org_id },
           {
@@ -468,7 +490,7 @@ export const updateFollowLead = async (req, res) => {
                 username: check_user.username,
                 role: check_user.role,
                 message: ` has updated status ${find_lead[0].lead_status}  from ${status}  in  lead ${find_lead[0].name} .`,
-                updated_date: new Date()
+                updated_date: newDate
               }
             },
           },
@@ -478,6 +500,18 @@ export const updateFollowLead = async (req, res) => {
             useFindAndModify: false,
           }
         );
+
+        const leadUpdate = {
+          username: check_user.username,
+          role: check_user.role,
+          message: ` has updated status ${status}  from ${find_lead[0].lead_status}  in  lead ${find_lead[0].name} .`,
+          updated_date: newDate,
+          tags: [],
+          type: 'lead updation'
+
+        }
+
+        await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
 
 
 
@@ -650,6 +684,8 @@ export const leadToProject = async (req, res) => {
                     const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id, org_id: org_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
 
                   }
+
+                  const newDate = new Date();
                   await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
                     {
                       $set: {
@@ -660,11 +696,35 @@ export const leadToProject = async (req, res) => {
                           username: check_user.username,
                           role: check_user.role,
                           message: ` has converted lead ${find_lead[0].name} to project ${project_name} .`,
-                          updated_date: new Date()
+                          updated_date: newDate
                         }
                       }
                     }
                   )
+
+                  const leadUpdate = {
+                    username: check_user.username,
+                    role: check_user.role,
+                    message: ` has converted lead ${find_lead[0].name} to project ${project_name} .`,
+                    updated_date: newDate,
+                    tags: [],
+                    type: 'lead updation'
+          
+                  }
+
+                  const projectUpdate = {
+                    username: check_user.username,
+                    role: check_user.role,
+                    message: ` has created the project`,
+                    updated_date: newDate,
+                    tags: [],
+                    type: 'project creation'
+          
+                  }
+
+                  await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+                  await createOrUpdateTimeline(lead_id, projectID, org_id, {}, projectUpdate, res);
+
                   await registerModel.findOneAndUpdate(
                     { _id: user_id, org_id: org_id },
                     {
@@ -787,6 +847,32 @@ export const leadToProject = async (req, res) => {
                     }
                   }
                 )
+
+                const newDate = new Date();
+
+                const leadUpdate = {
+                  username: check_user.username,
+                  role: check_user.role,
+                  message: ` has converted lead ${find_lead[0].name} to project ${project_name} .`,
+                  updated_date: newDate,
+                  tags: [],
+                  type: 'lead updation'
+        
+                }
+
+                const projectUpdate = {
+                  username: check_user.username,
+                  role: check_user.role,
+                  message: ` has created the project`,
+                  updated_date: newDate,
+                  tags: [],
+                  type: 'project creation'
+        
+                }
+
+                await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+                await createOrUpdateTimeline(lead_id, projectID, org_id, {}, projectUpdate, res);
+
                 await registerModel.findOneAndUpdate(
                   { _id: user_id, org_id: org_id },
                   {
@@ -915,6 +1001,17 @@ export const leadToMultipleProject = async (req, res) => {
                 }
               )
 
+              const leadUpdate = {
+                username: check_user.username,
+                role: check_user.role,
+                message: ` has activated the lead for another project .`,
+                updated_date: new Date(),
+                tags: [],
+                type: 'lead updation'
+              }
+
+              await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+
               await fileUploadData.save()
 
               responseData(
@@ -1022,6 +1119,7 @@ export const updateLead = async (req, res) => {
           responseData(res, "", 403, false, "lead not found.")
         }
         else {
+          const newDate = new Date();
           await leadModel.findOneAndUpdate(
             { lead_id: lead_id, org_id: org_id },
             {
@@ -1040,7 +1138,7 @@ export const updateLead = async (req, res) => {
                   username: check_user.username,
                   role: check_user.role,
                   message: ` has updated lead ${check_lead.name} .`,
-                  updated_date: new Date()
+                  updated_date: newDate
                 }
 
               }
@@ -1056,6 +1154,17 @@ export const updateLead = async (req, res) => {
 
             }
           );
+
+          const leadUpdate = {
+            username: check_user.username,
+            role: check_user.role,
+            message: ` has updated lead ${check_lead.name}.`,
+            updated_date: newDate,
+            tags: [],
+            type: 'lead updation'
+          }
+
+          await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
           responseData(
             res,
             "lead updated successfully.",
@@ -1214,6 +1323,50 @@ export const leadActivity = async (req, res) => {
   } catch (err) {
     console.error(err); // Log the error for debugging
     responseData(res, "", 400, false, "Error fetching lead activity", err);
+  }
+}
+
+
+
+
+
+export const getTimeline = async (req, res) => {
+  try {
+    const lead_id = req.query.lead_id;
+    const org_id = req.query.org_id;
+
+    if (!lead_id) {
+      return responseData(res, "", false, 400, "Lead Id is required");
+    }
+    if (!org_id) {
+      return responseData(res, "", 400, false, "org id is required", []);
+    }
+
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+    // Fetch lead activities and only the lead_update_track field
+    const lead = await leadModel
+      .findOne({ lead_id: lead_id, org_id: org_id })
+
+    if (!lead) {
+      return responseData(res, "", false, 404, "Lead not found");
+    }
+
+    const timelines = await TimelineModel.find({ lead_id: lead_id });
+
+    if(timelines.length > 0) {
+      return responseData(res, "Timeline is found!", 200, true, "", timelines);
+
+    }
+
+
+
+    responseData(res, "Timeline not found!", 404, true, "", []);
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    responseData(res, "", 400, false, "Error fetching timeline", err);
   }
 }
 

@@ -12,6 +12,7 @@ import notificationModel from "../../../models/adminModels/notification.model.js
 import taskModel from "../../../models/adminModels/task.model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
+import { createOrUpdateTimeline } from "../../../utils/timeline.utils.js";
 dotenv.config();
 function generateSixDigitNumber() {
   const min = 100000;
@@ -420,6 +421,8 @@ export const updateProjectDetails = async (req, res) => {
       }
       const project_find = await projectModel.find({ project_id: project_ID, org_id:org_id });
       if (project_find.length > 0) {
+
+        const newDate = new Date();
         const project_update = await projectModel.findOneAndUpdate(
           { project_id: project_ID, org_id: org_id, 'client.client_email': project_find[0].client[0].client_email },
           {
@@ -443,7 +446,7 @@ export const updateProjectDetails = async (req, res) => {
                 description: description,
                 designer: designer,
                 message: `has updated project ${project_find[0].project_name}.`,
-                updated_date: new Date()
+                updated_date: newDate
 
               }
 
@@ -453,6 +456,35 @@ export const updateProjectDetails = async (req, res) => {
 
           { new: true, useFindAndModify: false }
         );
+
+        if(project_find[0].project_status != project_status) {
+          const projectUpdate = {
+            username: find_user[0].username,
+            role: find_user[0].role,
+            message: ` has updated project status from ${project_find[0].project_status} to ${project_status}.`,
+            updated_date: newDate,
+            tags: [],
+            type: 'project updation'
+  
+          }
+
+          await createOrUpdateTimeline('', project_ID, org_id, {}, projectUpdate, res);
+        } else {
+          const projectUpdate = {
+            username: find_user[0].username,
+            role: find_user[0].role,
+            message: ` has updated project ${project_find[0].project_name}.`,
+            updated_date: newDate,
+            tags: [],
+            type: 'project updation'
+  
+          }
+          await createOrUpdateTimeline('', project_ID, org_id, {}, projectUpdate, res);
+
+        }
+
+
+
         const newNotification = new notificationModel({
           type: "project",
           notification_id: generateSixDigitNumber(),
