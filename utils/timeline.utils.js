@@ -8,6 +8,17 @@ export const createOrUpdateTimeline = async (leadId, projectId, org_id, leadUpda
   
       // Case 1: Only lead_id is given
       if (leadId && !projectId) {
+        if(leadUpdate.type == "lead activation") {
+            timeline = new TimelineModel({
+                org_id: org_id,
+                lead_id: leadId,
+                project_id: '',
+                leadEvents: [leadUpdate],
+            });
+            timeline.save();
+            return;
+        }
+
         timeline = await TimelineModel.findOne({ lead_id: leadId});
         if (!timeline) {
           // Create a new document if not found

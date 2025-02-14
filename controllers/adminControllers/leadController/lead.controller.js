@@ -1007,7 +1007,7 @@ export const leadToMultipleProject = async (req, res) => {
                 message: ` has activated the lead for another project .`,
                 updated_date: new Date(),
                 tags: [],
-                type: 'lead updation'
+                type: 'lead activation'
               }
 
               await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
