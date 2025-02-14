@@ -1342,33 +1342,44 @@ export const getTimeline = async (req, res) => {
       return responseData(res, "", 400, false, "org id is required", []);
     }
 
-    const check_org = await orgModel.findOne({ _id: org_id })
+    const check_org = await orgModel.findOne({ _id: org_id });
     if (!check_org) {
       return responseData(res, "", 404, false, "Org not found");
     }
-    // Fetch lead activities and only the lead_update_track field
-    const lead = await leadModel
-      .findOne({ lead_id: lead_id, org_id: org_id })
 
+    const lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
     if (!lead) {
       return responseData(res, "", false, 404, "Lead not found");
     }
 
+    // Step 1: Fetch all timelines with the given lead_id
     const timelines = await TimelineModel.find({ lead_id: lead_id });
 
-    if(timelines.length > 0) {
+    if (timelines.length > 0) {
+      // Step 2: Iterate over each timeline and replace project_id with project name
+      for (let timeline of timelines) {
+        if (timeline.project_id) {
+          // Step 3: Find the project by project_id
+          const project = await projectModel.findOne({ project_id: timeline.project_id });
+          if (project && project.name) {
+            // Replace project_id with project name
+            timeline.project_id = project.name;
+          }
+        }
+
+        timeline.lead_id = lead.name
+      }
+
+      // Step 4: Return the modified timelines
       return responseData(res, "Timeline is found!", 200, true, "", timelines);
-
     }
-
-
 
     responseData(res, "Timeline not found!", 404, true, "", []);
   } catch (err) {
     console.error(err); // Log the error for debugging
     responseData(res, "", 400, false, "Error fetching timeline", err);
   }
-}
+};
 
 
 
