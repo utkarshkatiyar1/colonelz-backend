@@ -1371,7 +1371,7 @@ export const getTimeline = async (req, res) => {
       }
 
       // Step 4: Return the modified timelines
-      return responseData(res, "Timeline is found!", 200, true, "", timelines);
+      return responseData(res, "Timeline is found!", 200, true, "", timelines.reverse());
     }
 
     responseData(res, "Timeline not found!", 404, true, "", []);
