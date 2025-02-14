@@ -1361,9 +1361,9 @@ export const getTimeline = async (req, res) => {
         if (timeline.project_id) {
           // Step 3: Find the project by project_id
           const project = await projectModel.findOne({ project_id: timeline.project_id });
-          if (project && project.name) {
+          if (project && project.project_name) {
             // Replace project_id with project name
-            timeline.project_id = project.name;
+            timeline.project_id = project.project_name;
           }
         }
 
