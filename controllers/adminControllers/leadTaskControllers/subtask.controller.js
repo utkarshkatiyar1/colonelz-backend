@@ -8,6 +8,7 @@ import orgModel from "../../../models/orgmodels/org.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
 import leadTimerModel from "../../../models/adminModels/leadTimer.Model.js";
+import { send_mail_subtask } from "../../../utils/mailtemplate.js";
 
 
 function generateSixDigitNumber() {
@@ -17,7 +18,7 @@ function generateSixDigitNumber() {
 
     return randomNumber;
 }
-const createSubTaskAndTimer = async (data, res) => {
+const createSubTaskAndTimer = async (data, res,req) => {
     try {
         const {org_id, lead_id, task_id, sub_task_name, sub_task_description, delegation_date, actual_sub_task_start_date, actual_sub_task_end_date,
             sub_task_status, sub_task_priority, sub_task_assignee, sub_task_reporter, check_user, check_task } = data;
@@ -46,7 +47,7 @@ const createSubTaskAndTimer = async (data, res) => {
                 }
             });
 
-            await leadModel.findOneAndUpdate({ lead_id: lead_id , org_id:org_id}, {
+            const lead_data = await leadModel.findOneAndUpdate({ lead_id: lead_id , org_id:org_id}, {
                 $push: {
                     lead_update_track: {
                         username: check_user.username, role: check_user.role,
@@ -55,7 +56,11 @@ const createSubTaskAndTimer = async (data, res) => {
                     }
                 }
             });
-
+            
+             if (sub_task_assignee !== '') {
+                    const find_user = await registerModel.findOne({ organization: lead_data.org_id, username: sub_task_assignee });
+                 await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, lead_data.name, actual_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"lead");
+                }
             responseData(res, "Sub Task added successfully", 200, true, "", []);
         } else {
             responseData(res, "", 404, false, "Sub Task not added", []);
@@ -158,7 +163,7 @@ export const createLeadSubTask = async (req, res) => {
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res, req);
         }
 
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
@@ -171,7 +176,7 @@ export const createLeadSubTask = async (req, res) => {
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res, req);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
@@ -184,7 +189,7 @@ export const createLeadSubTask = async (req, res) => {
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res,req);
         }
         else {
             // Ensure both assignee and reporter are part of the lead
@@ -202,7 +207,7 @@ export const createLeadSubTask = async (req, res) => {
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res,req);
         }
     } catch (err) {
         console.log(err);
@@ -437,14 +442,14 @@ export const updateLeadSubTask = async (req, res) => {
             : actual_sub_task_end_date;
 
       
-
+        const previous_sub_task_assignee = check_task.subtasks.find(item => item.sub_task_id === sub_task_id).sub_task_assignee;
 
         const updateFields = {
             "subtasks.$.sub_task_name": sub_task_name,
             "subtasks.$.sub_task_description": sub_task_description,
             "subtasks.$.estimated_sub_task_start_date": delegation_date,
             "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
-            // "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
+            "subtasks.$.estimated_sub_task_end_date": actual_sub_task_end_date,
             "subtasks.$.actual_sub_task_end_date": date,
             "subtasks.$.sub_task_status": sub_task_status,
             "subtasks.$.sub_task_priority": sub_task_priority,
@@ -482,7 +487,7 @@ export const updateLeadSubTask = async (req, res) => {
             return responseData(res, "", 404, false, "Sub Task Not Updated", []);
         }
 
-        await leadModel.findOneAndUpdate(
+        const lead_data=await leadModel.findOneAndUpdate(
             { lead_id, org_id },
             {
                 $push: {
@@ -495,6 +500,11 @@ export const updateLeadSubTask = async (req, res) => {
                 }
             }
         );
+        if (sub_task_assignee !== previous_sub_task_assignee) {
+                    const find_user = await registerModel.findOne({ organization: org_id, username: sub_task_assignee });
+            await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, lead_data.name, actual_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"lead");
+        
+                }
 
         if (['Completed', 'Cancelled'].includes(sub_task_status)) {
             const find_timer = await leadTimerModel.findOne({

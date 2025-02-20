@@ -5,6 +5,7 @@ import taskModel from "../../../models/adminModels/task.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import timerModel from "../../../models/adminModels/timer.Model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import {send_mail_subtask } from "../../../utils/mailtemplate.js";
 
 
 function generateSixDigitNumber() {
@@ -14,7 +15,7 @@ function generateSixDigitNumber() {
 
     return randomNumber;
 }
-const createSubTaskAndTimer = async (data, res) => {
+const createSubTaskAndTimer = async (data, res, req) => {
     try {
         const {org_id, project_id, task_id, sub_task_name, sub_task_description, actual_sub_task_start_date,
             estimated_sub_task_start_date, estimated_sub_task_end_date, actual_sub_task_end_date,
@@ -50,7 +51,7 @@ const createSubTaskAndTimer = async (data, res) => {
                 }
             });
 
-            await projectModel.findOneAndUpdate({ project_id: project_id , org_id:org_id}, {
+            const project_data = await projectModel.findOneAndUpdate({ project_id: project_id , org_id:org_id}, {
                 $push: {
                     project_updated_by: {
                         username: check_user.username, role: check_user.role,
@@ -59,6 +60,11 @@ const createSubTaskAndTimer = async (data, res) => {
                     }
                 }
             });
+
+            if (sub_task_assignee !== '') {
+                    const find_user = await registerModel.findOne({ organization: project_data.org_id, username: sub_task_assignee });
+                await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"project");
+                }
 
             responseData(res, "Sub Task added successfully", 200, true, "", []);
         } else {
@@ -162,7 +168,7 @@ export const createSubTask = async (req, res) => {
                 estimated_sub_task_end_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res, req);
         }
 
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
@@ -176,7 +182,7 @@ export const createSubTask = async (req, res) => {
                 estimated_sub_task_end_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res, req);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
@@ -190,7 +196,7 @@ export const createSubTask = async (req, res) => {
                 estimated_sub_task_end_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res,req);
         }
         else {
             // Ensure both assignee and reporter are part of the project
@@ -211,7 +217,7 @@ export const createSubTask = async (req, res) => {
                 estimated_sub_task_end_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
-            }, res);
+            }, res,req);
         }
     } catch (err) {
         console.log(err);
@@ -440,7 +446,7 @@ export const updateSubTask = async (req, res) => {
         }
 
 
-        
+        const previous_sub_task_assignee = check_task.subtasks.find(item => item.sub_task_id === sub_task_id).sub_task_assignee;
 
         // Use ternary operator to set `date` based on the conditions
         let date = (sub_task_status === 'Completed' && (actual_sub_task_end_date === '' || actual_sub_task_end_date == null))
@@ -493,7 +499,7 @@ export const updateSubTask = async (req, res) => {
             return responseData(res, "", 404, false, "Sub Task Not Updated", []);
         }
 
-        await projectModel.findOneAndUpdate(
+       const project_data= await projectModel.findOneAndUpdate(
             { project_id, org_id },
             {
                 $push: {
@@ -506,6 +512,13 @@ export const updateSubTask = async (req, res) => {
                 }
             }
         );
+      
+
+        if (sub_task_assignee !== previous_sub_task_assignee) {
+            const find_user = await registerModel.findOne({ organization: project_data.org_id, username: sub_task_assignee });
+            await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"project");
+
+        }
 
         if (['Completed', 'Cancelled'].includes(sub_task_status)) {
             const find_timer = await timerModel.findOne({
@@ -543,6 +556,7 @@ export const updateSubTask = async (req, res) => {
                 }
             }
         }
+
 
         responseData(res, "Sub Task Updated Successfully", 200, true, "", []);
     } catch (err) {

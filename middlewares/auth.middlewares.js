@@ -30,8 +30,8 @@ export const verifyJWT = async (req, res, next) => {
       return responseData(res, "", 401, false, "Unauthorized: User is not active");
     }
 
-    req.user = user; // Store user in req object
-    next(); // Proceed to the next middleware
+    req.user = user; 
+    next();
   } catch (err) {
     console.error("Error in verifyJWT:", err);
     return responseData(res, "", 401, false, "Unauthorized: Invalid token");
