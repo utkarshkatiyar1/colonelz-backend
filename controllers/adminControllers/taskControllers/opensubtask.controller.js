@@ -319,18 +319,38 @@ export const updateOpenSubTask = async (req, res) => {
             return responseData(res, "", 400, false, "The task has been canceled");
         }
 
-        if(check_task?.task_assignee) {
-            const isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            if (!isTask_assigneeAuthorized) {
-                return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
-            }
+        const check_sub_task = check_task.subtasks.find((subtask) => subtask.sub_task_id === sub_task_id);
+
+        if (!check_sub_task) {
+            return responseData(res, "", 404, false, "Sub task not found", []);
         }
 
-        if(check_task?.task_createdBy) {
-            const isTask_createdBy = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            if (!isTask_createdBy) {
-                return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+        let isTask_assigneeAuthorized = true;
+
+        if(check_task?.task_assignee) {
+            isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if(!isTask_assigneeAuthorized && check_sub_task.sub_task_assignee) {
+                isTask_assigneeAuthorized = [check_sub_task.sub_task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
             }
+            // if (!isTask_assigneeAuthorized) {
+            //     return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+            // }
+        }
+
+        let isTask_createdByAuthorized = true;
+
+        if(check_task?.task_createdBy) {
+            isTask_createdByAuthorized = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if(!isTask_createdByAuthorized && check_sub_task.sub_task_createdBy) {
+                isTask_createdByAuthorized = [check_sub_task.sub_task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            }
+            // if (!isTask_createdBy) {
+            //     return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+            // }
+        }
+
+        if (!isTask_createdByAuthorized && !isTask_assigneeAuthorized) {
+            return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
         }
 
         // Use ternary operator to set `date` based on the conditions

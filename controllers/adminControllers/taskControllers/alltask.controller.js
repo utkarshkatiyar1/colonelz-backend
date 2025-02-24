@@ -81,7 +81,7 @@ export const Alltask = async (req, res) => {
                 return {
                     project_id: task.project_id,
                     name: project ? project.project_name : "Unknown",
-                    type: "project type",
+                    type: "project",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -97,7 +97,7 @@ export const Alltask = async (req, res) => {
                 return {
                     lead_id: task.lead_id,
                     name: lead ? lead.name : "Unknown",
-                    type: "lead type",
+                    type: "lead",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -112,7 +112,7 @@ export const Alltask = async (req, res) => {
             const openTaskDetails = openTasks.map(task => {
                 return {
                     name: "Unknown",
-                    type: "open type",
+                    type: "open",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -153,7 +153,7 @@ export const Alltask = async (req, res) => {
                 return {
                     project_id: task.project_id,
                     name: project ? project.project_name : "Unknown",
-                    type: "project type",
+                    type: "project",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -170,7 +170,7 @@ export const Alltask = async (req, res) => {
                 return {
                     lead_id: task.lead_id,
                     name: lead ? lead.name : "Unknown",
-                    type: "lead type",
+                    type: "lead",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -185,7 +185,7 @@ export const Alltask = async (req, res) => {
             const openTaskDetails = openTasks.map(task => {
                 return {
                     name: "Unknown",
-                    type: "open type",
+                    type: "open",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,

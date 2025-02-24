@@ -24,7 +24,7 @@ export const createImage = async (req, res) => {
         const crd = req.body.crd;
         const hp = req.body.hp;
 
-        console.log("hp", hp)
+        // console.log("hp", hp)
 
         const img_id = generateSixDigitNumber();
 
@@ -272,7 +272,7 @@ export const getAllMainImage = async (req, res) => {
         }
 
 
-        console.log('image', image)
+        // console.log('image', image)
       
           if (!image || image.length === 0) {
             return responseData(res, "Image not found", 400, true, "", []);

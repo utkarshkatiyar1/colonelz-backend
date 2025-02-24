@@ -193,7 +193,7 @@ export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
   }));
 
     // Return the leads in the response
-    return responseData(res, "User data found", 200, true, "", { leads: formattedLeads });
+    return responseData(res, "User data found", 200, true, "", { leads: formattedLeads.reverse() });
   } catch (err) {
     console.error("Error in checkAvailableUserIsAdminInLead:", err);
     return responseData(res, "", 403, false, "Unauthorized: Invalid token");

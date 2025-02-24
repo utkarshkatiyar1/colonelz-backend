@@ -750,7 +750,7 @@ export const leadToProject = async (req, res) => {
                 }
 
               } else {
-                console.log(response)
+                // console.log(response)
                 responseData(res, "", 400, false, "contract file upload failed", "");
               }
 
@@ -898,7 +898,7 @@ export const leadToProject = async (req, res) => {
               }
 
             } else {
-              console.log(response)
+              // console.log(response)
               responseData(res, "", 400, false, "contract file upload failed", "");
             }
 
@@ -1249,7 +1249,7 @@ export const deleteInvativeLead = async (req, res) => {
     }
     // Check for the lead
     const check_lead = await leadModel.findOne({ lead_id, status: 'Inactive', org_id });
-    console.log('Lead found:', check_lead);
+    // console.log('Lead found:', check_lead);
 
     if (!check_lead) {
       return responseData(res, "", 404, false, "Lead not found.");
@@ -1377,9 +1377,6 @@ export const getTimeline = async (req, res) => {
     responseData(res, "Timeline not found!", 404, true, "", []);
   } catch (err) {
     console.error(err); // Log the error for debugging
-    responseData(res, "", 400, false, "Error fetching timeline", err);
+    responseData(res, "", 500, false, "Error fetching timeline", err);
   }
 };
-
-
-

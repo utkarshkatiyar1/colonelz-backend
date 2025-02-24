@@ -34,23 +34,71 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Contract Approval</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f4f4;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background: #ffffff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                    }
+                    .header {
+                        background: #007bff;
+                        color: #ffffff;
+                        text-align: center;
+                        padding: 15px;
+                        border-radius: 8px 8px 0 0;
+                        font-size: 20px;
+                        font-weight: bold;
+                    }
+                    .content {
+                        padding: 20px;
+                        font-size: 16px;
+                        color: #333333;
+                    }
+                    .content p {
+                        margin: 10px 0;
+                    }
+                    .footer {
+                        margin-top: 20px;
+                        text-align: center;
+                        font-size: 14px;
+                        color: #777777;
+                    }
+                </style>
             </head>
-            <body style="font-family: Arial, sans-serif;">
-                <h2>Contract Approval</h2>
-
-                <p>Hello ${username[0]},</p>
-
-                <p>Contract has been sent to you for the approval. Please see the details below: </p>
-
-                <p><strong>Lead Name:  </strong>${check_lead.name}</p>
-                <p><strong>Lead Id:  </strong>${check_lead.lead_id}</p>
-                <p><strong>Contract file name:  </strong>${existingContractData.contractData.file_name}</p>
-
-                <p>Thanks,<br>COLONELZ</p>
+            <body>
+                <div class="container">
+                    <div class="header">Contract Approval</div>
+                    <div class="content">
+                        <p>Hello <strong>${username[0]}</strong>,</p>
+        
+                        <p>A contract has been sent to you for approval. Please see the details below:</p>
+        
+                        <p><strong>Lead Name:</strong> ${check_lead.name}</p>
+                        <p><strong>Lead ID:</strong> ${check_lead.lead_id}</p>
+                        <p><strong>Contract File Name:</strong> ${existingContractData.contractData.file_name}</p>
+        
+                        <p>Thank you,</p>
+                        <p><strong>COLONELZ</strong></p>
+                    </div>
+                    <div class="footer">
+                        &copy; 2025 COLONELZ. All rights reserved.
+                    </div>
+                </div>
             </body>
             </html>
             `,
         };
+        
 
         if (isFirst) {
             // Find the approval document that matches lead_id
@@ -624,7 +672,7 @@ export const updateStatusAdmin = async (req, res) => {
                             };
 
                             const userUpdate = await registerModel.findOneAndUpdate(filter, update, options);
-                            console.log(userUpdate)
+                            // console.log(userUpdate)
 
                         } catch (error) {
                             console.error("Error updating document:", error);

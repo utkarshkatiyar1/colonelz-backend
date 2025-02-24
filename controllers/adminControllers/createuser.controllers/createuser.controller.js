@@ -56,7 +56,7 @@ export const createUser = async (req, res) => {
                             return responseData(res, "", 400, false, "You are not allowed to create admin");
                         }
                     const check_email_or_user_name = await registerModel.find({email:email});
-                    console.log("check_email_or_user_name", check_email_or_user_name)
+                    // console.log("check_email_or_user_name", check_email_or_user_name)
                     if (check_email_or_user_name.length < 1) {
 
                         const check_username = await registerModel.findOne({username:user_name, organization:org_id});
@@ -204,7 +204,7 @@ export const getUser = async (req, res) => {
         if (!users.length) {
             return responseData(res, "", 404, false, "No User Found");
         }
-        console.log("users", users)
+        // console.log("users", users)
 
         const filteredUsers = users.map(user => ({
             username: user.username,
@@ -214,7 +214,7 @@ export const getUser = async (req, res) => {
             access: user.access,
         }));
 
-        console.log("filteredUsers", filteredUsers)
+        // console.log("filteredUsers", filteredUsers)
 
         return responseData(res, "All users found", 200, true, "", filteredUsers);
 

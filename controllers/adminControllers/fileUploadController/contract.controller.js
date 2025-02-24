@@ -339,7 +339,7 @@ export const contractShare = async (req, res) => {
               }
 
             } else {
-              console.log(response)
+              // console.log(response)
               responseData(res, "", 400, false, "contract create failed", "");
             }
           } catch (error) {
