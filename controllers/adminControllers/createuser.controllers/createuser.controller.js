@@ -204,7 +204,6 @@ export const getUser = async (req, res) => {
         if (!users.length) {
             return responseData(res, "", 404, false, "No User Found");
         }
-        // console.log("users", users)
 
         const filteredUsers = users.map(user => ({
             username: user.username,
