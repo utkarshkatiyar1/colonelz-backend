@@ -336,7 +336,7 @@ async function deleteOldFiles() {
             archivedAt: { $lt: thirtyDaysAgo } // Filtering documents older than 30 days
         });
         let data;
-        console.log(find_data);
+        // console.log(find_data);
         for (let i = 0; i < find_data.length; i++) {
             if (find_data[i].type === 'template') {
                 if (find_data[i].deleted_type === 'file') {
@@ -593,7 +593,7 @@ const saveFileRestoreDataInProject = async (
                     ],
                 }
             );
-            console.log(updateResult)
+            // console.log(updateResult)
             if (updateResult.modifiedCount === 1) {
                 responseData(res, "File data restore successfully", 200, true);
             } else {
@@ -648,7 +648,7 @@ const saveFileRestoreDataInProject = async (
                     ],
                 }
             );
-            console.log(updateResult)
+            // console.log(updateResult)
             if (updateResult.modifiedCount === 1) {
                 responseData(res, "Folder restore successfully", 200, true);
             } else {
@@ -667,7 +667,7 @@ const saveFileRestoreDataInProject = async (
                         },
                     }
                 );
-                console.log(updateNewFolderResult)
+                // console.log(updateNewFolderResult)
 
                 if (updateNewFolderResult.modifiedCount === 1) {
                     responseData(res, " folder restore successfully", 200, true);

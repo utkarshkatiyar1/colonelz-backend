@@ -19,6 +19,7 @@ import {
   deleteInvativeLead,
   getAllLead,
   getSingleLead,
+  getTimeline,
   leadActivity,
   leadToMultipleProject,
   leadToProject,
@@ -27,6 +28,7 @@ import {
 } from "../../controllers/adminControllers/leadController/lead.controller.js";
 import {
   getAllProject,
+  getAllProjectByLeadId,
   getSingleProject,
   projectActivity,
   updateProjectDetails,
@@ -45,7 +47,7 @@ import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fil
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser, updateUserRole } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
 import { addMember, listUserInProject, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
-import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, checkOpenTaskReadAccess, isAdmin } from "../../middlewares/auth.middlewares.js";
+import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, checkAvailableUserIsAdmininProjectByLeadid, checkOpenTaskReadAccess, isAdmin } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
@@ -65,6 +67,8 @@ import { GetSingleLeadSubtimerController, UpdateLeadSubtimerController } from ".
 import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, MoveTask, updateOpenTask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
 import { createOpenSubTask, deleteOpenSubTask, getAllOpenSubTask, getSingleOpenSubTask, updateOpenSubTask } from "../../controllers/adminControllers/taskControllers/opensubtask.controller.js";
 import { GetSingleOpenSubtimerController, UpdateOpenSubtimerController } from "../../controllers/adminControllers/taskControllers/openTimer.controller.js";
+import { createImage, getAllMainImage, getImage } from "../../controllers/adminControllers/threeImageControllers/threeImage.controller.js";
+import { addUserToFile, getFilesForUser } from "../../controllers/adminControllers/leadController/approval.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -459,6 +463,7 @@ router.route("/get/companyData").get(verifyJWT, readFileCompanyDataAccess, getCo
  *         description: Unauthorized
  */
 router.route("/getall/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmininProject, getAllProject);
+router.route("/getallByLeadId/project").get(verifyJWT, readProjectAccess, checkAvailableUserIsAdmininProjectByLeadid, getAllProjectByLeadId);
 /**
  * @swagger
  * /v1/api/admin/getsingle/project:
@@ -1239,6 +1244,8 @@ router.route("/get/lead/activity").get(verifyJWT, leadActivity);
  */
 
 router.route("/create/lead").post(verifyJWT, createLeadAccess, createLead);
+router.route("/adduser/approval").post(verifyJWT, addUserToFile);
+router.route("/getfile/approval").get(verifyJWT, getFilesForUser);
 /**
  * @swagger
  * paths:
@@ -2498,6 +2505,7 @@ router.route("/remove/member/lead").post(verify, deleteAddMember, removeMemberIn
  */
 
 router.route("/get/userlist/lead").get(verifyJWT, listUserInLead);
+router.route("/get/timeline/lead").get(verifyJWT, getTimeline);
 /**
  * @swagger
  * paths:
@@ -3646,6 +3654,16 @@ router.route("/update/role").put(verifyJWT, updateRole, UpdateRole);
 router.route("/delete/role").delete(verifyJWT, deleteRole, DeleteRole);
 router.route("/rolewise/access").get(verifyJWT, roleWiseAccess);
 router.route("/get/rolename").get(verifyJWT, roleName);
+
+
+router.route("/create/threeimage").post(verifyJWT, createImage);
+router.route("/get/threeimage").get(verifyJWT, getImage);
+router.route("/get/all/mainthreeimage").get(verifyJWT, getAllMainImage);
+
+
+
+
+
 
 
 

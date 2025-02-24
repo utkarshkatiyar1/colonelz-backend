@@ -52,7 +52,7 @@ const saveFileUploadData = async (
           },
         ],
       });
-      console.log("first File created");
+      // console.log("first File created");
 
     } else {
       // Use update query to push data

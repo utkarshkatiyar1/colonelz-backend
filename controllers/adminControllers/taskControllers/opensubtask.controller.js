@@ -4,6 +4,7 @@ import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
 import openTaskModel from "../../../models/adminModels/openTask.model.js";
 import openTimerModel from "../../../models/adminModels/openTimer.model.js";
+import { send_mail_subtask } from "../../../utils/mailtemplate.js";
 
 
 function generateSixDigitNumber() {
@@ -13,7 +14,7 @@ function generateSixDigitNumber() {
 
     return randomNumber;
 }
-const createSubTaskAndTimer = async (data, res) => {
+const createSubTaskAndTimer = async (data, res, req) => {
     try {
         const {org_id, task_id, sub_task_name, sub_task_description, actual_sub_task_start_date,
             estimated_sub_task_start_date, estimated_sub_task_end_date, actual_sub_task_end_date,
@@ -47,6 +48,13 @@ const createSubTaskAndTimer = async (data, res) => {
                     }
                 }
             });
+
+            if(sub_task_assignee !== '') {
+                    const find_user = await registerModel.findOne({ organization:org_id, username: sub_task_assignee });
+                                await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, "Open Type", estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"type");
+            }
+
+
 
             responseData(res, "Sub Task added successfully", 200, true, "", []);
         } else {
@@ -129,7 +137,7 @@ export const createOpenSubTask = async (req, res) => {
             estimated_sub_task_end_date, actual_sub_task_end_date,
             sub_task_status, sub_task_priority, sub_task_assignee,
             sub_task_reporter, check_user, check_task
-        }, res);
+        }, res, req);
         
     } catch (err) {
         console.log(err);
@@ -319,25 +327,45 @@ export const updateOpenSubTask = async (req, res) => {
             return responseData(res, "", 400, false, "The task has been canceled");
         }
 
-        if(check_task?.task_assignee) {
-            const isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            if (!isTask_assigneeAuthorized) {
-                return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
-            }
+        const check_sub_task = check_task.subtasks.find((subtask) => subtask.sub_task_id === sub_task_id);
+
+        if (!check_sub_task) {
+            return responseData(res, "", 404, false, "Sub task not found", []);
         }
 
-        if(check_task?.task_createdBy) {
-            const isTask_createdBy = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            if (!isTask_createdBy) {
-                return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+        let isTask_assigneeAuthorized = true;
+
+        if(check_task?.task_assignee) {
+            isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if(!isTask_assigneeAuthorized && check_sub_task.sub_task_assignee) {
+                isTask_assigneeAuthorized = [check_sub_task.sub_task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
             }
+            // if (!isTask_assigneeAuthorized) {
+            //     return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+            // }
+        }
+
+        let isTask_createdByAuthorized = true;
+
+        if(check_task?.task_createdBy) {
+            isTask_createdByAuthorized = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if(!isTask_createdByAuthorized && check_sub_task.sub_task_createdBy) {
+                isTask_createdByAuthorized = [check_sub_task.sub_task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            }
+            // if (!isTask_createdBy) {
+            //     return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
+            // }
+        }
+
+        if (!isTask_createdByAuthorized && !isTask_assigneeAuthorized) {
+            return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
         }
 
         // Use ternary operator to set `date` based on the conditions
         let date = (sub_task_status === 'Completed' && (actual_sub_task_end_date === '' || actual_sub_task_end_date == null))
             ? new Date()
             : actual_sub_task_end_date;
-
+        const previous_sub_task_assignee = check_task.subtasks.find(item => item.sub_task_id === sub_task_id).sub_task_assignee;
         const updateFields = {
             "subtasks.$.sub_task_name": sub_task_name,
             "subtasks.$.sub_task_description": sub_task_description,
@@ -379,6 +407,11 @@ export const updateOpenSubTask = async (req, res) => {
 
         if (!update_subtask) {
             return responseData(res, "", 404, false, "Sub Task Not Updated", []);
+        }
+
+        if(sub_task_assignee !== previous_sub_task_assignee) {
+             const find_user = await registerModel.findOne({ organization:org_id, username: sub_task_assignee });
+                        await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name,"Open Type", estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"Type");
         }
 
         if (['Completed', 'Cancelled'].includes(sub_task_status)) {
