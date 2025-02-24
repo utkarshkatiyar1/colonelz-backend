@@ -5,6 +5,13 @@ import registerModel from "../../../models/usersModels/register.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import timerModel from "../../../models/adminModels/timer.Model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import cron from "node-cron";
+import { send_mail, send_mail_subtask_cronjob, send_mail_task_cronjob } from "../../../utils/mailtemplate.js";
+import jwt from "jsonwebtoken";
+import leadModel from "../../../models/adminModels/leadModel.js";
+import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
+import openTaskModel from "../../../models/adminModels/openTask.model.js";
+
 
 
 
@@ -16,7 +23,9 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+
+
+const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new taskModel({
@@ -51,7 +60,7 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project
     await task.save();
     await taskTime.save();
 
-    await projectModel.findOneAndUpdate(
+    const project_data = await projectModel.findOneAndUpdate(
         { project_id: project_id, org_id: org_id },
         {
             $push: {
@@ -64,6 +73,12 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, project
             }
         }
     );
+
+
+    if (task_assignee !== '') {
+        const find_user = await registerModel.findOne({ organization: project_data.org_id, username: task_assignee });
+        await send_mail(find_user.email, task_assignee, task_name, project_data.project_name, estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "project");
+    }
 
     responseData(res, "Task created successfully", 200, true, "", []);
 };
@@ -100,21 +115,21 @@ export const createTask = async (req, res) => {
         if (!check_org) {
             return responseData(res, "", 404, false, "Org not found");
         }
-        const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
+        const check_user = await registerModel.findOne({ _id: user_id, organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
         // Check if the project exists
-        const check_project = await projectModel.findOne({ project_id: project_id, org_id:org_id });
+        const check_project = await projectModel.findOne({ project_id: project_id, org_id: org_id });
         if (!check_project) return responseData(res, "", 404, false, "Project not found", []);
 
 
-        
+
 
         // Check if the assignee exists and is active
         let check_assignee = {};
 
-        if(task_assignee !== '') {
-            check_assignee = await registerModel.findOne({ username: task_assignee, status: true, organization:org_id });
+        if (task_assignee !== '') {
+            check_assignee = await registerModel.findOne({ username: task_assignee, status: true, organization: org_id });
             if (!check_assignee) return responseData(res, "", 404, false, "Task assignee is not a registered user", []);
         }
 
@@ -122,14 +137,14 @@ export const createTask = async (req, res) => {
 
         let check_reporter = {};
 
-        if(reporter !== '') {
+        if (reporter !== '') {
             check_reporter = await registerModel.findOne({ username: reporter, status: true, organization: org_id });
             if (!check_reporter) return responseData(res, "", 404, false, "Task reporter is not a registered user", []);
         }
 
         // Validate roles and project association
         const isSeniorOrAdmin = (user) => {
-            if(!user || user == {}) {
+            if (!user || user == {}) {
                 return false;
             }
             return ['Senior Architect', 'ADMIN'].includes(user.role)
@@ -137,47 +152,47 @@ export const createTask = async (req, res) => {
 
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
-            await createTaskAndTimer(res,  org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
 
-            if(task_assignee !== '') {
+            if (task_assignee !== '') {
                 const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
                 if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
             }
 
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
-            if(reporter !== '') {
+            if (reporter !== '') {
                 const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
                 if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
             }
 
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else {
             // Check project association for assignee and reporter
-            if(task_assignee !== '') {
+            if (task_assignee !== '') {
                 const existProject = check_assignee.data[0].projectData.find((item) => item.project_id === project_id);
                 if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
             }
 
-            if(reporter !== '') {
+            if (reporter !== '') {
                 const exitsreportproject = check_reporter.data[0].projectData.find((item) => item.project_id === project_id);
                 if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
             }
             // Create task if validation passes
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
-        
 
-        
+
+
 
     } catch (err) {
         console.log(err);
@@ -193,16 +208,15 @@ export const getAllTasks = async (req, res) => {
             const missingField = !user_id ? "User Id" : "Project Id";
             return responseData(res, "", 404, false, `${missingField} required`, []);
         }
-        if(!org_id)
-        {
-           return responseData(res, "", 400, false, "Org Id required");
+        if (!org_id) {
+            return responseData(res, "", 400, false, "Org Id required");
         }
 
         const check_org = await orgModel.findOne({ _id: org_id })
         if (!check_org) {
             return responseData(res, "", 404, false, "Org not found");
         }
-        const check_user = await registerModel.findOne({ _id: user_id , organization: org_id});
+        const check_user = await registerModel.findOne({ _id: user_id, organization: org_id });
         if (!check_user) {
             return responseData(res, "", 404, false, "User not found", []);
         }
@@ -438,6 +452,12 @@ export const updateTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
+                        const previous_task_assignee = check_task.task_assignee;
+                        const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
+                        if (!findUser) {
+                            return responseData(res, "", 404, false, "Task assignee not found", []);
+                        }
+
                         const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id, org_id: org_id },
                             {
                                 $set: {
@@ -479,7 +499,10 @@ export const updateTask = async (req, res) => {
                                 }
                             )
 
+                            if (previous_task_assignee !== task_assignee) {
 
+                                await send_mail(findUser.email, task_assignee, task_name, check_project.project_name, estimated_task_end_date, task_priority, task_status, reporter, check_user.username, "project");
+                            }
                             responseData(res, "Task updated successfully", 200, true, "", [])
                         }
                         else {
@@ -634,5 +657,123 @@ export const getAllTaskWithData = async (req, res) => {
 
 }
 
+
+export async function sendmail_cronjob() {
+    try {
+        console.log("Running cron job for overdue task emails...");
+
+        const allOrgs = await registerModel.distinct("organization").maxTimeMS(20000).lean();
+
+        for (const org_id of allOrgs) {
+            console.log(`Processing tasks for organization: ${org_id}`);
+
+            // Fetch all overdue tasks for different task models
+            const [overdueTasks, overdueTaskslead, overdueTasksOpen] = await Promise.all([
+                taskModel.find({ org_id, status: { $ne: "Completed" }, estimated_task_end_date: { $lt: new Date() } }).lean(),
+                leadTaskModel.find({ org_id, status: { $ne: "Completed" }, estimated_task_end_date: { $lt: new Date() } }).lean(),
+                openTaskModel.find({ org_id, status: { $ne: "Completed" }, estimated_task_end_date: { $lt: new Date() } }).lean()
+            ]);
+
+            if (!overdueTasks.length && !overdueTaskslead.length && !overdueTasksOpen.length) {
+                console.log(`No overdue tasks for organization: ${org_id}`);
+                continue;
+            }
+
+            // Process all overdue tasks
+            await Promise.all([
+                processTasks(overdueTasks, org_id, taskModel, "project"),
+                processTasks(overdueTaskslead, org_id, leadTaskModel, "lead"),
+                processTasks(overdueTasksOpen, org_id, openTaskModel, "open")
+            ]);
+        }
+
+        console.log("Cron job executed successfully.");
+    } catch (err) {
+        console.error("Error executing cron job:", err);
+    }
+}
+
+// Helper function to process tasks
+async function processTasks(tasks, org_id, model, taskType) {
+    for (const task of tasks) {
+        if (!task.task_assignee) {
+            console.log(`No assignee found for ${taskType} task`);
+            continue;
+        }
+
+        const find_user = await registerModel.findOne({ organization: org_id, username: task.task_assignee });
+
+        if (!find_user?.email) continue;
+
+        // Update task status to "High"
+        const task_data = await model.findOneAndUpdate(
+            { task_id: task.task_id, org_id },
+            { $set: { task_priority: "High" } },
+            { new: true, useFindAndModify: false }
+        ).lean();
+
+        const relatedModel = taskType === "lead" ? leadModel : projectModel;
+        const relatedData = taskType !== "open" ? await relatedModel.findOne({ [`${taskType}_id`]: task[`${taskType}_id`], org_id }) : null;
+        const relatedName = taskType === "lead" ? relatedData?.name : relatedData?.project_name || "Open Type";
+        // Filter subtasks
+        const all_subtasks = task_data.subtasks.filter(subtask =>
+            subtask.sub_task_status !== 'Completed' &&
+            subtask.sub_task_assignee &&
+            subtask.estimated_sub_task_end_date < new Date()
+        );
+
+        if (all_subtasks.length > 0) {
+            await model.bulkWrite(all_subtasks.map(subtask => ({
+                updateOne: {
+                    filter: { task_id: task.task_id, org_id, "subtasks.sub_task_id": subtask.sub_task_id },
+                    update: { $set: { "subtasks.$.sub_task_priority": "High" } }
+                }
+            })), { ordered: false });
+            
+            // Send subtask emails in parallel
+            await Promise.all(all_subtasks.map(async (subtask) => {
+                await send_mail_subtask_cronjob(
+                    find_user.email,
+                    subtask.sub_task_assignee,
+                    subtask.sub_task_name,
+                    relatedName,
+                    subtask.estimated_sub_task_end_date,
+                    "High",
+                    subtask.sub_task_status,
+                    subtask.sub_task_reporter,
+                    task_data.task_name,
+                    taskType
+                );
+            }));
+        }
+
+        await send_mail_task_cronjob(
+            find_user.email,
+            task_data.task_assignee,
+            task_data.task_name,
+            relatedName,
+            task_data.estimated_task_end_date,
+            task_data.task_priority,
+            task_data.task_status,
+            task_data.reporter,
+            taskType
+        );
+
+        console.log(`Email sent to ${find_user.email} for ${taskType} task "${task.task_name}"`);
+    }
+}
+
+
+
+
+cron.schedule("0 0 * * *", async () => {
+    try {
+
+        await sendmail_cronjob();
+        console.log("send email cron job executed successfully");
+    } catch (error) {
+        console.error("Error executing notification cron job:", error);
+    }
+});
 
 

@@ -3,8 +3,11 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { onlyAlphabetsValidation, onlyEmailValidation } from "../../../utils/validation.js";
-import { admintransporter, s3 } from "../../../utils/function.js"
+import { admintransporter, infotransporter, s3 } from "../../../utils/function.js"
 import orgModel from "../../../models/orgmodels/org.model.js";
+import Approval from "../../../models/adminModels/approval.model.js";
+import { createOrUpdateTimeline } from "../../../utils/timeline.utils.js";
+
 
 
 
@@ -17,9 +20,102 @@ function generateSixDigitNumber() {
 }
 
 
-const storeOrUpdateContract = async (res, existingContractData, isFirst = false) => {
+const storeOrUpdateContract = async (res, existingContractData, userId, userEmail, check_lead, leadUpdate,checkUser, isFirst = false) => {
     try {
+
+        const username = checkUser.username.trim().split(" ")
+        const mailOptions = {
+            from: process.env.INFO_USER_EMAIL,
+            to: userEmail,
+            subject: "Contract Approval",
+            html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Contract Approval</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f4f4;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background: #ffffff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                    }
+                    .header {
+                        background: #007bff;
+                        color: #ffffff;
+                        text-align: center;
+                        padding: 15px;
+                        border-radius: 8px 8px 0 0;
+                        font-size: 20px;
+                        font-weight: bold;
+                    }
+                    .content {
+                        padding: 20px;
+                        font-size: 16px;
+                        color: #333333;
+                    }
+                    .content p {
+                        margin: 10px 0;
+                    }
+                    .footer {
+                        margin-top: 20px;
+                        text-align: center;
+                        font-size: 14px;
+                        color: #777777;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">Contract Approval</div>
+                    <div class="content">
+                        <p>Hello <strong>${username[0]}</strong>,</p>
+        
+                        <p>A contract has been sent to you for approval. Please see the details below:</p>
+        
+                        <p><strong>Lead Name:</strong> ${check_lead.name}</p>
+                        <p><strong>Lead ID:</strong> ${check_lead.lead_id}</p>
+                        <p><strong>Contract File Name:</strong> ${existingContractData.contractData.file_name}</p>
+        
+                        <p>Thank you,</p>
+                        <p><strong>COLONELZ</strong></p>
+                    </div>
+                    <div class="footer">
+                        &copy; 2025 COLONELZ. All rights reserved.
+                    </div>
+                </div>
+            </body>
+            </html>
+            `,
+        };
+        
+
         if (isFirst) {
+            // Find the approval document that matches lead_id
+            const approval = await Approval.findOne({ lead_id:existingContractData.lead_id, org_id:existingContractData.org_id });
+    
+            if (!approval) {
+                return responseData(res, "", 400, false, "Approval document not found", []);
+            }
+
+
+            // Find the file inside the files array that matches file_id
+            const file = approval.files.find(f => f.file_id === existingContractData.contractData.itemId);
+    
+            if (!file) {
+                return responseData(res, "", 400, false, "File not found in approval document", []);
+            }
+
             const updatedLead = await leadModel.findOneAndUpdate(
                 { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
                 {
@@ -27,8 +123,52 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
                 },
                 { new: true } // Return the updated document
             );
+    
+            // Add user_id to the file's users list if not already present
+            if (!file.users.includes(userId)) {
+                file.users.push(userId);
+            }
+    
+            // Save the updated approval document
+            await approval.save();
+
+            
+
+            await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
+
+            infotransporter.sendMail(mailOptions, async (error, info) => {
+                if (error) {
+                    console.log(error);
+                    responseData(res, "", 400, false, "Failed to send email for approval");
+                }
+                    else {
+                    responseData(
+                        res,
+                        "Contract shared and Email for approval has been send",
+                        200,
+                        true,
+                        ""
+                    );
+                }
+            });
+
             return responseData(res, `Contract shared successfully`, 200, true, "");
         } else {
+            // Find the approval document that matches lead_id
+            const approval = await Approval.findOne({ lead_id:existingContractData.lead_id, org_id:existingContractData.org_id });
+
+    
+            if (!approval) {
+                return responseData(res, "", 400, false, "Approval document not found", []);
+            }
+
+            // Find the file inside the files array that matches file_id
+            const file = approval.files.find(f => f.file_id === existingContractData.contractData.itemId);
+    
+            if (!file) {
+                return responseData(res, "", 400, false, "File not found in approval document", []);
+            }
+
             // Find and update the specific contract in the array
             const updatedLead = await leadModel.findOneAndUpdate(
                 {
@@ -45,6 +185,36 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
             );
 
             if (updatedLead) {
+                if (!file.users.includes(userId)) {
+                    file.users.push(userId);
+                }
+
+                // Update the status to pending
+                file.status = "pending";
+        
+                // Save the updated approval document
+
+                await approval.save();
+
+                
+
+                await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
+
+                infotransporter.sendMail(mailOptions, async (error, info) => {
+                    if (error) {
+                        console.log(error);
+                        responseData(res, "", 400, false, "Failed to send email for approval");
+                    }
+                        else {
+                        responseData(
+                            res,
+                            "Contract shared and Email for approval has been send",
+                            200,
+                            true,
+                            ""
+                        );
+                    }
+                });
                 return responseData(res, `Contract updated successfully`, 200, true, "");
             } else {
                 // If no contract found, create a new one
@@ -55,6 +225,31 @@ const storeOrUpdateContract = async (res, existingContractData, isFirst = false)
                     },
                     { new: true } // Return the updated document
                 );
+
+                if (!file.users.includes(userId)) {
+                    file.users.push(userId);
+                }
+                
+                // Save the updated approval document
+                await approval.save();
+
+                await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
+
+                infotransporter.sendMail(mailOptions, async (error, info) => {
+                    if (error) {
+                        console.log(error);
+                        responseData(res, "", 400, false, "Failed to send email for approval");
+                    }
+                        else {
+                        responseData(
+                            res,
+                            "Contract shared and Email for approval has been send",
+                            200,
+                            true,
+                            ""
+                        );
+                    }
+                });
                 return responseData(res, `Contract shared successfully`, 200, true, "");
             }
         }
@@ -175,7 +370,10 @@ export const shareContract = async (req, res) => {
         const project_name = req.body.project_name;
         const site_location = req.body.site_location;
         const org_id = req.body.org_id;
-        console.log('folder_name', folder_name)
+        const userId = req.body.userId;
+        const user_id = req.body.user_id;
+        const userEmail = req.body.userEmail;
+        // console.log('folder_name', folder_name)
 
 
 
@@ -188,9 +386,28 @@ export const shareContract = async (req, res) => {
             if (!check_org) {
                 return responseData(res, "", 404, false, "Org not found");
             }
+
+            let checkUser = {};
+
+            if(userId) {
+                checkUser = await registerModel.findById(userId);
+                if (!checkUser) {
+                    return responseData(res, "", 404, false, "user not found");
+                }
+            }
+
+            
+            const currUser = await registerModel.findById(user_id);
+            if (!currUser) {
+                return responseData(res, "", 404, false, "user not found");
+            }
+
+            
+
             if (type === 'Internal') {
                
                 const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id  });
+                // console.log("check_lead", check_lead)
                 if (!check_lead) {
                     return responseData(res, "", 400, false, "Lead not found");
                 }
@@ -242,6 +459,9 @@ export const shareContract = async (req, res) => {
                     }
 
 
+                    
+
+
 
                     const check_file = await fileuploadModel.findOne({ "files.files.fileId": fileId, org_id: org_id });
                     if (!check_file) {
@@ -260,6 +480,15 @@ export const shareContract = async (req, res) => {
                             remark: "",
 
                         };
+                        
+                        const leadUpdate = {
+                            username: currUser.username,
+                            role: currUser.role,
+                            message: ` has shared the contract (${file_url.fileName}) to ${checkUser.username}`,
+                            updated_date: new Date(),
+                            tags: [],
+                            type: 'contract share'
+                          }
 
                         if (check_lead.contract.length < 1) {
 
@@ -269,7 +498,7 @@ export const shareContract = async (req, res) => {
                                 contractData,
                             }
 
-                            await storeOrUpdateContract(res, createObj, true);
+                            await storeOrUpdateContract(res, createObj, userId, userEmail, check_lead, leadUpdate, checkUser, true);
                         }
                         else {
                             const createObj = {
@@ -279,7 +508,7 @@ export const shareContract = async (req, res) => {
 
 
                             }
-                            await storeOrUpdateContract(res, createObj);
+                            await storeOrUpdateContract(res, createObj, userId, userEmail, check_lead, leadUpdate, checkUser);
 
                         }
                     }
@@ -443,7 +672,7 @@ export const updateStatusAdmin = async (req, res) => {
                             };
 
                             const userUpdate = await registerModel.findOneAndUpdate(filter, update, options);
-                            console.log(userUpdate)
+                            // console.log(userUpdate)
 
                         } catch (error) {
                             console.error("Error updating document:", error);
@@ -520,15 +749,31 @@ export const contractStatus = async (req, res) => {
         const itemId = req.body.file_id;
         const remark = req.body.remark;
         const org_id = req.body.org_id;
+        const user_id = req.body.user_id;
         
         const check_org = await orgModel.findOne({ _id: org_id })
         if (!check_org) {
             return responseData(res, "", 404, false, "Org not found");
         }
+        const check_user = await registerModel.findById(user_id);
+        if (!check_user) {
+            return responseData(res, "", 404, false, "User not found");
+        }
         const check_status = await leadModel.findOne({
             lead_id: lead_id, org_id: org_id,
             "contract.$.itemId": itemId
         })
+
+        const approval = await Approval.findOne({ lead_id:lead_id, org_id:org_id });
+        
+        if (!approval) {
+            return responseData(res, "", 400, false, "Approval document not found", []);
+        }
+        const file = approval.files.find(f => f.file_id === itemId);
+        if (!file) {
+            return responseData(res, "", 400, false, "File not found in approval document", []);
+        }
+
         for (let i = 0; i < check_status.contract.length; i++) {
             if (check_status.contract[i].itemId == itemId) {
                 if (check_status.contract[i].admin_status !== "pending") {
@@ -556,8 +801,6 @@ export const contractStatus = async (req, res) => {
                         console.error("Error updating document:", error);
                     }
 
-
-
                     if (status == 'approved') {
                         await leadModel.findOneAndUpdate(
                             {
@@ -577,6 +820,21 @@ export const contractStatus = async (req, res) => {
                             }
 
                         );
+
+                        file.status = status;
+                        await approval.save();
+
+                        const leadUpdate = {
+                            username: check_user.username,
+                            role: check_user.role,
+                            message: ` has approved the contract (${file.file_name}) .`,
+                            updated_date: new Date(),
+                            tags: [],
+                            type: 'contract acceptance'
+                  
+                          }
+
+                          await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
                         responseData(res, "Contract  approved Successfully", 200, true, "");
 
                     }
@@ -599,7 +857,23 @@ export const contractStatus = async (req, res) => {
                                 new: true
                             }
                         );
-                        responseData(res, "COntract  rejected Successfully", 200, true, "");
+
+                        file.status = status;
+                        await approval.save();
+
+                        const leadUpdate = {
+                            username: check_user.username,
+                            role: check_user.role,
+                            message: ` has rejected the contract (${file.file_name}) .`,
+                            updated_date: new Date(),
+                            tags: [],
+                            type: 'contract rejection'
+                  
+                          }
+
+                          await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+
+                        responseData(res, "Contract  rejected Successfully", 200, true, "");
                     }
                 }
             }

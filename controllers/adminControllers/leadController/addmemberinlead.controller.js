@@ -189,8 +189,14 @@ export const listUserInLead = async (req, res) => {
         //   const leadId = parseInt(lead_id)
         const [findlead, findUser] = await Promise.all([
             leadModel.findOne({lead_id:lead_id, org_id: org_id }).lean(),
-            registerModel.find({ 'data.leadData.lead_id': lead_id }).lean(),
+            registerModel.find({
+                $or: [
+                    { 'data.leadData.lead_id': lead_id },
+                    { role: { $in: ['Senior Architect', 'ADMIN'] }, status: true, organization: org_id }
+                ]
+            }).lean()
         ]);
+
 
         if (!findlead) {
             return responseData(res, "", 404, false, "Lead not found");

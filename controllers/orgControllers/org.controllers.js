@@ -40,7 +40,7 @@ const setProfileUrlInDB = async (res, response, org_id, req) => {
     try {
         const updates = { ...req.body };
         if (response) updates.org_logo = response.signedUrl;
-        console.log(response)
+        // console.log(response)
 
         const updatedUser = await updateProfileInDB(org_id, updates);
         if (!updatedUser) {
@@ -58,7 +58,7 @@ export const updateOrg = async (req, res) => {
     const userId = req.body.userId;
     const org_id = req.body.org_id;
 
-    console.log(req.body)
+    // console.log(req.body)
     // const user_name = req.body.user_name;
 
     if (!userId) {
@@ -104,7 +104,7 @@ export const updateOrg = async (req, res) => {
                         }
 
                         const fileName = `${Date.now()}_${file.name}`;
-                        console.log(fileName);
+                        // console.log(fileName);
                         const response = await uploadImage(req, fileName, org_id, "file");
 
                         if (response.status) {

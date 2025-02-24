@@ -9,6 +9,7 @@ import openTimerModel from "../../../models/adminModels/openTimer.model.js";
 import { onlyAlphabetsValidation } from "../../../utils/validation.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import { send_mail } from "../../../utils/mailtemplate.js";
 
 function generateSixDigitNumber() {
     const min = 100000;
@@ -18,7 +19,7 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res,org_id, check_user, task_assignee, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new openTaskModel({
@@ -51,6 +52,11 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, task_na
     await task.save();
     await taskTime.save();
 
+    if(task_assignee !=='') {
+    const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
+
+    await send_mail(findUser.email, task_assignee, task_name,"Open Type", estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "Open Type");
+    }
     responseData(res, "Task created successfully", 200, true, "", []);
 };
 
@@ -81,7 +87,7 @@ export const Alltask = async (req, res) => {
                 return {
                     project_id: task.project_id,
                     name: project ? project.project_name : "Unknown",
-                    type: "project type",
+                    type: "project",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -97,7 +103,7 @@ export const Alltask = async (req, res) => {
                 return {
                     lead_id: task.lead_id,
                     name: lead ? lead.name : "Unknown",
-                    type: "lead type",
+                    type: "lead",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -112,7 +118,7 @@ export const Alltask = async (req, res) => {
             const openTaskDetails = openTasks.map(task => {
                 return {
                     name: "Unknown",
-                    type: "open type",
+                    type: "open",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -153,7 +159,7 @@ export const Alltask = async (req, res) => {
                 return {
                     project_id: task.project_id,
                     name: project ? project.project_name : "Unknown",
-                    type: "project type",
+                    type: "project",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -170,7 +176,7 @@ export const Alltask = async (req, res) => {
                 return {
                     lead_id: task.lead_id,
                     name: lead ? lead.name : "Unknown",
-                    type: "lead type",
+                    type: "lead",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -185,7 +191,7 @@ export const Alltask = async (req, res) => {
             const openTaskDetails = openTasks.map(task => {
                 return {
                     name: "Unknown",
-                    type: "open type",
+                    type: "open",
                     task_id: task.task_id,
                     org_id: task.org_id,
                     task_name: task.task_name,
@@ -247,7 +253,7 @@ export const createOpenTask = async (req, res) => {
         const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
-        await createTaskAndTimer(res,  org_id, check_user, task_assignee, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);      
+        await createTaskAndTimer(res,req,  org_id, check_user, task_assignee, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);      
 
     } catch (err) {
         console.log(err);
@@ -377,6 +383,13 @@ export const updateOpenTask = async (req, res) => {
                     responseData(res, "", 404, false, "Task not found", [])
                 }
                 else {
+                    const previous_task_assignee = check_task.task_assignee;
+                    const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
+
+                    if (!findUser) {
+                        return responseData(res, "", 404, false, "User not found");
+                        
+                    }
                     const update_task = await openTaskModel.findOneAndUpdate({ task_id: task_id, org_id: org_id },
                         {
                             $set: {
@@ -403,6 +416,9 @@ export const updateOpenTask = async (req, res) => {
                         { new: true, useFindAndModify: false }
                     )
                     if (update_task) {
+                        if (previous_task_assignee != task_assignee) {
+                            await send_mail(findUser.email, task_assignee, task_name, "Open Type", estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "Open Type");
+                        }
                         responseData(res, "Task updated successfully", 200, true, "", [])
                     }
                     else {

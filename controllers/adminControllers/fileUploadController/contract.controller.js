@@ -7,6 +7,8 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js"
 import orgModel from "../../../models/orgmodels/org.model.js";
+import Approval from "../../../models/adminModels/approval.model.js";
+import { createOrUpdateTimeline } from "../../../utils/timeline.utils.js";
 function generateSixDigitNumber() {
   const min = 100000;
   const max = 999999;
@@ -15,39 +17,80 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
-const storeOrUpdateContract = async (res, existingContractData, isFirst = false) => {
-    try {
-        if (isFirst) {
-            const updatedLead = await leadModel.findOneAndUpdate(
-                { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
-                {
-                    $push: { "contract": existingContractData.contractData }
-                },
-                { new: true } // Return the updated document
-            );
-            return responseData(res, `Contract shared successfully`, 200, true, "");
+const storeOrUpdateContract = async (res, existingContractData, fileUrls, isFirst = false) => {
+  try {
+      let approval = await Approval.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
 
-        }
-        else {
-            const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
-            if (check_lead) {
-                const updatedLead = await leadModel.findOneAndUpdate(
-                    { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
-                    {
-                        $push: {
-                            "contract": existingContractData.contractData
-                        }
-                    }
-                )
-                return responseData(res, `Contract shared successfully`, 200, true, "");
-            }
-        }
-    }
-    catch (err) {
-        return responseData(res, "", 403, false, "Error occured while storing contract");
-    }
+      if (isFirst) {
+          await leadModel.findOneAndUpdate(
+              { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
+              { $push: { "contract": existingContractData.contractData } },
+              { new: true }
+          );
 
-}
+          if (!approval) {
+              approval = new Approval({
+                  lead_id: existingContractData.lead_id,
+                  org_id: existingContractData.org_id,
+                  files: fileUrls.map(file => ({
+                      file_id: file.fileId,
+                      file_name: file.fileName,
+                      file_url: file.fileUrl,
+                      status: "notsend",
+                      users: []
+                  }))
+              });
+          } else {
+              fileUrls.forEach(file => {
+                  if (!approval.files.some(f => f.file_id === file.fileId)) {
+                      approval.files.push({
+                          file_id: file.fileId,
+                          file_name: file.fileName,
+                          file_url: file.fileUrl,
+                          status: "notsend",
+                          users: []
+                      });
+                  }
+              });
+          }
+
+          await approval.save();
+          return responseData(res, "Contract shared successfully", 200, true, "");
+      } 
+      
+      const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
+
+      if (check_lead) {
+          await leadModel.findOneAndUpdate(
+              { lead_id: existingContractData.lead_id, org_id: existingContractData.org_id },
+              { $push: { "contract": existingContractData.contractData } }
+          );
+
+          if (approval) {
+              fileUrls.forEach(file => {
+                  if (!approval.files.some(f => f.file_id === file.fileId)) {
+                      approval.files.push({
+                          file_id: file.fileId,
+                          file_name: file.fileName,
+                          file_url: file.fileUrl,
+                          status: "notsend",
+                          users: []
+                      });
+                  }
+              });
+
+              await approval.save();
+          }
+
+          return responseData(res, "Contract shared successfully", 200, true, "");
+      }
+
+      return responseData(res, "Lead not found", 404, false, "");
+  } catch (err) {
+      return responseData(res, "Error occurred while storing contract", 403, false, err.message);
+  }
+};
+
 
 const uploadImage = async (req, filePath, lead_id, org_id, fileName) => {
 
@@ -208,7 +251,7 @@ export const contractShare = async (req, res) => {
               let fileUrls = [{
                 fileUrl: response.signedUrl,
                 fileName: decodeURIComponent(response.data.Location.split('/').pop().replace(/\+/g, ' ')),
-                fileId: `FL-${generateSixDigitNumber()}`,
+                fileId: fileId,
                 fileSize: `${contract_pdf.size / 1024} KB`,
                 date: new Date()
               }]
@@ -217,7 +260,7 @@ export const contractShare = async (req, res) => {
                 itemId: fileId,
                 admin_status: "notsend",
                 file_name: fileName,
-                files: response.data.Location,
+                files: response.signedUrl,
                 remark: "",
               };
 
@@ -255,7 +298,18 @@ export const contractShare = async (req, res) => {
                 }
               )
 
-              responseData(res, "contract create successfully", 200, true, "", response.data.Location);
+              const leadUpdate = {
+                username: find_user.username,
+                role: find_user.role,
+                message: ` has created contract (${contractData.file_name}) in lead ${check_lead.lead_name} .`,
+                updated_date: new Date(),
+                type: "contract creation", 
+                tags: [],
+              }
+
+              await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+
+              responseData(res, "contract create successfully", 200, true, "", response.signedUrl);
 
               fs.unlink(filePath, (unlinkErr) => {
                 if (unlinkErr) {
@@ -273,7 +327,7 @@ export const contractShare = async (req, res) => {
                     contractData,
                 }
 
-                await storeOrUpdateContract(res, createObj, true);
+                await storeOrUpdateContract(res, createObj, fileUrls, true);
               }
               else {
                   const createObj = {
@@ -281,11 +335,11 @@ export const contractShare = async (req, res) => {
                       org_id,
                       contractData,
                   }
-                  await storeOrUpdateContract(res, createObj);
+                  await storeOrUpdateContract(res, createObj, fileUrls);
               }
 
             } else {
-              console.log(response)
+              // console.log(response)
               responseData(res, "", 400, false, "contract create failed", "");
             }
           } catch (error) {

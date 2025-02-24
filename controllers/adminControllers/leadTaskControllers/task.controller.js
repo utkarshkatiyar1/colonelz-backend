@@ -8,6 +8,7 @@ import orgModel from "../../../models/orgmodels/org.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
 import leadTimerModel from "../../../models/adminModels/leadTimer.Model.js";
+import { send_mail } from "../../../utils/mailtemplate.js";
 
 
 
@@ -19,7 +20,7 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res,org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, delegation_date, actual_task_start_date, actual_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new leadTaskModel({
@@ -28,10 +29,10 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, lead_id
         org_id,
         task_name,
         task_description,
-        actual_task_start_date,
-        actual_task_end_date: "",
-        estimated_task_start_date,
-        estimated_task_end_date,
+        actual_task_start_date: actual_task_start_date,
+        actual_task_end_date: actual_task_end_date,
+        estimated_task_start_date: delegation_date,
+        estimated_task_end_date: actual_task_end_date,
         task_status,
         task_priority,
         task_assignee,
@@ -54,7 +55,7 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, lead_id
     await task.save();
     await taskTime.save();
 
-    await leadModel.findOneAndUpdate(
+    const leadData = await leadModel.findOneAndUpdate(
         { lead_id: lead_id, org_id: org_id },
         {
             $push: {
@@ -67,6 +68,12 @@ const createTaskAndTimer = async (res,org_id, check_user, task_assignee, lead_id
             }
         }
     );
+
+    if (task_assignee !== '') {
+        const find_user = await registerModel.findOne({ organization: req.user.organization, username: task_assignee });
+        await send_mail(find_user.email, task_assignee, task_name, leadData.name, actual_task_end_date, task_priority, task_status, reporter, req.user.username, "lead");
+
+    }
     responseData(res, "Task created successfully", 200, true, "", []);
 };
 export const createLeadTask = async (req, res) => {
@@ -77,9 +84,11 @@ export const createLeadTask = async (req, res) => {
         const lead_id = req.body.lead_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
+        const delegation_date = req.body.delegation_date;
         const actual_task_start_date = req.body.actual_task_start_date;
-        const estimated_task_start_date = req.body.estimated_task_start_date;
-        const estimated_task_end_date = req.body.estimated_task_end_date;
+        const actual_task_end_date = req.body.actual_task_end_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date;
+        // const estimated_task_end_date = req.body.estimated_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -95,8 +104,8 @@ export const createLeadTask = async (req, res) => {
             return responseData(res, "", 404, false, "Task Name should be alphabets and at least 3 characters long", []);
         }
         if (!task_priority) return responseData(res, "", 404, false, "Task priority required", []);
-        if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []);
-        if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
+        // if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []);
+        // if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
         if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
         // if (!task_assignee) return responseData(res, "", 404, false, "Task assignee required", []);
         // if (!reporter) return responseData(res, "", 404, false, "Task reporter required", []);
@@ -106,32 +115,32 @@ export const createLeadTask = async (req, res) => {
         if (!check_org) {
             return responseData(res, "", 404, false, "Org not found");
         }
-        const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
+        const check_user = await registerModel.findOne({ _id: user_id, organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
         // Check if the lead exists
-        const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id:org_id });
+        const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
         if (!check_lead) return responseData(res, "", 404, false, "Lead not found", []);
 
         // Check if the assignee exists and is active
         let check_assignee = {};
 
-        if(task_assignee !== '') {
-            check_assignee = await registerModel.findOne({ username: task_assignee, status: true, organization:org_id });
+        if (task_assignee !== '') {
+            check_assignee = await registerModel.findOne({ username: task_assignee, status: true, organization: org_id });
             if (!check_assignee) return responseData(res, "", 404, false, "Task assignee is not a registered user", []);
         }
 
         // Check if the reporter exists and is active
         let check_reporter = {};
 
-        if(reporter !== '') {
+        if (reporter !== '') {
             check_reporter = await registerModel.findOne({ username: reporter, status: true, organization: org_id });
             if (!check_reporter) return responseData(res, "", 404, false, "Task reporter is not a registered user", []);
         }
 
         // Validate roles and project association
         const isSeniorOrAdmin = (user) => {
-            if(!user || user == {}) {
+            if (!user || user == {}) {
                 return false;
             }
             return ['Senior Architect', 'ADMIN'].includes(user.role)
@@ -140,42 +149,42 @@ export const createLeadTask = async (req, res) => {
 
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
-            await createTaskAndTimer(res,  org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, delegation_date, actual_task_start_date, actual_task_end_date, task_status, task_priority, reporter);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
 
-            if(task_assignee !== '') {
+            if (task_assignee !== '') {
                 const existLead = check_assignee.data[0].leadData.find((item) => item.lead_id === lead_id);
                 if (!existLead) return responseData(res, "", 404, false, "Task assignee is not part of this lead", []);
             }
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, delegation_date, actual_task_start_date, actual_task_end_date, task_status, task_priority, reporter);
         }
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
 
-            if(reporter !== '') {
+            if (reporter !== '') {
                 const exitsreportlead = check_reporter.data[0].leadData.find((item) => item.lead_id === lead_id);
                 if (!exitsreportlead) return responseData(res, "", 404, false, "Reporter is not part of this lead", []);
             }
 
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, delegation_date, actual_task_start_date, actual_task_end_date, task_status, task_priority, reporter);
         }
 
         else {
             // Check lead association for assignee and reporter
-            if(task_assignee !== '') {
+            if (task_assignee !== '') {
                 const existLead = check_assignee.data[0].leadData.find((item) => item.lead_id === lead_id);
                 if (!existLead) return responseData(res, "", 404, false, "Task assignee is not part of this lead", []);
             }
 
-            if(reporter !== '') {
+            if (reporter !== '') {
                 const exitsreportlead = check_reporter.data[0].leadData.find((item) => item.lead_id === lead_id);
                 if (!exitsreportlead) return responseData(res, "", 404, false, "Reporter is not part of this lead", []);
             }
             // Create task if validation passes
-            await createTaskAndTimer(res, org_id, check_user, task_assignee, lead_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, delegation_date, actual_task_start_date, actual_task_end_date, task_status, task_priority, reporter);
         }
 
     } catch (err) {
@@ -192,16 +201,15 @@ export const getAllLeadTasks = async (req, res) => {
             const missingField = !user_id ? "User Id" : "Lead Id";
             return responseData(res, "", 404, false, `${missingField} required`, []);
         }
-        if(!org_id)
-        {
-           return responseData(res, "", 400, false, "Org Id required");
+        if (!org_id) {
+            return responseData(res, "", 400, false, "Org Id required");
         }
 
         const check_org = await orgModel.findOne({ _id: org_id })
         if (!check_org) {
             return responseData(res, "", 404, false, "Org not found");
         }
-        const check_user = await registerModel.findOne({ _id: user_id , organization: org_id});
+        const check_user = await registerModel.findOne({ _id: user_id, organization: org_id });
         if (!check_user) {
             return responseData(res, "", 404, false, "User not found", []);
         }
@@ -372,9 +380,10 @@ export const updateLeadTask = async (req, res) => {
         const lead_id = req.body.lead_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
+        const delegation_date = req.body.delegation_date;
         const actual_task_start_date = req.body.actual_task_start_date;
-        const estimated_task_start_date = req.body.estimated_task_start_date;
-        const estimated_task_end_date = req.body.estimated_task_end_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date;
+        // const estimated_task_end_date = req.body.estimated_task_end_date;
         const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
@@ -397,12 +406,12 @@ export const updateLeadTask = async (req, res) => {
             responseData(res, "", 404, false, "task priority required", [])
 
         }
-        else if (!estimated_task_start_date) {
-            responseData(res, "", 404, false, "Task start date  required", [])
-        }
-        else if (!estimated_task_end_date) {
-            responseData(res, "", 404, false, "Task end date required", [])
-        }
+        // else if (!estimated_task_start_date) {
+        //     responseData(res, "", 404, false, "Task start date  required", [])
+        // }
+        // else if (!estimated_task_end_date) {
+        //     responseData(res, "", 404, false, "Task end date required", [])
+        // }
         else if (!task_status) {
             responseData(res, "", 404, false, "Task status required", [])
         }
@@ -435,15 +444,20 @@ export const updateLeadTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
+                        const previous_task_assignee = check_task.task_assignee;
+                        const findUser = await registerModel.findOne({ organization: org_id, username: task_assignee });
+                        if (!findUser) {
+                            return responseData(res, "", 404, false, "User not found");
+                        }
                         const update_task = await leadTaskModel.findOneAndUpdate({ task_id: task_id, lead_id: lead_id, org_id: org_id },
                             {
                                 $set: {
                                     task_name: task_name,
                                     task_description: task_description,
+                                    estimated_task_start_date: delegation_date,
+                                    estimated_task_end_date: actual_task_end_date,
                                     actual_task_start_date: actual_task_start_date,
                                     actual_task_end_date: actual_task_end_date,
-                                    estimated_task_end_date: estimated_task_end_date,
-                                    estimated_task_start_date: estimated_task_start_date,
                                     task_status: task_status,
                                     task_priority: task_priority,
                                     task_assignee: task_assignee,
@@ -463,6 +477,7 @@ export const updateLeadTask = async (req, res) => {
                         )
 
                         if (update_task) {
+
                             await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
                                 {
                                     $push: {
@@ -476,7 +491,10 @@ export const updateLeadTask = async (req, res) => {
                                 }
                             )
 
+                            if (previous_task_assignee != task_assignee) {
 
+                                await send_mail(findUser.email, task_assignee, task_name, check_lead.name, actual_task_end_date, task_priority, task_status, reporter, check_user.username, "lead");
+                            }
                             responseData(res, "Task updated successfully", 200, true, "", [])
                         }
                         else {
