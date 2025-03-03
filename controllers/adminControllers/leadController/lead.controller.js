@@ -1396,6 +1396,24 @@ export const getTimeline = async (req, res) => {
 
     let newTimeline = [];
 
+    if(updatedTimelines.length <= 0) {
+
+      const tml = {
+        lead_id: lead?.lead_id || "",
+        project_id: "",
+        lead_name: lead?.name || "",
+        project_name: "",
+        org_id: org_id,
+        leadEvents: lead.lead_update_track,
+        projectEvents: [],
+      }
+
+      
+
+      updatedTimelines.push(tml)
+
+    }
+
     for(let project of projects) {
       const exists = updatedTimelines.some(timeline => timeline.project_id === project.project_id);
       if(!exists) {
