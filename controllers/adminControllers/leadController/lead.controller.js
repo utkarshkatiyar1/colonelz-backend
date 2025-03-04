@@ -1354,24 +1354,88 @@ export const getTimeline = async (req, res) => {
 
     // Step 1: Fetch all timelines with the given lead_id
     const timelines = await TimelineModel.find({ lead_id: lead_id });
+    const projects = await projectModel.find({ lead_id: lead_id });
+
+    let updatedTimelines = [];
 
     if (timelines.length > 0) {
-      // Step 2: Iterate over each timeline and replace project_id with project name
-      for (let timeline of timelines) {
-        if (timeline.project_id) {
-          // Step 3: Find the project by project_id
-          const project = await projectModel.findOne({ project_id: timeline.project_id });
-          if (project && project.project_name) {
-            // Replace project_id with project name
-            timeline.project_id = project.project_name;
+      updatedTimelines = await Promise.all(
+        timelines.map(async (timeline) => {
+          if (timeline.project_id) {
+              // Fetch the project
+              const project = await projectModel.findOne({ project_id: timeline.project_id });
+      
+              // console.log("Fetched project:", project); // Debugging
+      
+              if (project) {
+                return {
+                  ...timeline,
+                  project_id: project.project_id, // Replace project_id with project_name
+                  project_name: project.project_name,
+                  leadEvents: timeline.leadEvents?.reverse() || [],
+                  projectEvents: timeline.projectEvents?.reverse() || [],
+                  lead_id: lead?.lead_id || "", 
+                  lead_name: lead?.name || "",
+                };
+              }
           }
-        }
+      
+          // Return timeline even if no project was found
+          return {
+            ...timeline,
+            leadEvents: timeline.leadEvents?.reverse() || [],
+            projectEvents: timeline.projectEvents?.reverse() || [],
+            lead_id: lead?.lead_id || "",
+            lead_name: lead?.name || "",
+          };
+        })
+      );
+      
+      
+    }
 
-        timeline.lead_id = lead.name
+    let newTimeline = [];
+
+    if(updatedTimelines.length <= 0) {
+
+      const tml = {
+        lead_id: lead?.lead_id || "",
+        project_id: "",
+        lead_name: lead?.name || "",
+        project_name: "",
+        org_id: org_id,
+        leadEvents: lead.lead_update_track,
+        projectEvents: [],
       }
 
-      // Step 4: Return the modified timelines
-      return responseData(res, "Timeline is found!", 200, true, "", timelines.reverse());
+      
+
+      updatedTimelines.push(tml)
+
+    }
+
+    for(let project of projects) {
+      const exists = updatedTimelines.some(timeline => timeline.project_id === project.project_id);
+      if(!exists) {
+
+        const tml = {
+          lead_id: lead?.lead_id || "",
+          project_id: project?.project_id || "",
+          lead_name: lead?.name || "",
+          project_name: project?.project_name || "",
+          org_id: org_id,
+          leadEvents: lead.lead_update_track,
+          projectEvents: project.project_updated_by,
+        }
+
+        newTimeline.push(tml);
+      }
+    }
+
+    newTimeline = [...updatedTimelines.reverse(), ...newTimeline];
+
+    if(updatedTimelines) {
+      return responseData(res, "Timeline is found!", 200, true, "", newTimeline);
     }
 
     responseData(res, "Timeline not found!", 404, true, "", []);
