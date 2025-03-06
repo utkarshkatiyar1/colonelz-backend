@@ -20,7 +20,7 @@ function generateSixDigitNumber() {
 const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
   // console.log(fileName)
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
-  let newFileName = folder_name === 'Quotation' ? `${fileName}_${timestamp}` : fileName
+  let newFileName =`${fileName}_${timestamp}`
 
 
 
