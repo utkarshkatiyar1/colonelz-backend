@@ -18,10 +18,16 @@ function generateSixDigitNumber() {
 }
 
 const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
+  // console.log(fileName)
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  let newFileName = folder_name === 'Quotation' ? `${fileName}_${timestamp}` : fileName
+
+
+
   const data = await s3
     .upload({
       Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
-      Key: fileName,
+      Key: newFileName,
       Body: file.data,
       ContentType: file.mimetype,
       
@@ -29,7 +35,7 @@ const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
     .promise();
   const signedUrl = s3.getSignedUrl('getObject', {
     Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
-    Key: fileName,
+    Key: newFileName,
     Expires: 157680000 // URL expires in 5 year
   });
   return { status: true, data, signedUrl };
