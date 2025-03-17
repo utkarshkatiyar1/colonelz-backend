@@ -520,7 +520,7 @@ export const updateLeadSubTask = async (req, res) => {
                 }
             }
         );
-        if (sub_task_assignee !== previous_sub_task_assignee) {
+        if (sub_task_assignee && sub_task_assignee !== previous_sub_task_assignee) {
                     const find_user = await registerModel.findOne({ organization: org_id, username: sub_task_assignee });
             await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, lead_data.name, actual_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"lead");
         

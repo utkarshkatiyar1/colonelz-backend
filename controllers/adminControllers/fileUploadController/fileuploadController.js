@@ -17,11 +17,33 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
+const uploadFileDrawing = async (file, fileName, lead_id, org_id, folder_name, sub_folder_name_first, sub_folder_name_second) => {
+  const  data = await s3.upload({
+      Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
+     Key: fileName,
+     Body: file.data,
+     ContentType: file.mimetype,
+  
+ }).promise();
+ const signedUrl = s3.getSignedUrl('getObject', {
+     Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
+     Key: fileName,
+     Expires: 157680000 // URL expires in 5 year
+ });
+ return { status: true, data, signedUrl };
+};
+
 const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
+  // console.log(fileName)
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  let newFileName = `${fileName}_${timestamp}`
+
+
+
   const data = await s3
     .upload({
       Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
-      Key: fileName,
+      Key: newFileName,
       Body: file.data,
       ContentType: file.mimetype,
       
@@ -29,7 +51,7 @@ const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
     .promise();
   const signedUrl = s3.getSignedUrl('getObject', {
     Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
-    Key: fileName,
+    Key: newFileName,
     Expires: 157680000 // URL expires in 5 year
   });
   return { status: true, data, signedUrl };
@@ -208,7 +230,7 @@ const fileupload = async (req, res) => {
             }));
 
           }
-          console.log(decodeURIComponent(fileUrls[0].fileName.replace(/\+/g, ' ')))
+          // console.log(decodeURIComponent(fileUrls[0].fileName.replace(/\+/g, ' ')))
 
 
           const existingFile = await fileuploadModel.findOne({
@@ -264,6 +286,315 @@ const fileupload = async (req, res) => {
       });
     }
   }
+};
+
+
+
+
+// function generateSixDigitNumber() {
+//     const min = 100000;
+//     const max = 999999;
+//     const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+//     return randomNumber;
+// }
+
+// const uploadFile = async (file, org_id, fileName, folder_name, sub_folder_name_first, sub_folder_name_second) => {
+//      const  data = await s3.upload({
+//          Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/template/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
+//         Key: fileName,
+//         Body: file.data,
+//         ContentType: file.mimetype,
+     
+//     }).promise();
+//     const signedUrl = s3.getSignedUrl('getObject', {
+//         Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/template/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`,
+//         Key: fileName,
+//         Expires: 157680000 // URL expires in 5 year
+//     });
+//     return { status: true, data, signedUrl };
+// };
+
+const drwaingDaveFileUploadData = async (res, existingFileUploadData, isFirst = false) => {
+    try {
+
+      if(!existingFileUploadData.sub_folder_name_second) {
+          const firstFile = await fileuploadModel.create({
+            org_id: existingFileUploadData.org_id,
+            lead_id: existingFileUploadData.lead_id,
+            project_id: existingFileUploadData.project_id,
+            type: existingFileUploadData.type,
+            files: [
+                {
+                    folder_name: existingFileUploadData.folder_name,
+                    sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
+                    sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
+                    folder_id: existingFileUploadData.folder_Id,
+                    updated_date: existingFileUploadData.updated_Date,
+                    files: existingFileUploadData.files,
+                },
+            ],
+        });
+        responseData(res, "First file created successfully", 200, true);
+
+      } else {
+
+        if (isFirst) {
+          const firstFile = await fileuploadModel.create({
+              org_id: existingFileUploadData.org_id,
+              lead_id: existingFileUploadData.lead_id,
+              project_id: existingFileUploadData.project_id,
+              type: existingFileUploadData.type,
+              files: [
+                  {
+                      folder_name: existingFileUploadData.folder_name,
+                      sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
+                      sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
+                      folder_id: existingFileUploadData.folder_Id,
+                      updated_date: existingFileUploadData.updated_Date,
+                      files: existingFileUploadData.files,
+                  },
+              ],
+          });
+          responseData(res, "First file created successfully", 200, true);
+      } else {
+            let updateQuery = {};
+            updateQuery = {
+                $push: {
+                    "files.$.files": { $each: existingFileUploadData.files },
+                },
+                $set: {
+                    "files.$.updated_date": existingFileUploadData.updated_Date,
+                }
+            };
+
+
+            const updateResult = await fileuploadModel.updateOne(
+                {
+                    org_id: existingFileUploadData.org_id,
+                    lead_id: existingFileUploadData.lead_id,
+                    project_id: existingFileUploadData.project_id,
+                    type: existingFileUploadData.type,
+                    "files.sub_folder_name_second": existingFileUploadData.sub_folder_name_second,
+                    "files.folder_name": existingFileUploadData.folder_name,
+                    "files.sub_folder_name_first": existingFileUploadData.sub_folder_name_first,
+                },
+                updateQuery,
+                {
+                    arrayFilters: [
+                        { "folder.sub_folder_name_second": existingFileUploadData.sub_folder_name_second, },
+                    ],
+                }
+            );
+
+            if (updateResult.modifiedCount === 1) {
+                responseData(res, "File data updated successfully", 200, true);
+            } else {
+                const firstFile = await fileuploadModel.create({
+                    org_id: existingFileUploadData.org_id,
+                    lead_id: existingFileUploadData.lead_id,
+                    project_id: existingFileUploadData.project_id,
+                    type: existingFileUploadData.type,
+
+                    files: [
+                        {
+                            folder_name: existingFileUploadData.folder_name,
+                            sub_folder_name_first: existingFileUploadData.sub_folder_name_first,
+                            sub_folder_name_second: existingFileUploadData.sub_folder_name_second,
+                            updated_date: existingFileUploadData.updated_Date,
+                            folder_id: existingFileUploadData.folder_Id,
+                            files: existingFileUploadData.files,
+                        },
+                    ],
+                });
+
+                responseData(res, "File data updated successfully", 200, true);
+
+
+            }
+        }
+
+
+      }
+    
+        
+    } catch (error) {
+        console.error("Error saving file upload data:", error);
+        responseData(res, "", 500, false, "Something went wrong. File data not updated");
+    }
+};
+
+
+export const DrawingFileUpload = async (req, res) => {
+    const folder_name = req.body.folder_name;
+    const sub_folder_name_first = req.body.sub_folder_name_first;
+    const sub_folder_name_second = req.body.sub_folder_name_second;
+    const type = req.body.type;
+    const org_id = req.body.org_id;
+    const lead_id = req.body.lead_id;
+    const project_id = req.body.project_id;
+
+    // if(type !== 'Drawing') {
+    //     if (!folder_name || !sub_folder_name_first || !sub_folder_name_second || !type) {
+    //         responseData(res, "", 403, false, "folder name, sub folder names, and type are required", []);
+    //         return;
+    //     }
+    // }
+
+    if(!org_id)
+    {
+        responseData(res, "", 403, false, "Org Id required!", []);
+    }
+
+    // if (type !== "template") {
+    //     responseData(res, "", 403, false, "Type must be 'template'", []);
+    //     return;
+    // }
+
+
+    try {
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            responseData(res, "", 404, false, "Org not found!", []);
+        }
+        const files = Array.isArray(req.files?.files) ? req.files?.files : [req.files?.files];
+
+
+        // if (!files || files.length === 0) {
+        //     responseData(res, "", 400, false, "No files provided", []);
+        //     return;
+        // }
+
+        // Limit the number of files to upload to at most 5
+
+        if(!sub_folder_name_second) {
+          const folder_Id = `FOL_ID${generateSixDigitNumber()}`;
+          const check_type = await fileuploadModel.findOne({
+              org_id: org_id,
+              lead_id: lead_id ? lead_id : null,
+              project_id: project_id ? project_id : null,
+              type: "Drawing",
+              "files.folder_name": folder_name,
+              "files.sub_folder_name_first": sub_folder_name_first,
+          });
+
+          if (check_type) {
+              await drwaingDaveFileUploadData(res, {
+                  folder_name,
+                  folder_Id,
+                  org_id,
+                  lead_id : lead_id ? lead_id : null,
+                  project_id: project_id ? project_id : null,
+                  sub_folder_name_first,
+                  sub_folder_name_second,
+                  updated_Date: new Date(),
+                  type,
+                  files: [],
+              });
+          } else {
+              await drwaingDaveFileUploadData(res, {
+                  folder_name,
+                  folder_Id,
+                  org_id,
+                  lead_id: lead_id ? lead_id : null,
+                  project_id: project_id ? project_id : null,
+                  sub_folder_name_first,
+                  sub_folder_name_second,
+                  updated_Date: new Date(),
+                  type,
+                  files: [],
+              }, true);
+          }
+
+        } else {
+
+          const filesToUpload = files.slice(0, 5);
+          const fileUploadPromises = [];
+          let fileSize = []
+
+          // console.log("filesToUpload", filesToUpload)
+
+          for (const file of filesToUpload) {
+
+            // console.log("file", file)
+              const fileName = file.name;
+              const fileSizeInBytes = file.size;
+              fileSize.push(fileSizeInBytes / 1024)
+              fileUploadPromises.push(uploadFileDrawing(file, fileName, lead_id? lead_id : project_id, org_id, folder_name, sub_folder_name_first, sub_folder_name_second));
+              //file, org_id, fileName, folder_name, sub_folder_name_first, sub_folder_name_second
+          }
+
+          // console.log("bbbb")
+
+          const responses = await Promise.all(fileUploadPromises);
+          const fileUploadResults = responses.map((response) => ({
+              status: response.Location ? true : false,
+              data: response ? response : response.err,
+          }));
+          const successfullyUploadedFiles = fileUploadResults.filter((result) => result.data);
+
+          let fileUrls
+          if (successfullyUploadedFiles.length > 0) {
+              for (let i = 0; i < fileSize.length; i++) {
+                  fileUrls = successfullyUploadedFiles.map((result) => ({
+                      fileUrl: result.data.signedUrl,
+                      fileName: decodeURIComponent(result.data.data.Location.split('/').pop().replace(/\+/g, ' ')),
+                      fileId: `FL-${generateSixDigitNumber()}`,
+                      fileSize: `${fileSize[i]} KB`,
+                      date: new Date()
+
+                  }));
+
+              }
+
+              const folder_Id = `FOL_ID${generateSixDigitNumber()}`;
+              const check_type = await fileuploadModel.findOne({
+                  org_id: org_id,
+                  lead_id: lead_id ? lead_id : null,
+                  project_id: project_id ? project_id : null,
+                  type: "Drawing",
+                  "files.folder_name": folder_name,
+                  "files.sub_folder_name_first": sub_folder_name_first,
+              });
+
+              if (check_type) {
+                  await drwaingDaveFileUploadData(res, {
+                      folder_name,
+                      folder_Id,
+                      org_id,
+                      lead_id: lead_id ? lead_id : null,
+                      project_id: project_id ? project_id : null,
+                      sub_folder_name_first,
+                      sub_folder_name_second,
+                      updated_Date: fileUrls[0].date,
+                      type,
+                      files: fileUrls,
+                  });
+              } else {
+                  await drwaingDaveFileUploadData(res, {
+                      folder_name,
+                      folder_Id,
+                      org_id,
+                      lead_id: lead_id ? lead_id : null,
+                      project_id: project_id ? project_id : null,
+                      sub_folder_name_first,
+                      sub_folder_name_second,
+                      updated_Date: fileUrls[0].date || new Date(),
+                      type,
+                      files: fileUrls,
+                  }, true);
+              }
+              
+          } else {
+              responseData(res, "", 500, false, "Error uploading files", []);
+          }
+          
+        }
+
+
+        
+    } catch (err) {
+        responseData(res, "", 500, false, err.message, []);
+    }
 };
 
 export default fileupload;

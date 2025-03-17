@@ -13,6 +13,20 @@ const SubtasktimeSchema = new mongoose.Schema({
     sub_task_current: { type: String, required: true },
 });
 
+
+const OpenTasktimeSchema = new mongoose.Schema({
+    task_id: { type: String, required: true },
+    task_name: { type: String, required: true },
+    task_assignee: {
+        type: String,
+    },
+
+    task_time: { type: String, required: true },
+    task_isrunning: { type: Boolean, required: true },
+    task_totalTime: { type: String, required: true },
+    task_current: { type: String, required: true },
+});
+
 const openTaskWorkSchema = new mongoose.Schema({
     task_id: {
         type: String,
@@ -34,6 +48,7 @@ const openTaskWorkSchema = new mongoose.Schema({
         type: String,
     },
     subtaskstime: [SubtasktimeSchema],
+    taskstime: [OpenTasktimeSchema],
 
     createdAt: {
         type: Date,

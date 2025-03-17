@@ -49,7 +49,8 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, l
         task_name,
         task_assignee,
         task_time: '',
-        subtaskstime: []
+        subtaskstime: [],
+        taskstime: []
     });
 
     await task.save();
@@ -68,6 +69,20 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, l
             }
         }
     );
+
+    
+    const updateTimer = await leadTimerModel.findOneAndUpdate({ lead_id: lead_id, task_id: task_id, org_id:org_id }, {
+        $push: {
+            taskstime: {
+                task_id, task_name, task_assignee, task_time: ''
+            }
+        }
+    });
+
+    if(!updateTimer) {
+        return responseData(res, "Task timer not found", 404, false, "", []);
+        
+    }
 
     if (task_assignee !== '') {
         const find_user = await registerModel.findOne({ organization: req.user.organization, username: task_assignee });
@@ -445,9 +460,14 @@ export const updateLeadTask = async (req, res) => {
                     }
                     else {
                         const previous_task_assignee = check_task.task_assignee;
-                        const findUser = await registerModel.findOne({ organization: org_id, username: task_assignee });
-                        if (!findUser) {
-                            return responseData(res, "", 404, false, "User not found");
+
+                        let findUser;
+                        if(task_assignee) {
+                            findUser = await registerModel.findOne({ organization: org_id, username: task_assignee });
+                            if (!findUser) {
+                                return responseData(res, "", 404, false, "User not found");
+                            }
+
                         }
                         const update_task = await leadTaskModel.findOneAndUpdate({ task_id: task_id, lead_id: lead_id, org_id: org_id },
                             {
@@ -491,7 +511,7 @@ export const updateLeadTask = async (req, res) => {
                                 }
                             )
 
-                            if (previous_task_assignee != task_assignee) {
+                            if (task_assignee && previous_task_assignee != task_assignee) {
 
                                 await send_mail(findUser.email, task_assignee, task_name, check_lead.name, actual_task_end_date, task_priority, task_status, reporter, check_user.username, "lead");
                             }

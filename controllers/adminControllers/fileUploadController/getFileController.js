@@ -15,9 +15,9 @@ export const getFileData = async (req, res) => {
       return responseData(res, "", 404, false, "Org not found");
     }
     const data = await fileuploadModel.find({ org_id: org_id })
-      .populate('project_id', 'project_id client project_type project_status')
-      .populate('lead_id', 'lead_id email status date')
-      .select('project_id lead_id lead_name project_name')
+      .populate('project_id', 'project_id client project_type project_status type')
+      .populate('lead_id', 'lead_id email status date type')
+      .select('project_id lead_id lead_name project_name type')
       .lean();
 
     if (!data.length) {
@@ -36,7 +36,7 @@ export const getFileData = async (req, res) => {
     const leadMap = new Map(leads.map(l => [l.lead_id, l]));
 
     const projectData = data
-      .filter(element => element.project_id && projectMap.has(element.project_id))
+      .filter(element => !element?.type && element.project_id && projectMap.has(element.project_id))
       .map(element => {
         const project = projectMap.get(element.project_id);
         return {
@@ -48,8 +48,10 @@ export const getFileData = async (req, res) => {
         };
       });
 
+      // console.log("leadMap", leadMap)
+
     const leadData = data
-      .filter(element => element.lead_id && leadMap.has(element.lead_id))
+      .filter(element => !element?.type && element.lead_id && leadMap.has(element.lead_id))
       .map(element => {
         const lead = leadMap.get(element.lead_id);
         return {
@@ -97,6 +99,22 @@ export const getleadData = async (req, res) => {
       return responseData(res, "Data Not Found!", 200, true, "");
     }
 
+    const drawingData = await fileuploadModel.find({ lead_id, org_id, type:"Drawing" }).lean();
+    // console.log("drawingData", drawingData)
+    const uniqueFolders = new Set();
+
+    if(drawingData) {
+      drawingData?.forEach((obj) => {
+      obj.files?.forEach((item) => {
+          if (item.sub_folder_name_first) {
+          uniqueFolders.add(item.sub_folder_name_first);
+          }
+      });
+      });
+    }
+
+    // Extract folder values
+
     const files = data.files.map(file => {
       const foldername = file.folder_name.toLowerCase();
 
@@ -115,7 +133,7 @@ export const getleadData = async (req, res) => {
       return {
         folder_name: file.folder_name,
         updated_date: file.updated_date,
-        total_files: file.files.length,
+        total_files: file.folder_name === "Drawing" ? uniqueFolders.size : file.files.length,
         files: file.files
       };
     }).filter(file => file !== null);
@@ -151,6 +169,21 @@ export const getprojectData = async (req, res) => {
       return responseData(res, "Data Not Found!", 200, true, "");
     }
 
+
+    const drawingData = await fileuploadModel.find({ project_id, org_id, type:"Drawing" }).lean();
+    // console.log("drawingData", drawingData)
+    const uniqueFolders = new Set();
+
+    if(drawingData) {
+      drawingData?.forEach((obj) => {
+      obj.files?.forEach((item) => {
+          if (item.sub_folder_name_first) {
+          uniqueFolders.add(item.sub_folder_name_first);
+          }
+      });
+      });
+    }
+
     const files = data.files.map(file => {
       const foldername = file.folder_name.toLowerCase();
 
@@ -169,7 +202,7 @@ export const getprojectData = async (req, res) => {
       return {
         folder_name: file.folder_name,
         updated_date: file.updated_date,
-        total_files: file.files.length,
+        total_files: file.folder_name === "Drawing" ? uniqueFolders.size : file.files.length,
         files: file.files
       };
     }).filter(file => file !== null);
@@ -241,6 +274,80 @@ export const getCompanyData = async (req, res) => {
 };
 
 
+
+
+export const getDrawingData = async (req, res) => {
+  try {
+    // const type = req.query.type;
+    // const type2 = req.query.filter;
+    // if (!type) {
+    //   return responseData(res, "", 400, false, "Please Provide Type!");
+    // }
+    // if(!type2)
+    // {
+    //   return responseData(res, "", 400, false, "Please Provide Filter!");
+    // }
+    const org_id = req.query.org_id;
+    const type = req.query.type;
+    const lead_id = req.query.lead_id;
+    const project_id = req.query.project_id;
+
+    if (!org_id) {
+      return responseData(res, "", 404, false, "Org Id required", []);
+    }
+    const check_org = await orgModel.findOne({ _id: org_id })
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Org not found");
+    }
+
+
+    let data = [];
+
+   
+      data = await fileuploadModel.find({ org_id: org_id, lead_id: lead_id ? lead_id: null, project_id:project_id ? project_id: null, type:type }).lean();
+
+    
+
+ 
+
+    // console.log(data)
+
+
+    if (data.length === 0) {
+      return responseData(res, "Data Not Found!", 200, true, "");
+    }
+
+    const templateData = await Promise.all(data.map(async (element) => {
+      // if (element.lead_id === null && element.project_id === null) {
+        const files = element.files
+          .filter(file => file.folder_name
+            //  === type && file.sub_folder_name_first === type2
+          )
+          .map(file => ({
+            folder_name: file.folder_name,
+            folder_id: file.folder_id,
+            sub_folder_name_first: file.sub_folder_name_first,
+            sub_folder_name_second: file.sub_folder_name_second,
+            updated_date: file.updated_date,
+            total_files: file.files.length,
+            files: file.files,
+          }));
+
+          if(!files) {
+            return null;
+          }
+
+        return files.length > 0 ? { type: element.type, files } : null;
+      // }
+    }));
+    const filteredTemplateData = templateData.filter(item => item !== null);
+
+    responseData(res, "Get File Data Successfully!", 200, true, "", { DrawingData: filteredTemplateData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal Server Error");
+  }
+};
 
 
 
