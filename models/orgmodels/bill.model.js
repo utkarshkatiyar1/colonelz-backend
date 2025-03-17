@@ -6,23 +6,44 @@ const billSchema = new mongoose.Schema({
         type: String,
         // required: true,
     },
-    billing_shipping_address: {
+    billing_address: {
         type: String,
         // required: true,
     },
-    city: {
+    billing_city: {
         type: String,
         // required: true,
     },
-    state: {
+    billing_state: {
         type: String,
         // required: true,
     },
-    country: {
+    billing_country: {
         type: String,
         // required: true,
     },
-    zipcode: {
+    billing_zipcode: {
+        type: String,
+        // required: true,
+    },
+
+    shipping_address: {
+        type: String,
+        // required: true,
+    },
+    shipping_city: {
+        type: String,
+        // required: true,
+    },
+    shipping_state: {
+        type: String,
+        // required: true,
+    },
+    shipping_country: {
+        type: String,
+        // required: true,
+    },
+    shipping_zipcode: {
         type: String,
         // required: true,
     },

@@ -38,7 +38,22 @@ const updateProfileInDB = async (org_id, updates) => {
 
 const setProfileUrlInDB = async (res, response, org_id, req) => {
     try {
-        const updates = { ...req.body };
+        const updates = { 
+            org_phone: req.body.org_phone,
+            org_email: req.body.org_email,
+            email: req.body.email,
+            currency: req.body.currency,
+            vat_tax_gst_number: req.body.vat_tax_gst_number,
+            org_website: req.body.org_website,
+            org_address: req.body.org_address,
+            org_city: req.body.org_city,
+            org_state: req.body.org_state,
+            org_country: req.body.org_country,
+            org_zipcode: req.body.org_zipcode,
+            org_status: req.body.org_status,
+            organization: req.body.organization,
+            org_logo: req.body.org_logo,
+        };
         if (response) updates.org_logo = response.signedUrl;
         // console.log(response)
 
@@ -94,12 +109,6 @@ export const updateOrg = async (req, res) => {
                         const file = req.files ? req.files.file : null;
 
                         if (!file) {
-
-
-                            // console.log("file k ander if")
-                            // if (!onlyAlphabetsValidation(user_name) || user_name.length <= 3) {
-                            //   return responseData(res, "", 400, false, "User Name is not valid");
-                            // }
                             return await setProfileUrlInDB(res, null, org_id, req);
                         }
 
