@@ -40,6 +40,7 @@ const uploadFile = async (file, fileName, lead_id,org_id, folder_name) => {
 
 
 
+
   const data = await s3
     .upload({
       Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/${folder_name}`,
