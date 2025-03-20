@@ -46,11 +46,27 @@ const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, tas
         task_name,
         task_assignee,
         task_time: '',
-        subtaskstime: []
+        subtaskstime: [],
+        taskstime: []
     });
 
     await task.save();
     await taskTime.save();
+
+
+    
+    const updateTimer = await openTimerModel.findOneAndUpdate({ task_id: task_id, org_id:org_id }, {
+        $push: {
+            taskstime: {
+                task_id, task_name, task_assignee, task_time: ''
+            }
+        }
+    });
+
+    if(!updateTimer) {
+        return responseData(res, "Task timer not found", 404, false, "", []);
+        
+    }
 
     if(task_assignee !=='') {
     const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
@@ -384,11 +400,14 @@ export const updateOpenTask = async (req, res) => {
                 }
                 else {
                     const previous_task_assignee = check_task.task_assignee;
-                    const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
-
-                    if (!findUser) {
-                        return responseData(res, "", 404, false, "User not found");
-                        
+                    let findUser;
+                    if(task_assignee) {
+                        findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
+    
+                        if (!findUser) {
+                            return responseData(res, "", 404, false, "User not found");
+                            
+                        }
                     }
                     const update_task = await openTaskModel.findOneAndUpdate({ task_id: task_id, org_id: org_id },
                         {
@@ -416,7 +435,7 @@ export const updateOpenTask = async (req, res) => {
                         { new: true, useFindAndModify: false }
                     )
                     if (update_task) {
-                        if (previous_task_assignee != task_assignee) {
+                        if (task_assignee && previous_task_assignee != task_assignee) {
                             await send_mail(findUser.email, task_assignee, task_name, "Open Type", estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "Open Type");
                         }
                         responseData(res, "Task updated successfully", 200, true, "", [])

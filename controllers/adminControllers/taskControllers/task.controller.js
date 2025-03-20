@@ -54,7 +54,8 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         task_name,
         task_assignee,
         task_time: '',
-        subtaskstime: []
+        subtaskstime: [],
+        taskstime: []
     });
 
     await task.save();
@@ -74,6 +75,18 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         }
     );
 
+    const updateTimer = await timerModel.findOneAndUpdate({ project_id: project_id, task_id: task_id, org_id:org_id }, {
+        $push: {
+            taskstime: {
+                task_id, task_name, task_assignee, task_time: ''
+            }
+        }
+    });
+
+    if(!updateTimer) {
+       return responseData(res, "Task timer not found", 404, false, "", []);
+        
+    }
 
     if (task_assignee !== '') {
         const find_user = await registerModel.findOne({ organization: project_data.org_id, username: task_assignee });
@@ -453,9 +466,14 @@ export const updateTask = async (req, res) => {
                     }
                     else {
                         const previous_task_assignee = check_task.task_assignee;
-                        const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
-                        if (!findUser) {
-                            return responseData(res, "", 404, false, "Task assignee not found", []);
+
+                        let findUser;
+
+                        if(task_assignee) {
+                            findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
+                            if (!findUser) {
+                                return responseData(res, "", 404, false, "Task assignee not found", []);
+                            }
                         }
 
                         const update_task = await taskModel.findOneAndUpdate({ task_id: task_id, project_id: project_id, org_id: org_id },
@@ -499,7 +517,7 @@ export const updateTask = async (req, res) => {
                                 }
                             )
 
-                            if (previous_task_assignee !== task_assignee) {
+                            if (task_assignee && previous_task_assignee !== task_assignee) {
 
                                 await send_mail(findUser.email, task_assignee, task_name, check_project.project_name, estimated_task_end_date, task_priority, task_status, reporter, check_user.username, "project");
                             }

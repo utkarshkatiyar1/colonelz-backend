@@ -681,8 +681,10 @@ export const leadToProject = async (req, res) => {
                     responseData(res, "", 404, false, "lead not found in file manager")
                   }
                   if (lead_find_in_fileupload.length > 0) {
-                    const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id, org_id: org_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
-
+                    const lead_update_in_fileupload = await fileuploadModel.updateMany(
+                        { lead_id: lead_id, org_id: org_id }, 
+                        { $set: { project_id: projectID, project_name: project_name, lead_id: null } }
+                    );
                   }
 
                   const newDate = new Date();
@@ -828,9 +830,10 @@ export const leadToProject = async (req, res) => {
                   responseData(res, "", 404, false, "lead not found in file manager")
                 }
                 if (lead_find_in_fileupload.length > 0) {
-                  const lead_update_in_fileupload = await fileuploadModel.updateOne({ lead_id: lead_id, org_id: org_id }, { $set: { project_id: projectID, project_name: project_name, lead_id: null } });
-
-
+                  const lead_update_in_fileupload = await fileuploadModel.updateMany(
+                      { lead_id: lead_id, org_id: org_id }, 
+                      { $set: { project_id: projectID, project_name: project_name, lead_id: null } }
+                  );
                 }
                 await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
                   {

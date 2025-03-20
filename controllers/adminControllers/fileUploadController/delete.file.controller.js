@@ -2,12 +2,12 @@ import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import Archive from "../../../models/adminModels/archive.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import leadModel from "../../../models/adminModels/leadModel.js";
 
 
 export const deleteFile = async (req, res) => {
-    const { org_id, lead_id, project_id, folder_name, file_id: fileIds, type } = req.body;
+    const { org_id, lead_id, project_id, folder_name, file_id: fileIds, type, sub_folder_name_second, sub_folder_name_first } = req.body;
 
-    // console.log('fileid', fileIds)
 
     if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
         return responseData(res, "", 400, false, "Please provide an array of fileIds");
@@ -26,6 +26,144 @@ export const deleteFile = async (req, res) => {
         const check_org = await orgModel.findOne({ _id: org_id })
         if (!check_org) {
             responseData(res, "", 404, false, "Org not found!", []);
+        }
+
+        if(type === 'Drawing') {
+
+            if(lead_id) {
+                if(sub_folder_name_second && sub_folder_name_first) {
+                    const document = await fileuploadModel.findOne({
+                        lead_id,
+                        org_id,
+                        type: 'Drawing',
+                        folder_name: 'Drawing',
+                        "files.sub_folder_name_first": sub_folder_name_first,
+                        "files.sub_folder_name_second": sub_folder_name_second
+                    });
+                    
+                    if (!document) {
+                        return responseData(res, "", 404, false, "No file found", []);
+                    }
+                    
+                    // Step 2: Find the correct folder inside 'files'
+                    let folder = document.files.find(f => 
+                        f.sub_folder_name_first === sub_folder_name_first &&
+                        f.sub_folder_name_second === sub_folder_name_second
+                    );
+                    
+                    if (!folder) {
+                        return responseData(res, "", 404, false, "No folder found", []);
+                    }
+                    
+                    // Step 3: Separate files to remove
+                    const removedFiles = folder.files.filter(file => fileIds.includes(file.fileId));
+                    
+                    if (removedFiles.length === 0) {
+                        return responseData(res, "", 404, false, "No matching files found", []);
+                    }
+                    
+                    // Step 4: Use $pull to remove files from the document
+                    await fileuploadModel.updateOne(
+                        {
+                            lead_id,
+                            org_id,
+                            type: 'Drawing',
+                            folder_name: 'Drawing',
+                            "files.sub_folder_name_first": sub_folder_name_first,
+                            "files.sub_folder_name_second": sub_folder_name_second
+                        },
+                        {
+                            $pull: { "files.$[].files": { fileId: { $in: fileIds } } }
+                        }
+                    );
+                    
+                    // Step 5: Archive the removed files
+                    await Archive.create({
+                        lead_id,
+                        org_id,
+                        lead_name: document.lead_name || "",
+                        project_id: document.project_id,
+                        project_name: document.project_name,
+                        folder_name: folder.folder_name,
+                        sub_folder_name_first: folder.sub_folder_name_first,
+                        sub_folder_name_second: folder.sub_folder_name_second,
+                        files: removedFiles,
+                        type: "Drawing",
+                        deleted_type: "file",
+                        deleted_at: new Date()
+                    });
+                    
+                    return responseData(res, "", 200, true, "Files deleted and archived successfully", []);
+                }
+            } else if(project_id) {
+                if(sub_folder_name_second && sub_folder_name_first) {
+                    const document = await fileuploadModel.findOne({
+                        project_id,
+                        org_id,
+                        type: 'Drawing',
+                        folder_name: 'Drawing',
+                        "files.sub_folder_name_first": sub_folder_name_first,
+                        "files.sub_folder_name_second": sub_folder_name_second
+                    });
+                    
+                    if (!document) {
+                        return responseData(res, "", 404, false, "No file found", []);
+                    }
+                    
+                    // Step 2: Find the correct folder inside 'files'
+                    let folder = document.files.find(f => 
+                        f.sub_folder_name_first === sub_folder_name_first &&
+                        f.sub_folder_name_second === sub_folder_name_second
+                    );
+                    
+                    if (!folder) {
+                        return responseData(res, "", 404, false, "No folder found", []);
+                    }
+                    
+                    // Step 3: Separate files to remove
+                    const removedFiles = folder.files.filter(file => fileIds.includes(file.fileId));
+                    
+                    if (removedFiles.length === 0) {
+                        return responseData(res, "", 404, false, "No matching files found", []);
+                    }
+                    
+                    // Step 4: Use $pull to remove files from the document
+                    await fileuploadModel.updateOne(
+                        {
+                            project_id,
+                            org_id,
+                            type: 'Drawing',
+                            folder_name: 'Drawing',
+                            "files.sub_folder_name_first": sub_folder_name_first,
+                            "files.sub_folder_name_second": sub_folder_name_second
+                        },
+                        {
+                            $pull: { "files.$[].files": { fileId: { $in: fileIds } } }
+                        }
+                    );
+                    
+                    // Step 5: Archive the removed files
+                    await Archive.create({
+                        project_id,
+                        org_id,
+                        lead_name: document.lead_name || "",
+                        project_id: document.project_id,
+                        project_name: document.project_name,
+                        folder_name: folder.folder_name,
+                        sub_folder_name_first: folder.sub_folder_name_first,
+                        sub_folder_name_second: folder.sub_folder_name_second,
+                        files: removedFiles,
+                        type: "Drawing",
+                        deleted_type: "file",
+                        deleted_at: new Date()
+                    });
+                    
+                    return responseData(res, "", 200, true, "Files deleted and archived successfully", []);
+                }
+
+            }
+
+            
         }
 
         for (const fileId of fileIds) {
@@ -89,7 +227,7 @@ export const deleteFile = async (req, res) => {
 
 
 export const deleteFolder = async (req, res) => {
-    const { lead_id, org_id, project_id, folder_name, type } = req.body;
+    const { lead_id, org_id, project_id, folder_name, type, sub_folder_name_first, sub_folder_name_second } = req.body;
 
     if (!folder_name) {
         return responseData(res, "", 400, false, "Please Enter Folder Name");
@@ -103,7 +241,190 @@ export const deleteFolder = async (req, res) => {
         if (!check_org) {
             responseData(res, "", 404, false, "Org not found!", []);
         }
+
+       
+
         let folder, data;
+
+        if(type === "Drawing") {
+
+            if(lead_id) {
+                const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id:org_id })
+                if (!check_lead) {
+                    return responseData(res, "", 404, false, "lead not found!", []);
+                }
+                if(!sub_folder_name_first) {
+
+                    const filesToArchive = await fileuploadModel.find({ lead_id: lead_id, org_id: org_id, type: "Drawing" });
+
+
+
+                    const files = filesToArchive.map((data) => (data.files));
+
+
+                    const archiveData = {
+                        lead_id: lead_id,
+                        org_id: org_id,
+                        lead_name: check_lead.name,
+                        project_name: "",
+                        project_id: "",
+                        folder_name: 'Drawing',
+                        sub_folder_name_first:  '',
+                        sub_folder_name_second: '',
+                        files: files,
+                        type: 'Drawing',
+                        deleted_type: "folder"
+                    }
+            
+                    // Insert into Archive collection
+                    await Archive.create(archiveData);
+
+                    const data = await fileuploadModel.deleteMany({
+                        lead_id,
+                        org_id: org_id,
+                        type: "Drawing"
+                    });
+
+                    const pullFile = await fileuploadModel.findOneAndUpdate(
+                        {
+                             lead_id: lead_id,
+                             org_id: org_id,
+                             type: { $exists: false }
+                        },
+                        { $pull: { "files": { folder_name } } },
+                        { new: true }
+                    );
+
+
+                    return responseData(res, "Folder is deleted", 200, false, "", []);
+    
+                } else {
+    
+                    if(!sub_folder_name_second) {
+
+                        const filesToArchive = await fileuploadModel.find({
+                            lead_id: lead_id,
+                            org_id: org_id,
+                            type: "Drawing",
+                            "files.folder_name": "Drawing",
+                            "files.sub_folder_name_first": sub_folder_name_first // Match inside the nested array
+                        });
+
+                        const files = filesToArchive.map((data) => (data.files));
+
+
+                        const archiveData = {
+                            lead_id: lead_id,
+                            org_id: org_id,
+                            lead_name: check_lead.name,
+                            project_name: "",
+                            project_id: "",
+                            folder_name: 'Drawing',
+                            sub_folder_name_first:  sub_folder_name_first,
+                            sub_folder_name_second: '',
+                            files: files,
+                            type: 'Drawing',
+                            deleted_type: "folder"
+                        }
+                
+                        // Insert into Archive collection
+                        await Archive.create(archiveData);
+    
+                        const data = await fileuploadModel.deleteMany({
+                            lead_id: lead_id,
+                            org_id: org_id,
+                            type: "Drawing",
+                            "files.folder_name": "Drawing",
+                            "files.sub_folder_name_first": sub_folder_name_first,
+                        });
+                        return responseData(res, "Folder is deleted", 200, false, "", []);
+    
+                    } else {
+    
+                        const filesToArchive = await fileuploadModel.find({
+                            lead_id: lead_id,
+                            org_id: org_id,
+                            type: "Drawing",
+                            "files.folder_name": "Drawing",
+                            "files.sub_folder_name_first": sub_folder_name_first, // Match inside the nested array
+                            "files.sub_folder_name_second": sub_folder_name_second // Match inside the nested array
+                        });
+
+                        const files = filesToArchive.map((data) => (data.files));
+
+
+                        const archiveData = {
+                            lead_id: lead_id,
+                            org_id: org_id,
+                            lead_name: check_lead.name,
+                            project_name: "",
+                            project_id: "",
+                            folder_name: 'Drawing',
+                            sub_folder_name_first:  sub_folder_name_first,
+                            sub_folder_name_second: sub_folder_name_second,
+                            files: files,
+                            type: 'Drawing',
+                            deleted_type: "folder"
+                        }
+                
+                        // Insert into Archive collection
+                        await Archive.create(archiveData);
+    
+                        const data = await fileuploadModel.deleteMany({
+                            lead_id: lead_id,
+                            org_id: org_id,
+                            type: "Drawing",
+                            "files.folder_name": "Drawing",
+                            "files.sub_folder_name_first": sub_folder_name_first,
+                            "files.sub_folder_name_second": sub_folder_name_second,
+                        });
+                        return responseData(res, "Folder is deleted", 200, false, "", []);
+                    }
+    
+                    
+    
+                }
+
+            } else if (project_id) {
+
+                if(!sub_folder_name_first) {
+                    const data = await fileuploadModel.deleteMany({
+                        project_id: project_id,
+                        org_id: org_id,
+                        type: "Drawing"
+                    });
+                    return responseData(res, "Folder is deleted", 200, false, "", []);
+    
+                } else {
+    
+                    if(!sub_folder_name_second) {
+    
+                        const data = await fileuploadModel.deleteMany({
+                            project_id: project_id,
+                            org_id: org_id,
+                            type: "Drawing",
+                            "files.folder_name": "Drawing",
+                            "files.sub_folder_name_first": sub_folder_name_first,
+                        });
+                        return responseData(res, "Folder is deleted", 200, false, "", []);
+    
+                    } else {
+    
+                        const data = await fileuploadModel.deleteMany({
+                            project_id: project_id,
+                            org_id: org_id,
+                            type: "Drawing",
+                            "files.folder_name": "Drawing",
+                            "files.sub_folder_name_first": sub_folder_name_first,
+                            "files.sub_folder_name_second": sub_folder_name_second,
+                        });
+                        return responseData(res, "Folder is deleted", 200, false, "", []);
+                    }
+                }
+            }
+        }
+
+
         const query = type === "template"
             ? {
                 org_id: org_id,

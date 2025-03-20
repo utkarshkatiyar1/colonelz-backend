@@ -62,7 +62,7 @@ export const UpdateOpenSubtimerController = async (req, res) => {
                             )
                             return responseData(res, "", 400, false, "Sub task is already completed or cancelled")
                         }
-                        else if (check_subtask.sub_task_assignee !== sub_task_assignee) {
+                        else if (sub_task_assignee && check_subtask.sub_task_assignee !== sub_task_assignee) {
                             return responseData(res, "", 400, false, "Sub task assignee is not valid")
                         }
                         else {
@@ -150,6 +150,175 @@ export const GetSingleOpenSubtimerController = async (req, res) => {
         };
 
         return responseData(res, "Sub task timer found", 200, true, "", response);
+    } catch (err) {
+        console.error(err);
+        return responseData(res, "", 500, false, "Internal Server Error", err);
+    }
+};
+
+
+export const UpdateOpenTasktimerController = async (req, res) => {
+    try {
+        const time = req.body.time;
+        const isrunning = req.body.isrunning;
+        const totalTime = req.body.total_time;
+        const current = req.body.current;
+        const task_id = req.body.task_id;
+        const sub_task_id = req.body.sub_task_id;
+        const sub_task_assignee = req.body.sub_task_assignee;
+        const task_assignee = req.body.task_assignee;
+
+        if (!time) {
+            return responseData(res, "", 400, false, "Time is required")
+        }
+        else if (!task_id) {
+            return responseData(res, "", 400, false, "Task id is required")
+        }
+        // else if (!sub_task_id) {
+        //     return responseData(res, "", 400, false, "Sub task id is required")
+        // }
+
+        else if (!totalTime) {
+            return responseData(res, "", 400, false, "Total time is required")
+        }
+        else if (!current) {
+            return responseData(res, "", 400, false, "Current time is required")
+        }
+        // else if (!sub_task_assignee) {
+        //     responseData(res, "", 400, false, "Sub task assignee is required")
+        // }
+
+        else {
+            const check_task = await openTaskModel.findOne({ task_id: task_id})
+            if (!check_task) {
+                return responseData(res, "", 400, false, "Task not found")
+            }
+            else {
+                if (check_task.task_status === 'Compeleted' || check_task.task_status === 'Cancelled') {
+                    return responseData(res, "", 400, false, "Task is already completed or cancelled")
+                }
+                else {
+                    const check_subtask = check_task.subtasks
+                    if (check_subtask.length > 0) {
+                        await openTimerModel.findOneAndUpdate({
+                            task_id: task_id,
+                            'taskstime.task_id': task_id
+                        },
+                            {
+                                $set: {
+                                    'taskstime.$.task_isrunning': false,
+
+                                }
+                            },
+                            { new: true, useFindAndModify: false }
+                        )
+                        return responseData(res, "", 400, false, "This task already has subtasks")
+
+                    }
+                    else {
+
+                        if (check_task.task_status === 'Completed' || check_task.task_status === 'Cancelled') {
+                            await openTimerModel.findOneAndUpdate({
+                                task_id: task_id,
+                                'taskstime.task_id': task_id
+                            },
+                                {
+                                    $set: {
+                                        'taskstime.$.task_isrunning': false,
+
+                                    }
+                                },
+                                { new: true, useFindAndModify: false }
+                            )
+                            return responseData(res, "", 400, false, "Task is already completed or cancelled")
+                        }
+                        else if (task_assignee && check_task.task_assignee !== task_assignee) {
+                            return responseData(res, "", 400, false, "Task assignee is not valid")
+                        }
+                        else {
+                            const update_timer = await openTimerModel.findOneAndUpdate({
+                                task_id: task_id,
+                                'taskstime.task_id': task_id
+                            },
+                                {
+                                    $set: {
+                                        'taskstime.$.task_time': time,
+                                        'taskstime.$.task_isrunning': isrunning,
+
+                                        'taskstime.$.task_totalTime': totalTime,
+                                        'taskstime.$.task_current': current
+
+
+                                    }
+                                },
+                                { new: true, useFindAndModify: false }
+                            )
+
+                            if (update_timer) {
+                                return responseData(res, "Timer updated successfully", 200, true, "")
+                            }
+                            else {
+                                return responseData(res, "", 400, false, "Timer not updated")
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+    catch (err) {
+        console.log(err)
+        responseData(res, "", 500, false, "Internal Server Error", err)
+    }
+
+}
+
+export const GetSingleOpenTasktimerController = async (req, res) => {
+    try {
+        const { task_id, sub_task_id } = req.query;
+
+        // Validate required fields in a single step
+        if (!task_id) {
+            return responseData(res, "", 400, false, `Task id is required`);
+        }
+
+        // Combine both checks into a single database query using aggregation for better performance
+        const taskWithtask = await openTimerModel.aggregate([
+            {
+                $match: {
+                    task_id,
+                    'taskstime.task_id': task_id
+                }
+            },
+            {
+                $project: {
+                    task: {
+                        $filter: {
+                            input: '$taskstime',
+                            as: 'task',
+                            cond: { $eq: ['$$task.task_id', task_id] }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // If task or subtask is not found, return an error
+        if (!taskWithtask.length || !taskWithtask[0].task.length) {
+            return responseData(res, "", 400, false, "Task or task not found");
+        }
+
+        // Prepare the response data
+        const task = taskWithtask[0].task[0];
+        const response = {
+            time: task.task_time,
+            isrunning: task.task_isrunning,
+            total_time: task.task_totalTime,
+            current: task.task_current,
+        };
+
+        return responseData(res, "task timer found", 200, true, "", response);
     } catch (err) {
         console.error(err);
         return responseData(res, "", 500, false, "Internal Server Error", err);
