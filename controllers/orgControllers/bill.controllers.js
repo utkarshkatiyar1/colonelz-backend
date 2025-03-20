@@ -45,6 +45,8 @@ export const updateBillingShippingDetails = async (req, res) => {
                             billing_city: req.body.billing_city,
                             billing_zipcode: req.body.billing_zipcode,
 
+                            sameAsBilling: req.body.sameAsBilling,
+
                             shipping_address: req.body.shipping_address,
                             shipping_country: req.body.shipping_country,
                             shipping_state: req.body.shipping_state,

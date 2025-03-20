@@ -47,6 +47,11 @@ const billSchema = new mongoose.Schema({
         type: String,
         // required: true,
     },
+
+    sameAsBilling: {
+        type: Boolean,
+    },
+
     createdAt: {
         type: Date,
         default: Date.now,

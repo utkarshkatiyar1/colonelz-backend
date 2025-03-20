@@ -67,7 +67,7 @@ import { GetSingleLeadSubtimerController, GetSingleLeadTasktimerController, Upda
 import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, MoveTask, updateOpenTask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
 import { createOpenSubTask, deleteOpenSubTask, getAllOpenSubTask, getSingleOpenSubTask, updateOpenSubTask } from "../../controllers/adminControllers/taskControllers/opensubtask.controller.js";
 import { GetSingleOpenSubtimerController, GetSingleOpenTasktimerController, UpdateOpenSubtimerController, UpdateOpenTasktimerController } from "../../controllers/adminControllers/taskControllers/openTimer.controller.js";
-import { createImage, getAllMainImage, getImage } from "../../controllers/adminControllers/threeImageControllers/threeImage.controller.js";
+import { createImage, deleteMainImage, getAllMainImage, getAllPanoImagesFromFileManager, getImageById } from "../../controllers/adminControllers/threeImageControllers/threeImage.controller.js";
 import { addUserToFile, getFilesForUser } from "../../controllers/adminControllers/leadController/approval.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
@@ -3670,8 +3670,10 @@ router.route("/get/rolename").get(verifyJWT, roleName);
 
 
 router.route("/create/threeimage").post(verifyJWT, createImage);
-router.route("/get/threeimage").get(verifyJWT, getImage);
+router.route("/delete/mainimage").delete(verifyJWT, deleteMainImage);
+router.route("/get/threeimage").get(verifyJWT, getImageById);
 router.route("/get/all/mainthreeimage").get(verifyJWT, getAllMainImage);
+router.route("/get/all/panoimages").get(verifyJWT, getAllPanoImagesFromFileManager);
 
 
 
