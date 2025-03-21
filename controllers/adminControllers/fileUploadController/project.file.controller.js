@@ -199,7 +199,6 @@ const projectFileUpload = async (req, res) => {
           for (let i = 0; i < fileSize.length; i++) {
             // console.log(successfullyUploadedFiles[i].data.data.Location)
             fileUrls = successfullyUploadedFiles.map((result) => {
-              console.log(result.data.signedUrl)
               return ({
 
               

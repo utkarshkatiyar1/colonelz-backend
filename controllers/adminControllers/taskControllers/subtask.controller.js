@@ -444,7 +444,6 @@ export const updateSubTask = async (req, res) => {
         if(check_task.task_assignee) {
 
             isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            console.log(isTask_assigneeAuthorized)
             if(!isTask_assigneeAuthorized && check_sub_task.sub_task_assignee) {
                 isTask_assigneeAuthorized = [check_sub_task.sub_task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
             }
@@ -458,7 +457,6 @@ export const updateSubTask = async (req, res) => {
         if(check_task.task_createdBy) {
              isTask_createdByAuthorized = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
 
-             console.log(isTask_createdByAuthorized)
 
              if(!isTask_createdByAuthorized && check_sub_task.sub_task_createdBy) {
                 isTask_createdByAuthorized = [check_sub_task.sub_task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);

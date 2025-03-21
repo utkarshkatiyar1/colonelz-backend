@@ -41,7 +41,6 @@ const setProfileUrlInDB = async (res, response, org_id, req) => {
 
         const listOfObjects = JSON.parse(req.body.vat_tax_gst_number);
 
-        console.log("listOfObjects", listOfObjects)
 
         const updates = { 
             org_phone: req.body.org_phone,
@@ -67,7 +66,6 @@ const setProfileUrlInDB = async (res, response, org_id, req) => {
             return responseData(res, "", 404, false, "Organization does not exist");
         }
 
-        console.log("Organization update successful");
         return responseData(res, "Organization updated successfully", 200, true, "", []);
     } catch (error) {
         return responseData(res, "", 403, false, "Server problem");
@@ -78,7 +76,6 @@ export const updateOrg = async (req, res) => {
     const userId = req.body.userId;
     const org_id = req.body.org_id;
 
-    console.log("req.body", req.body)
     // const user_name = req.body.user_name;
 
     if (!userId) {
