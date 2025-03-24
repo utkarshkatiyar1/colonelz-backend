@@ -49,7 +49,6 @@ const setProfileUrlInDB = async (res, response, userId, user_name) => {
       return responseData(res, "", 404, false, "User does not exist");
     }
 
-    console.log("Profile update successful");
     return responseData(res, "Profile updated successfully", 200, true, "", updates || response.signedUrl);
   } catch (error) {
     return responseData(res, "", 403, false, "Server problem");

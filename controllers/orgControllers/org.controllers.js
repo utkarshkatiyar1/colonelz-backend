@@ -38,12 +38,16 @@ const updateProfileInDB = async (org_id, updates) => {
 
 const setProfileUrlInDB = async (res, response, org_id, req) => {
     try {
+
+        const listOfObjects = JSON.parse(req.body.vat_tax_gst_number);
+
+
         const updates = { 
             org_phone: req.body.org_phone,
             org_email: req.body.org_email,
             email: req.body.email,
             currency: req.body.currency,
-            vat_tax_gst_number: req.body.vat_tax_gst_number,
+            vat_tax_gst_number: listOfObjects,
             org_website: req.body.org_website,
             org_address: req.body.org_address,
             org_city: req.body.org_city,
@@ -62,7 +66,6 @@ const setProfileUrlInDB = async (res, response, org_id, req) => {
             return responseData(res, "", 404, false, "Organization does not exist");
         }
 
-        console.log("Organization update successful");
         return responseData(res, "Organization updated successfully", 200, true, "", []);
     } catch (error) {
         return responseData(res, "", 403, false, "Server problem");
@@ -73,7 +76,6 @@ export const updateOrg = async (req, res) => {
     const userId = req.body.userId;
     const org_id = req.body.org_id;
 
-    // console.log(req.body)
     // const user_name = req.body.user_name;
 
     if (!userId) {

@@ -132,7 +132,6 @@ export const getImageById = async (req, res) => {
         const img_id = req.query.img_id;
         const type = req.query.type;
 
-        console.log(img_id)
 
         
 
@@ -350,7 +349,6 @@ export const getAllPanoImagesFromFileManager = async (req, res) => {
             return responseData(res, "", 404, false, "Org not found");
         }
 
-        console.log("project_id", project_id)
 
         const query = {
             org_id: org_id,
@@ -363,7 +361,6 @@ export const getAllPanoImagesFromFileManager = async (req, res) => {
         } 
 
         const document = await fileuploadModel.findOne(query);
-        console.log("document", document)
         
 
         if (!document || document.length === 0) {
@@ -443,7 +440,6 @@ export const deleteMainImage = async (req, res) => {
                 ]
             });
 
-            console.log("hpImage", hpImage)
 
             if (!hpImage) {
                 responseData(res, "", 404, false, "Hp image not Found", [])

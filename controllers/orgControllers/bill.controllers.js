@@ -101,6 +101,7 @@ export const updateBillingShippingDetails = async (req, res) => {
 
 export const getBillingShippingDetails = async (req, res) => {
     try {
+
         const org_id = req.query.org_id;
         if (!org_id) {
             return responseData(res, "", 400, false, "Organization Id is required");
