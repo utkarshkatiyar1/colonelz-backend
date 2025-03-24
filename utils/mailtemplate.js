@@ -1,6 +1,6 @@
 import { infotransporter } from "./function.js";
 
-export async function send_mail(email, assignee_name, task_name, project_name, estimated_task_end_date, priority, task_status, task_reporter, username, type) {
+export async function send_mail(email, assignee_name, task_name, project_name, estimated_task_end_date, priority, task_status, task_reporter,task_reporter_email, username, type) {
     let type_data = '';
     if (type === 'project') {
         type_data = 'Project';
@@ -14,7 +14,7 @@ export async function send_mail(email, assignee_name, task_name, project_name, e
     }
     const mailOptions = {
         from: process.env.INFO_USER_EMAIL,
-        to: email,
+        to:[email, task_reporter_email],
         subject: "Task Manager | Task Notification",
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
@@ -22,7 +22,7 @@ export async function send_mail(email, assignee_name, task_name, project_name, e
                 <h2 style="color: #fff; margin: 0;">Task Notification</h2>
             </div>
             <div style="padding: 20px;">
-                <p>Dear <strong>${assignee_name}</strong>,</p>
+                <p>Dear <strong>$Team</strong>,</p>
                 <p>We hope this email finds you well. You have been assigned a new task in <strong>Task Manager</strong>.</p>
                 
                 <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -49,6 +49,10 @@ export async function send_mail(email, assignee_name, task_name, project_name, e
                         <tr>
                             <td style="padding: 8px;border-bottom: 1px solid #ddd; "><strong>Status:</strong></td>
                             <td style="padding: 8px;border-bottom: 1px solid #ddd; ">${task_status}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; "><strong>Task assignee:</strong></td>
+                            <td style="padding: 8px;; ">${assignee_name}</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px; "><strong>Report to:</strong></td>
@@ -80,7 +84,7 @@ export async function send_mail(email, assignee_name, task_name, project_name, e
 
 }
 
-export async function send_mail_subtask(email, assignee_name, sub_task_name, project_name, estimated_task_end_date, priority, task_status, task_reporter, username, task_name, type) {
+export async function send_mail_subtask(email, assignee_name, sub_task_name, project_name, estimated_task_end_date, priority, task_status, task_reporter,reporter_email, username, task_name, type) {
     let type_data = '';
     if (type === 'project') {
         type_data = 'Project';
@@ -94,7 +98,7 @@ export async function send_mail_subtask(email, assignee_name, sub_task_name, pro
     }
     const mailOptions = {
         from: process.env.INFO_USER_EMAIL,
-        to: email,
+        to: [email, reporter_email],
         subject: "Sub Task Manager | Sub Task Notification",
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
@@ -102,7 +106,7 @@ export async function send_mail_subtask(email, assignee_name, sub_task_name, pro
                 <h2 style="color: #fff; margin: 0;">Sub Task Notification</h2>
             </div>
             <div style="padding: 20px;">
-                <p>Dear <strong>${assignee_name}</strong>,</p>
+                <p>Dear <strong>Teams</strong>,</p>
                 <p>We hope this email finds you well. You have been assigned a new sub task in <strong>Task Manager</strong>.</p>
                 
                 <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -134,6 +138,10 @@ export async function send_mail_subtask(email, assignee_name, sub_task_name, pro
                         <tr>
                             <td style="padding: 8px;border-bottom: 1px solid #ddd; "><strong>Status:</strong></td>
                             <td style="padding: 8px;border-bottom: 1px solid #ddd; ">${task_status}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; "><strong>Assignee:</strong></td>
+                            <td style="padding: 8px;; ">${assignee_name}</td>
                         </tr>
                         <tr>
                             <td style="padding: 8px; "><strong>Report to:</strong></td>
@@ -181,7 +189,7 @@ export async function send_mail_task_cronjob(email, assignee_name, task_name, pr
     }
     const mailOptions = {
         from: process.env.INFO_USER_EMAIL,
-        to: email,
+        to: [email,],
         subject: `🚨 IMPORTANT: Overdue Task Alert - ${task_name}`,
         html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid red; border-radius: 10px; padding: 20px; background-color: #fff5f5;">
@@ -189,7 +197,7 @@ export async function send_mail_task_cronjob(email, assignee_name, task_name, pr
             <h2 style="color: #fff; margin: 0;">⚠️ Task Overdue Alert</h2>
         </div>
         <div style="padding: 20px;">
-            <p>Dear <strong>${assignee_name}</strong>,</p>
+            <p>Dear <strong>Teams</strong>,</p>
             <p style="color: red; font-weight: bold;">🚨 This is an important notification regarding your assigned task.</p>
             <p>The task <strong>${task_name}</strong> in <strong>Task Manager</strong> has exceeded its due date. Please take immediate action!</p>
 
@@ -219,6 +227,10 @@ export async function send_mail_task_cronjob(email, assignee_name, task_name, pr
                     <tr>
                         <td style="padding: 8px;border-bottom: 1px solid #ddd;"><strong>Status:</strong></td>
                         <td style="padding: 8px;border-bottom: 1px solid #ddd;">${task_status}</td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px;"><strong>Task assingee:</strong></td>
+                        <td style="padding: 8px;">${assignee_name}</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px;"><strong>Report to:</strong></td>
@@ -272,7 +284,7 @@ export async function send_mail_subtask_cronjob(email, assignee_name, sub_task_n
             <h2 style="color: #fff; margin: 0;">⚠️ SubTask Overdue Alert</h2>
         </div>
         <div style="padding: 20px;">
-            <p>Dear <strong>${assignee_name}</strong>,</p>
+            <p>Dear <strong>Teams</strong>,</p>
             <p style="color: red; font-weight: bold;">🚨 This is an important notification regarding your assigned task.</p>
             <p>The subtask <strong>${sub_task_name}</strong> in <strong>Task Manager</strong> has exceeded its due date. Please take immediate action!</p>
 
@@ -306,6 +318,10 @@ export async function send_mail_subtask_cronjob(email, assignee_name, sub_task_n
                     <tr>
                         <td style="padding: 8px;border-bottom: 1px solid #ddd;"><strong>Status:</strong></td>
                         <td style="padding: 8px;border-bottom: 1px solid #ddd;">${task_status}</td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px;"><strong>Assigned To:</strong></td>
+                        <td style="padding: 8px;">${assignee_name}</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px;"><strong>Report to:</strong></td>

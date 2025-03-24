@@ -70,8 +70,8 @@ const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, tas
 
     if(task_assignee !=='') {
     const findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
-
-    await send_mail(findUser.email, task_assignee, task_name,"Open Type", estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "Open Type");
+    const find_reporter = await registerModel.findOne({username:reporter, organization: org_id})
+    await send_mail(findUser.email, task_assignee, task_name,"Open Type", estimated_task_end_date, task_priority, task_status, reporter,find_reporter.email, req.user.username, "Open Type");
     }
     responseData(res, "Task created successfully", 200, true, "", []);
 };
@@ -436,7 +436,8 @@ export const updateOpenTask = async (req, res) => {
                     )
                     if (update_task) {
                         if (task_assignee && previous_task_assignee != task_assignee) {
-                            await send_mail(findUser.email, task_assignee, task_name, "Open Type", estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "Open Type");
+                            const find_reporter = await registerModel.findOne({organization:org_id, username:reporter})
+                            await send_mail(findUser.email, task_assignee, task_name, "Open Type", estimated_task_end_date, task_priority, task_status, reporter, find_reporter.email,req.user.username, "Open Type");
                         }
                         responseData(res, "Task updated successfully", 200, true, "", [])
                     }

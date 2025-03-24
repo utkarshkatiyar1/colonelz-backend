@@ -75,7 +75,7 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         }
     );
 
-    const updateTimer = await timerModel.findOneAndUpdate({ project_id: project_id, task_id: task_id, org_id:org_id }, {
+    const updateTimer = await timerModel.findOneAndUpdate({ project_id: project_id, task_id: task_id, org_id: org_id }, {
         $push: {
             taskstime: {
                 task_id, task_name, task_assignee, task_time: ''
@@ -83,14 +83,15 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         }
     });
 
-    if(!updateTimer) {
-       return responseData(res, "Task timer not found", 404, false, "", []);
-        
+    if (!updateTimer) {
+        return responseData(res, "Task timer not found", 404, false, "", []);
+
     }
 
     if (task_assignee !== '') {
         const find_user = await registerModel.findOne({ organization: project_data.org_id, username: task_assignee });
-        await send_mail(find_user.email, task_assignee, task_name, project_data.project_name, estimated_task_end_date, task_priority, task_status, reporter, req.user.username, "project");
+        const find_reporter = await registerModel.findOne({ organization: project_data.org_id, username: reporter })
+        await send_mail(find_user.email, task_assignee, task_name, project_data.project_name, estimated_task_end_date, task_priority, task_status, reporter, find_reporter.email, req.user.username, "project");
     }
 
     responseData(res, "Task created successfully", 200, true, "", []);
@@ -469,7 +470,7 @@ export const updateTask = async (req, res) => {
 
                         let findUser;
 
-                        if(task_assignee) {
+                        if (task_assignee) {
                             findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
                             if (!findUser) {
                                 return responseData(res, "", 404, false, "Task assignee not found", []);
@@ -518,8 +519,8 @@ export const updateTask = async (req, res) => {
                             )
 
                             if (task_assignee && previous_task_assignee !== task_assignee) {
-
-                                await send_mail(findUser.email, task_assignee, task_name, check_project.project_name, estimated_task_end_date, task_priority, task_status, reporter, check_user.username, "project");
+                                const find_reporter = await registerModel.findOne({ organization: org_id, username: reporter })
+                                await send_mail(findUser.email, task_assignee, task_name, check_project.project_name, estimated_task_end_date, task_priority, task_status, reporter, find_reporter.email, check_user.username, "project");
                             }
                             responseData(res, "Task updated successfully", 200, true, "", [])
                         }
@@ -685,11 +686,24 @@ export async function sendmail_cronjob() {
         for (const org_id of allOrgs) {
             console.log(`Processing tasks for organization: ${org_id}`);
 
-            // Fetch all overdue tasks for different task models
+
             const [overdueTasks, overdueTaskslead, overdueTasksOpen] = await Promise.all([
-                taskModel.find({ org_id, status: { $ne: "Completed" }, estimated_task_end_date: { $lt: new Date() } }).lean(),
-                leadTaskModel.find({ org_id, status: { $ne: "Completed" }, estimated_task_end_date: { $lt: new Date() } }).lean(),
-                openTaskModel.find({ org_id, status: { $ne: "Completed" }, estimated_task_end_date: { $lt: new Date() } }).lean()
+                await taskModel.find({
+                    org_id,
+                    task_status: { $nin: ["Completed", "Cancelled"] },
+                    estimated_task_end_date: { $lt: new Date() }
+                }).lean(),
+
+                await leadTaskModel.find({
+                    org_id,
+                    task_status: { $nin: ["Completed", "Cancelled"] },
+                    estimated_task_end_date: { $lt: new Date() }
+                }).lean(),
+                await openTaskModel.find({
+                    org_id,
+                    task_status: { $nin: ["Completed", "Cancelled"] },
+                    estimated_task_end_date: { $lt: new Date() }
+                }).lean()
             ]);
 
             if (!overdueTasks.length && !overdueTaskslead.length && !overdueTasksOpen.length) {
@@ -721,7 +735,13 @@ async function processTasks(tasks, org_id, model, taskType) {
 
         const find_user = await registerModel.findOne({ organization: org_id, username: task.task_assignee });
 
+        const find_reporter = await registerModel.findOne({ organization: org_id, username: task.reporter });
         if (!find_user?.email) continue;
+        if (!find_reporter?.email) continue;
+        const find_admins = await registerModel.find({ organization: org_id, role: "ADMIN" });
+        const find_superadmins = await registerModel.find({ organization: org_id, role: "SUPERADMIN" });
+
+
 
         // Update task status to "High"
         const task_data = await model.findOneAndUpdate(
@@ -733,7 +753,7 @@ async function processTasks(tasks, org_id, model, taskType) {
         const relatedModel = taskType === "lead" ? leadModel : projectModel;
         const relatedData = taskType !== "open" ? await relatedModel.findOne({ [`${taskType}_id`]: task[`${taskType}_id`], org_id }) : null;
         const relatedName = taskType === "lead" ? relatedData?.name : relatedData?.project_name || "Open Type";
-        // Filter subtasks
+
         const all_subtasks = task_data.subtasks.filter(subtask =>
             subtask.sub_task_status !== 'Completed' &&
             subtask.sub_task_assignee &&
@@ -747,44 +767,69 @@ async function processTasks(tasks, org_id, model, taskType) {
                     update: { $set: { "subtasks.$.sub_task_priority": "High" } }
                 }
             })), { ordered: false });
-            
-            // Send subtask emails in parallel
+
+
             await Promise.all(all_subtasks.map(async (subtask) => {
-                await send_mail_subtask_cronjob(
-                    find_user.email,
-                    subtask.sub_task_assignee,
-                    subtask.sub_task_name,
-                    relatedName,
-                    subtask.estimated_sub_task_end_date,
-                    "High",
-                    subtask.sub_task_status,
-                    subtask.sub_task_reporter,
-                    task_data.task_name,
-                    taskType
-                );
+                const find_subtask_assignee = await registerModel.findOne({ organization: org_id, username: subtask.sub_task_assignee });
+                const find_subtask_reporter = await registerModel.findOne({ organization: org_id, username: subtask.sub_task_reporter });
+                const sub_task_emails = new Set();
+                if (find_subtask_assignee?.email) sub_task_emails.add(find_subtask_assignee.email);
+                if (find_subtask_reporter?.email) sub_task_emails.add(find_subtask_reporter.email);
+                find_admins.forEach(admin => {
+                    if (admin?.email) sub_task_emails.add(admin.email);
+                });
+                find_superadmins.forEach(superadmin => {
+                    if (superadmin?.email) sub_task_emails.add(superadmin.email);
+                });
+                await Promise.all([...sub_task_emails].map(email =>
+                    send_mail_subtask_cronjob(
+                        email,
+                        subtask.sub_task_assignee,
+                        subtask.sub_task_name,
+                        relatedName,
+                        subtask.estimated_sub_task_end_date,
+                        "High",
+                        subtask.sub_task_status,
+                        subtask.sub_task_reporter,
+                        task_data.task_name,
+                        taskType
+                    )
+                ));
             }));
+
         }
 
-        await send_mail_task_cronjob(
-            find_user.email,
-            task_data.task_assignee,
-            task_data.task_name,
-            relatedName,
-            task_data.estimated_task_end_date,
-            task_data.task_priority,
-            task_data.task_status,
-            task_data.reporter,
-            taskType
-        );
+        const emails = new Set();
 
-        console.log(`Email sent to ${find_user.email} for ${taskType} task "${task.task_name}"`);
+        if (find_user?.email) emails.add(find_user.email);
+        if (find_reporter?.email) emails.add(find_reporter.email);
+        find_admins.forEach(admin => {
+            if (admin?.email) emails.add(admin.email);
+        });
+        find_superadmins.forEach(superadmin => {
+            if (superadmin?.email) emails.add(superadmin.email);
+        });
+
+        await Promise.all([...emails].map(email =>
+            send_mail_task_cronjob(
+                email,
+                task_data.task_assignee,
+                task_data.task_name,
+                relatedName,
+                task_data.estimated_task_end_date,
+                task_data.task_priority,
+                task_data.task_status,
+                task_data.reporter,
+                taskType
+            )
+        ));
     }
 }
 
 
 
 
-cron.schedule("0 0 * * *", async () => {
+cron.schedule("*/60 * * * * *", async () => {
     try {
 
         await sendmail_cronjob();

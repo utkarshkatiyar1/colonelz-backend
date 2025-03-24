@@ -63,7 +63,8 @@ const createSubTaskAndTimer = async (data, res, req) => {
 
             if (sub_task_assignee !== '') {
                     const find_user = await registerModel.findOne({ organization: project_data.org_id, username: sub_task_assignee });
-                await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"project");
+                    const find_reporter = await registerModel.findOne({organization: project_data.org_id, username: sub_task_reporter})
+                await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, find_reporter.email,req.user.username, check_task.task_name,"project");
                 }
 
             responseData(res, "Sub Task added successfully", 200, true, "", []);
@@ -544,7 +545,9 @@ export const updateSubTask = async (req, res) => {
 
         if (sub_task_assignee && sub_task_assignee !== previous_sub_task_assignee) {
             const find_user = await registerModel.findOne({ organization: project_data.org_id, username: sub_task_assignee });
-            await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, req.user.username, check_task.task_name,"project");
+            const find_reporter = await registerModel.findOne({organization:project_data.org_id, username:sub_task_reporter})
+
+            await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, find_reporter.email,req.user.username, check_task.task_name,"project");
 
         }
 
