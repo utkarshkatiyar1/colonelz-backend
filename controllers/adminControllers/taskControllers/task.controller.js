@@ -829,7 +829,7 @@ async function processTasks(tasks, org_id, model, taskType) {
 
 
 
-cron.schedule("*/60 * * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
     try {
 
         await sendmail_cronjob();
