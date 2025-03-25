@@ -25,7 +25,7 @@ function generateSixDigitNumber() {
 
 
 
-const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, project_id, task_name, task_description,  estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new taskModel({
@@ -34,16 +34,13 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         org_id,
         task_name,
         task_description,
-        actual_task_start_date,
-        actual_task_end_date: "",
-        estimated_task_start_date,
         estimated_task_end_date,
         task_status,
         task_priority,
         task_assignee,
         task_createdBy: check_user.username,
         task_createdOn: new Date(),
-        reporter,
+        reporter: reporter || check_user.username,
         subtasks: []
     });
 
@@ -104,8 +101,8 @@ export const createTask = async (req, res) => {
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
-        const actual_task_start_date = req.body.actual_task_start_date;
-        const estimated_task_start_date = req.body.estimated_task_start_date;
+        // const actual_task_start_date = req.body.actual_task_start_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date;
         const estimated_task_end_date = req.body.estimated_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
@@ -118,7 +115,7 @@ export const createTask = async (req, res) => {
             return responseData(res, "", 404, false, "Task Name should be alphabets and at least 3 characters long", []);
         }
         if (!task_priority) return responseData(res, "", 404, false, "Task priority required", []);
-        if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []);
+        // if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []);
         if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
         if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
         // if (!task_assignee) return responseData(res, "", 404, false, "Task assignee required", []);
@@ -166,7 +163,7 @@ export const createTask = async (req, res) => {
 
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
-            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
@@ -177,7 +174,7 @@ export const createTask = async (req, res) => {
                 if (!existProject) return responseData(res, "", 404, false, "Task assignee is not part of this project", []);
             }
 
-            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, estimated_task_end_date, task_status, task_priority, reporter);
         }
         else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
             // Create task if both assignee and reporter are Senior Architect or ADMIN
@@ -186,7 +183,7 @@ export const createTask = async (req, res) => {
                 if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
             }
 
-            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
         else {
@@ -201,7 +198,7 @@ export const createTask = async (req, res) => {
                 if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
             }
             // Create task if validation passes
-            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, actual_task_start_date, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description,  estimated_task_end_date, task_status, task_priority, reporter);
         }
 
 
@@ -245,17 +242,12 @@ export const getAllTasks = async (req, res) => {
         if (!tasks.length) {
             return responseData(res, "Tasks not found", 200, false, "", []);
         }
-
-        // Process each task and update status if necessary
         for (let task of tasks) {
             const { subtasks } = task;
 
-            // Skip tasks with no subtasks
             if (!subtasks.length) {
                 continue;
             }
-
-            // Determine the status of all subtasks
             const allSubtasksCompleted = subtasks.every(subtask =>
                 subtask.sub_task_status === 'Completed' || subtask.sub_task_status === 'Cancelled'
             );
@@ -266,43 +258,33 @@ export const getAllTasks = async (req, res) => {
 
             let newTaskStatus;
             if (allSubtasksCancelled) {
-                // If all subtasks are canceled, set the task status to InProgress
                 newTaskStatus = 'In Progress';
             } else if (allSubtasksCompleted) {
-                // If all subtasks are completed, set the task status to Completed
                 newTaskStatus = 'Completed';
             } else {
-                // If some subtasks are  not completed and some are  not canceled, set the task status to In progress
                 newTaskStatus = 'In Progress';
             }
 
             if (newTaskStatus !== task.task_status) {
-                // Update task status if it has changed
                 await taskModel.findOneAndUpdate(
                     { task_id: task.task_id, org_id: org_id },
                     {
                         $set: {
                             task_status: newTaskStatus,
-                            actual_task_end_date: newTaskStatus === 'Completed' ? new Date() : task.actual_task_end_date
+                            estimated_task_end_date: newTaskStatus === 'Completed' ? new Date() : estimated_task_end_date
                         }
                     },
-                    { new: true } // Ensure the updated task is returned
+                    { new: true } 
                 );
             }
         }
 
-        // Fetch the updated tasks
         const updatedTasks = await taskModel.find({ project_id: project_id, org_id: org_id });
-
-        // Construct response
         const response = updatedTasks.map(task => ({
             project_id: task.project_id,
             task_id: task.task_id,
             task_name: task.task_name,
-            actual_task_start_date: task.actual_task_start_date,
-            actual_task_end_date: task.actual_task_end_date,
             estimated_task_end_date: task.estimated_task_end_date,
-            estimated_task_start_date: task.estimated_task_start_date,
             task_status: task.task_status,
             task_priority: task.task_priority,
             task_createdOn: task.task_createdOn,
@@ -329,12 +311,12 @@ export const getSingleTask = async (req, res) => {
     try {
         const { user_id, project_id, task_id, org_id } = req.query;
 
-        // Validate required parameters
+
         if (!user_id || !project_id || !task_id || !org_id) {
             return responseData(res, "", 400, false, "User ID, Project ID, and Task ID, Org ID are required", []);
         }
 
-        // Aggregate to find user, project, and task
+   
         const result = await taskModel.aggregate([
             {
                 $match: {
@@ -345,7 +327,7 @@ export const getSingleTask = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "projects", // Assuming the collection name for projects
+                    from: "projects", 
                     localField: "project_id",
                     foreignField: "project_id",
                     as: "project_info",
@@ -353,7 +335,7 @@ export const getSingleTask = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "users", // Assuming the collection name for users
+                    from: "users",
                     localField: "task_assignee",
                     foreignField: "_id",
                     as: "assignee_info",
@@ -365,10 +347,7 @@ export const getSingleTask = async (req, res) => {
                     task_id: 1,
                     task_name: 1,
                     task_description: 1,
-                    actual_task_start_date: 1,
-                    actual_task_end_date: 1,
                     estimated_task_end_date: 1,
-                    estimated_task_start_date: 1,
                     task_status: 1,
                     task_priority: 1,
                     task_createdOn: 1,
@@ -377,7 +356,7 @@ export const getSingleTask = async (req, res) => {
                     task_createdBy: 1,
                     number_of_subtasks: { $size: "$subtasks" },
                     project_name: { $arrayElemAt: ["$project_info.project_name", 0] },
-                    assignee_name: { $arrayElemAt: ["$assignee_info.name", 0] }, // Adjust based on your user schema
+                    assignee_name: { $arrayElemAt: ["$assignee_info.name", 0] },
                 },
             },
         ]);
@@ -403,10 +382,7 @@ export const updateTask = async (req, res) => {
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
-        const actual_task_start_date = req.body.actual_task_start_date;
-        const estimated_task_start_date = req.body.estimated_task_start_date;
         const estimated_task_end_date = req.body.estimated_task_end_date;
-        const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -427,9 +403,6 @@ export const updateTask = async (req, res) => {
         else if (!task_priority) {
             responseData(res, "", 404, false, "task priority required", [])
 
-        }
-        else if (!estimated_task_start_date) {
-            responseData(res, "", 404, false, "Task start date  required", [])
         }
         else if (!estimated_task_end_date) {
             responseData(res, "", 404, false, "Task end date required", [])
@@ -482,10 +455,7 @@ export const updateTask = async (req, res) => {
                                 $set: {
                                     task_name: task_name,
                                     task_description: task_description,
-                                    actual_task_start_date: actual_task_start_date,
-                                    actual_task_end_date: actual_task_end_date,
                                     estimated_task_end_date: estimated_task_end_date,
-                                    estimated_task_start_date: estimated_task_start_date,
                                     task_status: task_status,
                                     task_priority: task_priority,
                                     task_assignee: task_assignee,
