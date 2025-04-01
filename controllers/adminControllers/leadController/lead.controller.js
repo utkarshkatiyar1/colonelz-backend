@@ -216,6 +216,16 @@ export const createLead = async (req, res) => {
             updated_date: date,
             files: fileUrls,
             date: date,
+            lead_details: {
+              lead_manager: lead_manager,
+              email: email,
+              phone: phone,
+              location: location,
+              status: status,
+              lead_status: status,
+              source: source,
+              date: date,
+            },
             notes: [
               {
                 content: content,
@@ -346,19 +356,19 @@ export const getAllLead = async (req, res) => {
       },
       {
         $project: {
-          name: 1,
+          name: { $arrayElemAt: ["$lead_details.name", 0] }, 
           lead_id: 1,
-          email: 1,
-          phone: 1,
-          location: 1,
+          email: { $arrayElemAt: ["$lead_details.email", 0] },
+          phone: { $arrayElemAt: ["$lead_details.phone", 0] }, 
+          location: { $arrayElemAt: ["$lead_details.location", 0] },
           status: 1,
-          date: 1,
+          date: { $arrayElemAt: ["$lead_details.date", 0] },
           lead_status: 1,
           count_task: { $size: "$leadTask" }, // Calculate task count
           // contract: 1,
           hasPendingContract: { // Calculate if any contract has "pending" admin_status
             $cond: [
-              { $gt: [ { $size: { $filter: { input: "$contract", as: "item", cond: { $eq: ["$$item.admin_status", "pending"] } } } }, 0 ] },
+              { $gt: [{ $size: { $filter: { input: "$contract", as: "item", cond: { $eq: ["$$item.admin_status", "pending"] } } } }, 0] },
               true,
               false
             ]
@@ -401,11 +411,11 @@ export const getSingleLead = async (req, res) => {
     }
     const [leads, fileUploadExists] = await Promise.all([
       leadModel.find({ lead_id, org_id: org_id })
-        .select('name lead_id lead_manager email phone location status source date updated_date notes contract  lead_status createdAt contract_Status')
+        .select('name lead_id lead_details lead_manager email phone location status source date updated_date notes contract  lead_status createdAt contract_Status')
         .lean(),
       fileuploadModel.exists({ lead_id, project_id: null, org_id })
     ]);
-
+    console.log(leads)
     if (leads.length === 0) {
       return responseData(res, "", 404, false, "Data not found", []);
     }
@@ -682,8 +692,8 @@ export const leadToProject = async (req, res) => {
                   }
                   if (lead_find_in_fileupload.length > 0) {
                     const lead_update_in_fileupload = await fileuploadModel.updateMany(
-                        { lead_id: lead_id, org_id: org_id }, 
-                        { $set: { project_id: projectID, project_name: project_name, lead_id: null } }
+                      { lead_id: lead_id, org_id: org_id },
+                      { $set: { project_id: projectID, project_name: project_name, lead_id: null } }
                     );
                   }
 
@@ -711,7 +721,7 @@ export const leadToProject = async (req, res) => {
                     updated_date: newDate,
                     tags: [],
                     type: 'lead updation'
-          
+
                   }
 
                   const projectUpdate = {
@@ -721,7 +731,7 @@ export const leadToProject = async (req, res) => {
                     updated_date: newDate,
                     tags: [],
                     type: 'project creation'
-          
+
                   }
 
                   await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
@@ -831,8 +841,8 @@ export const leadToProject = async (req, res) => {
                 }
                 if (lead_find_in_fileupload.length > 0) {
                   const lead_update_in_fileupload = await fileuploadModel.updateMany(
-                      { lead_id: lead_id, org_id: org_id }, 
-                      { $set: { project_id: projectID, project_name: project_name, lead_id: null } }
+                    { lead_id: lead_id, org_id: org_id },
+                    { $set: { project_id: projectID, project_name: project_name, lead_id: null } }
                   );
                 }
                 await leadModel.findOneAndUpdate({ lead_id: lead_id, org_id: org_id },
@@ -860,7 +870,7 @@ export const leadToProject = async (req, res) => {
                   updated_date: newDate,
                   tags: [],
                   type: 'lead updation'
-        
+
                 }
 
                 const projectUpdate = {
@@ -870,7 +880,7 @@ export const leadToProject = async (req, res) => {
                   updated_date: newDate,
                   tags: [],
                   type: 'project creation'
-        
+
                 }
 
                 await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
@@ -933,6 +943,13 @@ export const leadToMultipleProject = async (req, res) => {
     const type = req.body.type;
     const user_id = req.body.user_id;
     const org_id = req.body.org_id;
+    const name = req.body.lead_name;
+    const email = req.body.email;
+    const phone = req.body.phone;
+    const location = req.body.location;
+    const source = req.body.source;
+    const date = req.body.date;
+    const lead_manager = req.body.lead_manager;
 
 
     if (!lead_id) {
@@ -1000,6 +1017,20 @@ export const leadToMultipleProject = async (req, res) => {
                     lead_status: "Follow Up",
                     lead_update_track: [],
                     contract_Status: false
+                  },
+                  $push:{
+                    lead_details: {
+                      $each: [{
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        location: location,
+                        source: source,
+                        date: date,
+                        lead_manager: lead_manager,
+                      }],
+                      $position: 0 
+                    }
                   }
                 }
               )
@@ -1127,13 +1158,15 @@ export const updateLead = async (req, res) => {
             { lead_id: lead_id, org_id: org_id },
             {
               $set: {
-                name: name,
-                email: email,
-                phone: phone,
-                location: location,
-                source: source,
-                date: date,
-                lead_manager: lead_manager,
+                'lead_details.0': {
+                  name: name,
+                  email: email,
+                  phone: phone,
+                  location: location,
+                  source: source,
+                  date: date,
+                  lead_manager: lead_manager,
+                }
 
               },
               $push: {
@@ -1365,24 +1398,24 @@ export const getTimeline = async (req, res) => {
       updatedTimelines = await Promise.all(
         timelines.map(async (timeline) => {
           if (timeline.project_id) {
-              // Fetch the project
-              const project = await projectModel.findOne({ project_id: timeline.project_id });
-      
-              // console.log("Fetched project:", project); // Debugging
-      
-              if (project) {
-                return {
-                  ...timeline,
-                  project_id: project.project_id, // Replace project_id with project_name
-                  project_name: project.project_name,
-                  leadEvents: timeline.leadEvents?.reverse() || [],
-                  projectEvents: timeline.projectEvents?.reverse() || [],
-                  lead_id: lead?.lead_id || "", 
-                  lead_name: lead?.name || "",
-                };
-              }
+            // Fetch the project
+            const project = await projectModel.findOne({ project_id: timeline.project_id });
+
+            // console.log("Fetched project:", project); // Debugging
+
+            if (project) {
+              return {
+                ...timeline,
+                project_id: project.project_id, // Replace project_id with project_name
+                project_name: project.project_name,
+                leadEvents: timeline.leadEvents?.reverse() || [],
+                projectEvents: timeline.projectEvents?.reverse() || [],
+                lead_id: lead?.lead_id || "",
+                lead_name: lead?.name || "",
+              };
+            }
           }
-      
+
           // Return timeline even if no project was found
           return {
             ...timeline,
@@ -1393,13 +1426,13 @@ export const getTimeline = async (req, res) => {
           };
         })
       );
-      
-      
+
+
     }
 
     let newTimeline = [];
 
-    if(updatedTimelines.length <= 0) {
+    if (updatedTimelines.length <= 0) {
 
       const tml = {
         lead_id: lead?.lead_id || "",
@@ -1411,15 +1444,15 @@ export const getTimeline = async (req, res) => {
         projectEvents: [],
       }
 
-      
+
 
       updatedTimelines.push(tml)
 
     }
 
-    for(let project of projects) {
+    for (let project of projects) {
       const exists = updatedTimelines.some(timeline => timeline.project_id === project.project_id);
-      if(!exists) {
+      if (!exists) {
 
         const tml = {
           lead_id: lead?.lead_id || "",
@@ -1437,7 +1470,7 @@ export const getTimeline = async (req, res) => {
 
     newTimeline = [...updatedTimelines.reverse(), ...newTimeline];
 
-    if(updatedTimelines) {
+    if (updatedTimelines) {
       return responseData(res, "Timeline is found!", 200, true, "", newTimeline);
     }
 
