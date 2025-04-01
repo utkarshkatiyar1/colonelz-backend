@@ -228,7 +228,7 @@ const deleteNotification = async (req, res) => {
   try {
 
     const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 7);
 
     // Find notifications that meet the specified conditions
     const notificationsToDelete = await Notification.find({
@@ -261,8 +261,8 @@ cron.schedule(" 0 0 * * *", async () => {
     console.error("Error executing notification cron job:", error);
   }
 });
-cron.schedule(" 0 0 */14 * *", async () => {
-  // This cron pattern runs the job at 00:00 every  14 days
+cron.schedule(" 0 0 */7 * *", async () => {
+  // This cron pattern runs the job at 00:00 every  7 days
   try {
     await deleteNotification();
     console.log("Notification cron job executed successfully");
