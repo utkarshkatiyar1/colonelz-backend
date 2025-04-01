@@ -63,12 +63,13 @@ import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole }
 import { verify } from "crypto";
 import { createLeadTask, deleteLeadTask, getAllLeadTasks, getAllLeadTaskWithData, getSingleLeadTask, updateLeadTask } from "../../controllers/adminControllers/leadTaskControllers/task.controller.js";
 import { createLeadSubTask, deleteLeadSubTask, getAllLeadSubTask, getSingleLeadSubTask, updateLeadSubTask } from "../../controllers/adminControllers/leadTaskControllers/subtask.controller.js";
-import { GetSingleLeadSubtimerController, GetSingleLeadTasktimerController, UpdateLeadSubtimerController, UpdateLeadTasktimerController } from "../../controllers/adminControllers/leadTimerControllers/timer.controller.js";
+import { GetSingleLeadMinitimerController, GetSingleLeadSubtimerController, GetSingleLeadTasktimerController, UpdateLeadMinitimerController, UpdateLeadSubtimerController, UpdateLeadTasktimerController } from "../../controllers/adminControllers/leadTimerControllers/timer.controller.js";
 import { Alltask, createOpenTask, deleteOpenTask, getSingleOpenTask, MoveTask, updateOpenTask } from "../../controllers/adminControllers/taskControllers/alltask.controller.js";
 import { createOpenSubTask, deleteOpenSubTask, getAllOpenSubTask, getSingleOpenSubTask, updateOpenSubTask } from "../../controllers/adminControllers/taskControllers/opensubtask.controller.js";
 import { GetSingleOpenSubtimerController, GetSingleOpenTasktimerController, UpdateOpenSubtimerController, UpdateOpenTasktimerController } from "../../controllers/adminControllers/taskControllers/openTimer.controller.js";
 import { createImage, deleteMainImage, getAllMainImage, getAllPanoImagesFromFileManager, getImageById } from "../../controllers/adminControllers/threeImageControllers/threeImage.controller.js";
 import { addUserToFile, getFilesForUser } from "../../controllers/adminControllers/leadController/approval.controller.js";
+import { createLeadMiniTask, deleteLeadMiniTask, getAllLeadMiniTask, getSingleLeadMiniTask, updateLeadMiniTask } from "../../controllers/adminControllers/leadTaskControllers/minitask.controller.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -3637,6 +3638,15 @@ router.route("/update/leadsubtask").put(verifyJWT, updateLeadSubTask);
 router.route("/delete/leadsubtask").delete(verifyJWT, deleteLeadSubTask);
 router.route("/update/leadsubtask/time").put(verifyJWT, UpdateLeadSubtimerController);
 router.route("/get/leadsubtask/time").get(verifyJWT, GetSingleLeadSubtimerController);
+
+
+router.route("/create/leadminitask").post(verifyJWT, createLeadMiniTask);
+router.route("/get/all/leadminitask").get(verifyJWT, getAllLeadMiniTask);
+router.route("/get/single/leadminitask").get(verifyJWT, getSingleLeadMiniTask);
+router.route("/update/leadminitask").put(verifyJWT, updateLeadMiniTask);
+router.route("/delete/leadminitask").delete(verifyJWT, deleteLeadMiniTask);
+router.route("/update/leadminitask/time").put(verifyJWT, UpdateLeadMinitimerController);
+router.route("/get/leadminitask/time").get(verifyJWT, GetSingleLeadMinitimerController);
 
 
 //open task

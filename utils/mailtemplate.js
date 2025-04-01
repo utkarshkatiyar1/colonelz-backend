@@ -172,6 +172,94 @@ export async function send_mail_subtask(email, assignee_name, sub_task_name, pro
     });
 
 }
+export async function send_mail_minitask(email, assignee_name, sub_task_name, project_name, estimated_task_end_date, priority, task_status, task_reporter,reporter_email, username, task_name, type) {
+    let type_data = '';
+    if (type === 'project') {
+        type_data = 'Project';
+
+    }
+    else if (type === 'lead') {
+        type_data = 'lead';
+    }
+    else {
+        type_data = 'task';
+    }
+    const mailOptions = {
+        from: process.env.INFO_USER_EMAIL,
+        to: [email, reporter_email],
+        subject: "Mini Task Manager | Mini Task Notification",
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: #0073e6; padding: 15px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h2 style="color: #fff; margin: 0;">Sub Task Notification</h2>
+            </div>
+            <div style="padding: 20px;">
+                <p>Dear <strong>Teams</strong>,</p>
+                <p>We hope this email finds you well. You have been assigned a new mini task in <strong>Task Manager</strong>.</p>
+                
+                <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <h3 style="color: #333; text-align: center; margin-bottom: 10px;">🔹 Sub Task Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Mini Task Name:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${sub_task_name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Task Name:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${task_name}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>${type_data}:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${project_name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Due Date:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${estimated_task_end_date}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Priority:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; color: ${priority === 'High' ? 'red' : priority === 'Medium' ? 'orange' : 'green'};">
+                                ${priority}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px;border-bottom: 1px solid #ddd; "><strong>Status:</strong></td>
+                            <td style="padding: 8px;border-bottom: 1px solid #ddd; ">${task_status}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; "><strong>Assignee:</strong></td>
+                            <td style="padding: 8px;; ">${assignee_name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; "><strong>Report to:</strong></td>
+                            <td style="padding: 8px;; ">${task_reporter}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <p>If you have any questions, feel free to reach out.</p>
+
+                
+
+                <p>Best regards,<br><strong>${username}</strong></p>
+            </div>
+        </div>
+    `,
+    };
+
+
+    infotransporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+            console.log(error);
+
+        }
+        else {
+            console.log("Email sent: " + info.response);
+        }
+    });
+
+}
 
 
 export async function send_mail_task_cronjob(email, assignee_name, task_name, project_name, estimated_task_end_date, priority, task_status, task_reporter, type){
