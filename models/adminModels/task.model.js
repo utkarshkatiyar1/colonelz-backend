@@ -20,6 +20,28 @@ const SubtaskSchema = new mongoose.Schema({
     remark:[]
 });
 
+
+const MinitaskSchema = new mongoose.Schema({
+    mini_task_id: { type: String, required: true },
+    org_id: { type: String, required: true },
+    mini_task_name: { type: String, required: true },
+    mini_task_assignee: { type: String},
+    mini_task_assignee_id: { type: String},
+    mini_task_status: { type: String },
+    // estimated_sub_task_start_date: { type: String, required: true },
+    estimated_mini_task_end_date: { type: String },
+    // actual_sub_task_start_date: { type: String,},
+    // actual_sub_task_end_date: { type: String,  },
+    mini_task_priority: { type: String },
+    mini_task_description: { type: String},
+    mini_task_note: { type: String},
+    mini_task_createdBy: { type: String },
+    mini_task_createdOn: { type: Date },
+    mini_task_reporter: { type: String},
+    mini_task_updatedBy: [],
+    remark:[]
+});
+
 const TaskSchema = new mongoose.Schema({
     project_id: { type: String, required: true },
     task_id: { type: String, required: true },
@@ -29,6 +51,7 @@ const TaskSchema = new mongoose.Schema({
     task_status: { type: String, required: true },
     // estimated_task_start_date: { type: String, required: true },
     estimated_task_end_date: { type: String, required: true },
+    task_note: { type: String },
     // actual_task_start_date: { type: String, },
     // actual_task_end_date: { type: String, },
     task_description: { type: String },
@@ -37,7 +60,8 @@ const TaskSchema = new mongoose.Schema({
     task_createdOn: { type: Date, required: true },
     reporter: { type: String},
     task_updatedBy: [],
-    subtasks: [SubtaskSchema]
+    subtasks: [SubtaskSchema],
+    minitasks: [MinitaskSchema]
 
 });
 

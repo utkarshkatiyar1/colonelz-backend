@@ -34,6 +34,7 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         org_id,
         task_name,
         task_description,
+        task_note : "",
         estimated_task_end_date,
         task_status,
         task_priority,
@@ -41,7 +42,8 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         task_createdBy: check_user.username,
         task_createdOn: new Date(),
         reporter: reporter || check_user.username,
-        subtasks: []
+        subtasks: [],
+        minitasks: [],
     });
 
     const taskTime = new timerModel({
@@ -52,7 +54,8 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
         task_assignee,
         task_time: '',
         subtaskstime: [],
-        taskstime: []
+        taskstime: [],
+        minitaskstime: [],
     });
 
     await task.save();
@@ -88,7 +91,7 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, p
     if (task_assignee !== '') {
         const find_user = await registerModel.findOne({ organization: project_data.org_id, username: task_assignee });
         const find_reporter = await registerModel.findOne({ organization: project_data.org_id, username: reporter })
-        await send_mail(find_user.email, task_assignee, task_name, project_data.project_name, estimated_task_end_date, task_priority, task_status, reporter, find_reporter.email, req.user.username, "project");
+        await send_mail(find_user.email, task_assignee, task_name, project_data.project_name, estimated_task_end_date, task_priority, task_status, reporter, find_reporter?.email || 'None', req.user.username, "project");
     }
 
     responseData(res, "Task created successfully", 200, true, "", []);
@@ -101,8 +104,6 @@ export const createTask = async (req, res) => {
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
-        // const actual_task_start_date = req.body.actual_task_start_date;
-        // const estimated_task_start_date = req.body.estimated_task_start_date;
         const estimated_task_end_date = req.body.estimated_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
@@ -158,7 +159,7 @@ export const createTask = async (req, res) => {
             if (!user || user == {}) {
                 return false;
             }
-            return ['Senior Architect', 'ADMIN'].includes(user.role)
+            return ['Senior Architect', 'ADMIN', 'SUPERADMIN'].includes(user.role)
         };
 
         if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
@@ -291,7 +292,8 @@ export const getAllTasks = async (req, res) => {
             task_createdBy: task.task_createdBy,
             task_assignee: task.task_assignee,
             reporter: task.reporter,
-            task_description: task.task_description
+            task_description: task.task_description,
+            task_note: task?.task_note || ""
 
 
         }));
@@ -347,6 +349,7 @@ export const getSingleTask = async (req, res) => {
                     task_id: 1,
                     task_name: 1,
                     task_description: 1,
+                    task_note: 1,
                     estimated_task_end_date: 1,
                     task_status: 1,
                     task_priority: 1,
@@ -382,6 +385,7 @@ export const updateTask = async (req, res) => {
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
+        const task_note = req.body.task_note;
         const estimated_task_end_date = req.body.estimated_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
@@ -455,6 +459,7 @@ export const updateTask = async (req, res) => {
                                 $set: {
                                     task_name: task_name,
                                     task_description: task_description,
+                                    task_note: task_note,
                                     estimated_task_end_date: estimated_task_end_date,
                                     task_status: task_status,
                                     task_priority: task_priority,
