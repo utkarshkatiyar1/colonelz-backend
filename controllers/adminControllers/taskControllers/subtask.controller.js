@@ -64,7 +64,7 @@ const createSubTaskAndTimer = async (data, res, req) => {
             if (sub_task_assignee !== '') {
                     const find_user = await registerModel.findOne({ organization: project_data.org_id, username: sub_task_assignee });
                     const find_reporter = await registerModel.findOne({organization: project_data.org_id, username: sub_task_reporter})
-                await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, find_reporter.email,req.user.username, check_task.task_name,"project");
+                await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, project_data.project_name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter, find_reporter?.email || "None",req.user.username, check_task.task_name,"project");
                 }
 
             responseData(res, "Sub Task added successfully", 200, true, "", []);
@@ -477,12 +477,7 @@ export const updateSubTask = async (req, res) => {
 
         const previous_sub_task_assignee = check_task.subtasks.find(item => item.sub_task_id === sub_task_id).sub_task_assignee;
 
-        // Use ternary operator to set `date` based on the conditions
-        let date = (sub_task_status === 'Completed' && (actual_sub_task_end_date === '' || actual_sub_task_end_date == null))
-            ? new Date()
-            : actual_sub_task_end_date;
-
-      
+        
 
 
         const updateFields = {

@@ -25,6 +25,20 @@ const TasktimeSchema = new mongoose.Schema({
     task_current: { type: String, required: true },
 });
 
+
+const MinitasktimeSchema = new mongoose.Schema({
+    mini_task_id: { type: String, required: true },
+    mini_task_name: { type: String, required: true },
+    mini_task_assignee: {
+        type: String,
+    },
+
+    mini_task_time: { type: String, required: true },
+    mini_task_isrunning: { type: Boolean, required: true },
+    mini_task_totalTime: { type: String, required: true },
+    mini_task_current: { type: String, required: true },
+});
+
 const taskWorkSchema = new mongoose.Schema({
     project_id: {
         type: String,
@@ -51,6 +65,7 @@ const taskWorkSchema = new mongoose.Schema({
     },
     subtaskstime: [SubtasktimeSchema],
     taskstime: [TasktimeSchema],
+    minitaskstime: [MinitasktimeSchema],
     createdAt: {
         type: Date,
         default: Date.now,
