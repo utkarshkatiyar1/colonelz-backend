@@ -10,13 +10,15 @@ export const getFileData = async (req, res) => {
     if (!org_id) {
       return responseData(res, "", 404, false, "Org Id required", []);
     }
-    const check_org = await orgModel.findOne({ _id: org_id })
+
+    const check_org = await orgModel.findOne({ _id: org_id });
     if (!check_org) {
       return responseData(res, "", 404, false, "Org not found");
     }
+
     const data = await fileuploadModel.find({ org_id: org_id })
       .populate('project_id', 'project_id client project_type project_status type')
-      .populate('lead_id', 'lead_id email status date type')
+      .populate('lead_id', 'lead_id lead_details status date type') // Include lead_details
       .select('project_id lead_id lead_name project_name type')
       .lean();
 
@@ -28,8 +30,12 @@ export const getFileData = async (req, res) => {
     const leadIds = [...new Set(data.map(d => d.lead_id).filter(Boolean))];
 
     const [projects, leads] = await Promise.all([
-      projectModel.find({ project_id: { $in: projectIds }, org_id: org_id }).select('project_id client project_type project_status').lean(),
-      leadModel.find({ lead_id: { $in: leadIds }, org_id: org_id }).select('lead_id email status date').lean(),
+      projectModel.find({ project_id: { $in: projectIds }, org_id: org_id })
+        .select('project_id client project_type project_status')
+        .lean(),
+      leadModel.find({ lead_id: { $in: leadIds }, org_id: org_id })
+        .select('lead_id lead_details status date')
+        .lean(),
     ]);
 
     const projectMap = new Map(projects.map(p => [p.project_id, p]));
@@ -48,16 +54,16 @@ export const getFileData = async (req, res) => {
         };
       });
 
-      // console.log("leadMap", leadMap)
-
     const leadData = data
       .filter(element => !element?.type && element.lead_id && leadMap.has(element.lead_id))
       .map(element => {
         const lead = leadMap.get(element.lead_id);
+        const firstLeadDetail = lead?.lead_details?.[0] || {}; 
+
         return {
           lead_id: element.lead_id,
-          lead_name: element.lead_name,
-          lead_email: lead.email,
+          lead_name: firstLeadDetail.name || "", 
+          lead_email: firstLeadDetail.email || "", 
           lead_status: lead.status,
           lead_date: lead.date,
         };
@@ -75,6 +81,7 @@ export const getFileData = async (req, res) => {
     responseData(res, "", 500, false, "An error occurred while fetching file data.");
   }
 };
+
 
 
 
