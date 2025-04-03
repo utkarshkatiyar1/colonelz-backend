@@ -38,7 +38,21 @@ export const updateBillingShippingDetails = async (req, res) => {
 
                     if (existingBill) {
 
-                        let updates = {...req.body}
+                        let updates = {
+                            billing_address: req.body.billing_address,
+                            billing_country: req.body.billing_country,
+                            billing_state: req.body.billing_state,
+                            billing_city: req.body.billing_city,
+                            billing_zipcode: req.body.billing_zipcode,
+
+                            sameAsBilling: req.body.sameAsBilling,
+
+                            shipping_address: req.body.shipping_address,
+                            shipping_country: req.body.shipping_country,
+                            shipping_state: req.body.shipping_state,
+                            shipping_city: req.body.shipping_city,
+                            shipping_zipcode: req.body.shipping_zipcode,
+                        };
 
                         const result = await billModel.findOneAndUpdate(
                             { org_id: org_id },
@@ -87,6 +101,7 @@ export const updateBillingShippingDetails = async (req, res) => {
 
 export const getBillingShippingDetails = async (req, res) => {
     try {
+
         const org_id = req.query.org_id;
         if (!org_id) {
             return responseData(res, "", 400, false, "Organization Id is required");

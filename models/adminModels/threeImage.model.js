@@ -5,11 +5,20 @@ const threeimageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  lead_id: {
+    type: String,
+  },
+  project_id: {
+    type: String,
+  },
   user_id: {
     type: String,
     required: true,
   },
   type: {
+    type: String,
+  },
+  main_img_id: {
     type: String,
   },
   img_id: {

@@ -20,10 +20,11 @@ const orgSchema = new mongoose.Schema({
         type: String,
         // required: true,
     },
-    vat_tax_gst_number: {
-        type: String,
-        // required: true,
-    },
+
+    vat_tax_gst_number: [
+       
+    ],
+
     org_website: {
         type: String,
         // required: true,

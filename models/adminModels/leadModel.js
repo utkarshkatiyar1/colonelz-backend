@@ -23,6 +23,7 @@ const lead = new mongoose.Schema({
     type:String,
     require:true,
   },
+  lead_details:[],
   lead_manager: {
     type: String,
     required: true,

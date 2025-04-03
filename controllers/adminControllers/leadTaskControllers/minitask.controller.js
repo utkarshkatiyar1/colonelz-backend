@@ -8,7 +8,7 @@ import orgModel from "../../../models/orgmodels/org.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import leadTaskModel from "../../../models/adminModels/leadTask.model.js";
 import leadTimerModel from "../../../models/adminModels/leadTimer.Model.js";
-import { send_mail_subtask } from "../../../utils/mailtemplate.js";
+import { send_mail_minitask, send_mail_subtask } from "../../../utils/mailtemplate.js";
 
 
 function generateSixDigitNumber() {
@@ -18,22 +18,22 @@ function generateSixDigitNumber() {
 
     return randomNumber;
 }
-const createSubTaskAndTimer = async (data, res,req) => {
+const createMiniTaskAndTimer = async (data, res,req) => {
     try {
-        const {org_id, lead_id, task_id, sub_task_name, sub_task_description, estimated_sub_task_end_date,
-            sub_task_status, sub_task_priority, sub_task_assignee, sub_task_reporter, check_user, check_task } = data;
+        const {org_id, lead_id, task_id, mini_task_name, mini_task_description, estimated_mini_task_end_date,
+            mini_task_status, mini_task_priority, mini_task_assignee, mini_task_reporter, check_user, check_task } = data;
 
-        const sub_task_id = `STK-${generateSixDigitNumber()}`;
+        const mini_task_id = `STK-${generateSixDigitNumber()}`;
 
         const update_task = await leadTaskModel.findOneAndUpdate({ task_id: task_id, lead_id: lead_id, org_id: org_id }, {
             $push: {
-                subtasks: {
-                    sub_task_id, sub_task_name, sub_task_description,
-                    estimated_sub_task_end_date: estimated_sub_task_end_date,
+                minitasks: {
+                    mini_task_id, mini_task_name, mini_task_description,
+                    estimated_mini_task_end_date: estimated_mini_task_end_date,
                     
-                    sub_task_status, sub_task_priority, sub_task_assignee,
-                    sub_task_createdBy: check_user.username, sub_task_createdOn: new Date(),
-                    sub_task_reporter
+                    mini_task_status, mini_task_priority, mini_task_assignee,
+                    mini_task_createdBy: check_user.username, mini_task_createdOn: new Date(),
+                    mini_task_reporter, mini_task_note: ""
                 }
             }
         }, { new: true, useFindAndModify: false });
@@ -41,8 +41,8 @@ const createSubTaskAndTimer = async (data, res,req) => {
         if (update_task) {
             await leadTimerModel.findOneAndUpdate({ lead_id: lead_id, task_id: task_id, org_id:org_id }, {
                 $push: {
-                    subtaskstime: {
-                        sub_task_id, sub_task_name, sub_task_assignee, sub_task_time: ''
+                    minitaskstime: {
+                        mini_task_id, mini_task_name, mini_task_assignee, mini_task_time: ''
                     }
                 }
             });
@@ -51,16 +51,16 @@ const createSubTaskAndTimer = async (data, res,req) => {
                 $push: {
                     lead_update_track: {
                         username: check_user.username, role: check_user.role,
-                        message: `has created new subtask ${sub_task_name} in task ${check_task.task_name}.`,
+                        message: `has created new minitask ${mini_task_name} in task ${check_task.task_name}.`,
                         updated_date: new Date()
                     }
                 }
             });
             
-             if (sub_task_assignee !== '') {
-                    const find_user = await registerModel.findOne({ organization: lead_data.org_id, username: sub_task_assignee });
-                    const find_reporter = await registerModel.find({organization:lead_data.org_id, username: sub_task_reporter})
-                 await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, lead_data.name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter,find_reporter.email ,req.user.username, check_task.task_name,"lead");
+             if (mini_task_assignee !== '') {
+                    const find_user = await registerModel.findOne({ organization: lead_data.org_id, username: mini_task_assignee });
+                    const find_reporter = await registerModel.find({organization:lead_data.org_id, username: mini_task_reporter})
+                 await send_mail_minitask(find_user.email, mini_task_assignee, mini_task_name, lead_data.name, estimated_mini_task_end_date, mini_task_priority, mini_task_status, mini_task_reporter,find_reporter.email ,req.user.username, check_task.task_name,"lead");
                 }
             responseData(res, "Sub Task added successfully", 200, true, "", []);
         } else {
@@ -72,24 +72,24 @@ const createSubTaskAndTimer = async (data, res,req) => {
     }
 }
 
-export const createLeadSubTask = async (req, res) => {
+export const createLeadMiniTask = async (req, res) => {
     try {
         const org_id = req.body.org_id;
         const user_id = req.body.user_id;
         const lead_id = req.body.lead_id;
         const task_id = req.body.task_id;
-        const sub_task_name = req.body.sub_task_name;
-        const sub_task_description = req.body.sub_task_description; 
+        const mini_task_name = req.body.mini_task_name;
+        const mini_task_description = req.body.mini_task_description;
 
-        const estimated_sub_task_end_date = req.body.estimated_sub_task_end_date;
+        const estimated_mini_task_end_date = req.body.estimated_mini_task_end_date;
         // const actual_sub_task_start_date = req.body.actual_sub_task_start_date;
         // const estimated_sub_task_start_date = req.body.estimated_sub_task_start_date;
         // const estimated_sub_task_end_date = req.body.estimated_sub_task_end_date;
         // const actual_sub_task_end_date = req.body.actual_sub_task_end_date;
-        const sub_task_status = req.body.sub_task_status;
-        const sub_task_priority = req.body.sub_task_priority;
-        const sub_task_assignee = req.body.sub_task_assignee;
-        const sub_task_reporter = req.body.sub_task_reporter;
+        const mini_task_status = req.body.mini_task_status;
+        const mini_task_priority = req.body.mini_task_priority;
+        const mini_task_assignee = req.body.mini_task_assignee;
+        const mini_task_reporter = req.body.mini_task_reporter;
 
         // if(sub_task_assignee === sub_task_reporter)
         // {
@@ -99,12 +99,12 @@ export const createLeadSubTask = async (req, res) => {
         if (!user_id) return responseData(res, "", 404, false, "User Id required", []);
         if (!lead_id) return responseData(res, "", 404, false, "Lead Id required", []);
         if (!task_id) return responseData(res, "", 404, false, "Task Id required", []);
-        if (!sub_task_name || !onlyAlphabetsValidation(sub_task_name) || sub_task_name.length <= 3)
-            return responseData(res, "", 404, false, "Subtask Name should be alphabets and more than 3 characters", []);
-        if (!sub_task_priority) return responseData(res, "", 404, false, "Subtask priority required", []);
+        if (!mini_task_name || !onlyAlphabetsValidation(mini_task_name) || mini_task_name.length <= 3)
+            return responseData(res, "", 404, false, "Minitask Name should be alphabets and more than 3 characters", []);
+        // if (!sub_task_priority) return responseData(res, "", 404, false, "Subtask priority required", []);
         // if (!estimated_sub_task_start_date) return responseData(res, "", 404, false, "Subtask start date required", []);
         // if (!estimated_sub_task_end_date) return responseData(res, "", 404, false, "Subtask end date required", []);
-        if (!sub_task_status) return responseData(res, "", 404, false, "Subtask status required", []);
+        // if (!sub_task_status) return responseData(res, "", 404, false, "Subtask status required", []);
         // if (!sub_task_assignee) return responseData(res, "", 404, false, "Subtask assignee required", []);
         // if (!sub_task_reporter) return responseData(res, "", 404, false, "Subtask reporter required", []);
         if (!org_id) return responseData(res, "", 404, false, "Org Id required", []);
@@ -126,7 +126,7 @@ export const createLeadSubTask = async (req, res) => {
         if (check_task.task_status === 'Cancelled') return responseData(res, "", 400, false, "The task has been canceled", []);
 
         // Ensure user is authorize
-        const isNotAssigneeOrCreator = ![check_task.task_assignee, check_task.task_createdBy].includes(check_user.username);
+        const isNotAssigneeOrCreator = ![check_task.task_assignee].includes(check_user.username);
         const isNotAdminOrSuperadmin = !['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
 
         if (isNotAssigneeOrCreator && isNotAdminOrSuperadmin) {
@@ -136,17 +136,17 @@ export const createLeadSubTask = async (req, res) => {
         // Check if subtask assignee exists
         let check_assignee = {};
 
-        if(sub_task_assignee !== '') {
-            check_assignee = await registerModel.findOne({ username: sub_task_assignee, status: true, organization:org_id });
-            if (!check_assignee) return responseData(res, "", 404, false, "Subtask assignee is not a registered user", []);
+        if(mini_task_assignee !== '') {
+            check_assignee = await registerModel.findOne({ username: mini_task_assignee, status: true, organization:org_id });
+            if (!check_assignee) return responseData(res, "", 404, false, "Minitask assignee is not a registered user", []);
         }
 
         // Check if subtask reporter exists
         let check_reporter = {}
 
-        if(sub_task_reporter !== '') {
-            check_reporter = await registerModel.findOne({ username: sub_task_reporter, status: true, organization: org_id });
-            if (!check_reporter) return responseData(res, "", 404, false, "Subtask reporter is not a registered user", []);
+        if(mini_task_reporter !== '') {
+            check_reporter = await registerModel.findOne({ username: mini_task_reporter, status: true, organization: org_id });
+            if (!check_reporter) return responseData(res, "", 404, false, "Minitask reporter is not a registered user", []);
         }
 
         // Handle role-based project assignment checks
@@ -157,66 +157,32 @@ export const createLeadSubTask = async (req, res) => {
             return ['Senior Architect', 'ADMIN'].includes(user.role)
         };
 
-        if (isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
-            // Subtask can be created directly
-            await createSubTaskAndTimer({
-                org_id, lead_id, task_id, sub_task_name, sub_task_description,estimated_sub_task_end_date,
-                 
-                sub_task_status, sub_task_priority, sub_task_assignee,
-                sub_task_reporter, check_user, check_task
-            }, res, req);
-        }
+       
+        // Ensure both assignee and reporter are part of the lead
+        // if(mini_task_assignee !== '') {
+        //     const isAssigneeInLead= check_assignee.data[0].leadData.some(item => item.lead_id === lead_id);
+        //     if (!isAssigneeInLead) return responseData(res, "", 404, false, "Minitask assignee is not part of this lead", []);
+        // }
 
-        else if (isSeniorOrAdmin(check_assignee) && !isSeniorOrAdmin(check_reporter)) {
-            if(sub_task_reporter !== '') {
-                const isReporterInLead = check_reporter.data[0].leadData.some(item => item.lead_id === lead_id);
-                if (!isReporterInLead) return responseData(res, "", 404, false, "Subtask reporter is not part of this lead", []);
-            }
-            await createSubTaskAndTimer({
-                org_id, lead_id, task_id, sub_task_name, sub_task_description,estimated_sub_task_end_date,
-                 
-                sub_task_status, sub_task_priority, sub_task_assignee,
-                sub_task_reporter, check_user, check_task
-            }, res, req);
-        }
+        // if(mini_task_reporter !== '') {
+        //     const isReporterInLead = check_reporter.data[0].leadData.some(item => item.lead_id === lead_id);
+        //     if (!isReporterInLead) return responseData(res, "", 404, false, "Minitask reporter is not part of this lead", []);
+        // }
+        await createMiniTaskAndTimer({
+            org_id, lead_id, task_id, mini_task_name, mini_task_description,estimated_mini_task_end_date,
+            
+            mini_task_status, mini_task_priority, mini_task_assignee,
+            mini_task_reporter, check_user, check_task
+        }, res,req);
 
-        else if (!isSeniorOrAdmin(check_assignee) && isSeniorOrAdmin(check_reporter)) {
-            if(sub_task_assignee !== '') {
-                const isAssigneeInLead = check_assignee.data[0].leadData.some(item => item.lead_id === lead_id);
-                if (!isAssigneeInLead) return responseData(res, "", 404, false, "Subtask assignee is not part of this lead", []);
-            }
-            await createSubTaskAndTimer({
-                org_id, lead_id, task_id, sub_task_name, sub_task_description,estimated_sub_task_end_date,
-                 
-                sub_task_status, sub_task_priority, sub_task_assignee,
-                sub_task_reporter, check_user, check_task
-            }, res,req);
-        }
-        else {
-            // Ensure both assignee and reporter are part of the lead
-            if(sub_task_assignee !== '') {
-                const isAssigneeInLead= check_assignee.data[0].leadData.some(item => item.lead_id === lead_id);
-                if (!isAssigneeInLead) return responseData(res, "", 404, false, "Subtask assignee is not part of this lead", []);
-            }
-
-            if(sub_task_reporter !== '') {
-                const isReporterInLead = check_reporter.data[0].leadData.some(item => item.lead_id === lead_id);
-                if (!isReporterInLead) return responseData(res, "", 404, false, "Subtask reporter is not part of this lead", []);
-            }
-            await createSubTaskAndTimer({
-                org_id, lead_id, task_id, sub_task_name, sub_task_description,estimated_sub_task_end_date,
-                
-                sub_task_status, sub_task_priority, sub_task_assignee,
-                sub_task_reporter, check_user, check_task
-            }, res,req);
-        }
+        
     } catch (err) {
         console.log(err);
         res.send(err);
     }
 }
 
-export const getAllLeadSubTask = async (req, res) => {
+export const getAllLeadMiniTask = async (req, res) => {
 
     try {
         const user_id = req.query.user_id;
@@ -259,29 +225,30 @@ export const getAllLeadSubTask = async (req, res) => {
                     else {
                         let response = []
                         let count = 0;
-                        for (let i = 0; i < check_task.subtasks.length; i++) {
+                        for (let i = 0; i < check_task.minitasks.length; i++) {
 
 
                             response.push({
                                 task_id: task_id,
-                                sub_task_id: check_task.subtasks[i].sub_task_id,
-                                sub_task_name: check_task.subtasks[i].sub_task_name,
-                                sub_task_description: check_task.subtasks[i].sub_task_description,
+                                mini_task_id: check_task.minitasks[i]?.mini_task_id,
+                                mini_task_name: check_task.minitasks[i]?.mini_task_name,
+                                mini_task_description: check_task.minitasks[i]?.mini_task_description,
+                                mini_task_note: check_task.minitasks[i]?.mini_task_note || "",
                                 // actual_sub_task_start_date: check_task.subtasks[i].actual_sub_task_start_date,
                                 // actual_sub_task_end_date: check_task.subtasks[i].actual_sub_task_end_date,
-                                estimated_sub_task_end_date: check_task.subtasks[i].estimated_sub_task_end_date,
+                                estimated_mini_task_end_date: check_task.minitasks[i]?.estimated_mini_task_end_date,
                                 // estimated_sub_task_start_date: check_task.subtasks[i].estimated_sub_task_start_date,
-                                sub_task_status: check_task.subtasks[i].sub_task_status,
-                                sub_task_priority: check_task.subtasks[i].sub_task_priority,
-                                sub_task_assignee: check_task.subtasks[i].sub_task_assignee,
-                                sub_task_createdBy: check_task.subtasks[i].sub_task_createdBy,
-                                sub_task_createdOn: check_task.subtasks[i].sub_task_createdOn,
-                                sub_task_reporter: check_task.subtasks[i].sub_task_reporter,
-                                remark: check_task.subtasks[i].remark
+                                mini_task_status: check_task.minitasks[i]?.mini_task_status,
+                                mini_task_priority: check_task.minitasks[i]?.mini_task_priority,
+                                mini_task_assignee: check_task.minitasks[i]?.mini_task_assignee,
+                                mini_task_createdBy: check_task.minitasks[i]?.mini_task_createdBy,
+                                mini_task_createdOn: check_task.minitasks[i]?.mini_task_createdOn,
+                                mini_task_reporter: check_task.minitasks[i]?.mini_task_reporter,
+                                remark: check_task.minitasks[i]?.remark
 
                             })
                         }
-                        responseData(res, "All sub task fetch successfully", 200, false, "", response)
+                        responseData(res, "All mini task fetch successfully", 200, false, "", response)
                     }
                 }
             }
@@ -294,12 +261,12 @@ export const getAllLeadSubTask = async (req, res) => {
     }
 }
 
-export const getSingleLeadSubTask = async (req, res) => {
+export const getSingleLeadMiniTask = async (req, res) => {
     try {
         const user_id = req.query.user_id;
         const lead_id = req.query.lead_id;
         const task_id = req.query.task_id;
-        const sub_task_id = req.query.sub_task_id;
+        const mini_task_id = req.query.mini_task_id;
         const org_id = req.query.org_id;
         if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
@@ -311,8 +278,8 @@ export const getSingleLeadSubTask = async (req, res) => {
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
-        else if (!sub_task_id) {
-            responseData(res, "", 404, false, "Sub-task Id required", [])
+        else if (!mini_task_id) {
+            responseData(res, "", 404, false, "Mini task Id required", [])
         }
         const check_org = await orgModel.findOne({ _id: org_id })
         if (!check_org) {
@@ -334,13 +301,13 @@ export const getSingleLeadSubTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const sub_task = check_task.subtasks.find(item => item.sub_task_id == sub_task_id);
+                        const mini_task = check_task.subtasks.find(item => item.mini_task_id == mini_task_id);
 
-                        if (!sub_task) {
-                            return responseData(res, "Sub-task not found", 200, false, "", []);
+                        if (!mini_task) {
+                            return responseData(res, "mini-task not found", 200, false, "", []);
                         }
                         else {
-                            return responseData(res, "Sub-task fetched successfully", 200, true, "", sub_task);
+                            return responseData(res, "mini-task fetched successfully", 200, true, "", mini_task);
                         }
 
                     }
@@ -356,24 +323,22 @@ export const getSingleLeadSubTask = async (req, res) => {
 }
 
 
-export const updateLeadSubTask = async (req, res) => {
+export const updateLeadMiniTask = async (req, res) => {
     try {
         const {
             org_id,
             user_id,
             lead_id,
             task_id,
-            sub_task_id,
-            sub_task_name,
-            sub_task_description,
-            // actual_sub_task_start_date,
-            estimated_sub_task_end_date,
-            // estimated_sub_task_end_date,
-            // actual_sub_task_end_date,
-            sub_task_status,
-            sub_task_priority,
-            sub_task_assignee,
-            sub_task_reporter,
+            mini_task_id,
+            mini_task_name,
+            mini_task_description,
+            mini_task_note,
+            estimated_mini_task_end_date,
+            mini_task_status,
+            mini_task_priority,
+            mini_task_assignee,
+            mini_task_reporter,
             remark
         } = req.body;
 
@@ -383,12 +348,12 @@ export const updateLeadSubTask = async (req, res) => {
             { key: user_id, message: "User Id required" },
             { key: lead_id, message: "Lead Id required" },
             { key: task_id, message: "Task Id required" },
-            { key: sub_task_id, message: "Sub-task Id required" },
-            { key: sub_task_name && onlyAlphabetsValidation(sub_task_name) && sub_task_name.length > 3, message: "Sub task Name should be alphabets and longer than 3 characters" },
-            { key: sub_task_priority, message: "Sub task priority required" },
+            { key: mini_task_id, message: "Mini-task Id required" },
+            { key: mini_task_name && onlyAlphabetsValidation(mini_task_name) && mini_task_name.length > 3, message: "mini task Name should be alphabets and longer than 3 characters" },
+            { key: mini_task_priority, message: "Mini task priority required" },
             // { key: estimated_sub_task_start_date, message: "Sub task start date required" },
             // { key: estimated_sub_task_end_date, message: "Sub task end date required" },
-            { key: sub_task_status, message: "Sub task status required" },
+            { key: mini_task_status, message: "Mini task status required" },
             // { key: sub_task_assignee, message: "Sub task assignee required" },
             // { key: sub_task_reporter, message: "Sub task reporter required" }
         ];
@@ -418,10 +383,10 @@ export const updateLeadSubTask = async (req, res) => {
             return responseData(res, "", 404, false, "Task not found", []);
         }
 
-        const check_sub_task = check_task.subtasks.find((subtask) => subtask.sub_task_id === sub_task_id);
+        const check_mini_task = check_task.minitasks.find((minitask) => minitask.mini_task_id === mini_task_id);
 
-        if (!check_sub_task) {
-            return responseData(res, "", 404, false, "Sub task not found", []);
+        if (!check_mini_task) {
+            return responseData(res, "", 404, false, "Mini task not found", []);
         }
 
         if (check_task.task_status === 'Cancelled') {
@@ -432,8 +397,8 @@ export const updateLeadSubTask = async (req, res) => {
 
         if(check_task.task_assignee) {
             isTask_assigneeAuthorized = [check_task.task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            if(!isTask_assigneeAuthorized && check_sub_task.sub_task_assignee) {
-                isTask_assigneeAuthorized = [check_sub_task.sub_task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if(!isTask_assigneeAuthorized && check_mini_task.mini_task_assignee) {
+                isTask_assigneeAuthorized = [check_mini_task.mini_task_assignee].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
             }
             // if (!isTask_assigneeAuthorized) {
             //     return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
@@ -444,8 +409,8 @@ export const updateLeadSubTask = async (req, res) => {
 
         if(check_task.task_createdBy) {
             isTask_createdByAuthorized = [check_task.task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
-            if(!isTask_createdByAuthorized && check_sub_task.sub_task_createdBy) {
-                isTask_createdByAuthorized = [check_sub_task.sub_task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
+            if(!isTask_createdByAuthorized && check_mini_task.mini_task_createdBy) {
+                isTask_createdByAuthorized = [check_mini_task.mini_task_createdBy].includes(check_user.username) || ['ADMIN', 'SUPERADMIN', 'Senior Architect',].includes(check_user.role);
             }
             // if (!isTask_createdByAuthorized) {
             //     return responseData(res, "", 404, false, "You are not authorized to update this sub-task", []);
@@ -458,51 +423,52 @@ export const updateLeadSubTask = async (req, res) => {
         
 
         // Use ternary operator to set `date` based on the conditions
-        let date = (sub_task_status === 'Completed' && (estimated_sub_task_end_date === '' || estimated_sub_task_end_date == null))
+        let date = (mini_task_status === 'Completed' && (estimated_mini_task_end_date === '' || estimated_mini_task_end_date == null))
             ? new Date()
-            : estimated_sub_task_end_date;
+            : estimated_mini_task_end_date;
 
       
-        const previous_sub_task_assignee = check_task.subtasks.find(item => item.sub_task_id === sub_task_id).sub_task_assignee;
+        const previous_mini_task_assignee = check_task.minitasks.find(item => item.mini_task_id === mini_task_id).mini_task_assignee;
 
         const updateFields = {
-            "subtasks.$.sub_task_name": sub_task_name,
-            "subtasks.$.sub_task_description": sub_task_description,
-            "subtasks.$.estimated_sub_task_end_date": date,
-            "subtasks.$.sub_task_status": sub_task_status,
-            "subtasks.$.sub_task_priority": sub_task_priority,
-            "subtasks.$.sub_task_assignee": sub_task_assignee,
-            "subtasks.$.sub_task_reporter": sub_task_reporter
+            "minitasks.$.mini_task_name": mini_task_name,
+            "minitasks.$.mini_task_description": mini_task_description,
+            "minitasks.$.mini_task_note": mini_task_note,
+            "minitasks.$.estimated_mini_task_end_date": date,
+            "minitasks.$.mini_task_status": mini_task_status,
+            "minitasks.$.mini_task_priority": mini_task_priority,
+            "minitasks.$.mini_task_assignee": mini_task_assignee,
+            "minitasks.$.mini_task_reporter": mini_task_reporter
         };
 
         const updatePushFields = {
-            "subtasks.$.sub_task_updatedBy": {
-                sub_task_updatedBy: check_user.username,
+            "minitasks.$.mini_task_updatedBy": {
+                mini_task_updatedBy: check_user.username,
                 role: check_user.role,
-                sub_task_updatedOn: new Date()
+                mini_task_updatedOn: new Date()
             }
         };
 
-        if (sub_task_status === 'Under Revision' && !remark) {
+        if (mini_task_status === 'Under Revision' && !remark) {
             return responseData(res, "", 404, false, "Please enter a remark", []);
         }
 
         if (remark) {
-            updatePushFields["subtasks.$.remark"] = {
+            updatePushFields["minitasks.$.remark"] = {
                 remark,
                 remark_by: check_user.username,
                 remark_date: new Date()
             };
         }
 
-        const update_subtask = await leadTaskModel.findOneAndUpdate(
-            { task_id, lead_id, org_id, "subtasks.sub_task_id": sub_task_id },
+        const update_minitask = await leadTaskModel.findOneAndUpdate(
+            { task_id, lead_id, org_id, "minitasks.mini_task_id": mini_task_id },
             { $set: updateFields, $push: updatePushFields },
             { new: true, useFindAndModify: false }
         );
 
-        if (!update_subtask) {
-            return responseData(res, "", 404, false, "Sub Task Not Updated", []);
+        if (!update_minitask) {
+            return responseData(res, "", 404, false, "mini Task Not Updated", []);
         }
 
         const lead_data=await leadModel.findOneAndUpdate(
@@ -512,46 +478,47 @@ export const updateLeadSubTask = async (req, res) => {
                     lead_update_track: {
                         username: check_user.username,
                         role: check_user.role,
-                        message: ` has updated subtask ${sub_task_name} in task ${check_task.task_name}.`,
+                        message: ` has updated minitask ${mini_task_name} in task ${check_task.task_name}.`,
                         updated_date: new Date()
                     }
                 }
             }
         );
-        if (sub_task_assignee && sub_task_assignee !== previous_sub_task_assignee) {
-                    const find_user = await registerModel.findOne({ organization: org_id, username: sub_task_assignee });
-                    const find_reporter = await registerModel.findOne({organization: org_id, username: sub_task_reporter})
-            await send_mail_subtask(find_user.email, sub_task_assignee, sub_task_name, lead_data.name, estimated_sub_task_end_date, sub_task_priority, sub_task_status, sub_task_reporter,find_reporter.email ,req.user.username, check_task.task_name,"lead");
+
+        if (mini_task_assignee && mini_task_assignee !== previous_mini_task_assignee) {
+                    const find_user = await registerModel.findOne({ organization: org_id, username: mini_task_assignee });
+                    const find_reporter = await registerModel.findOne({organization: org_id, username: mini_task_reporter})
+            await send_mail_minitask(find_user.email, mini_task_assignee, mini_task_name, lead_data.name, estimated_mini_task_end_date, mini_task_priority, mini_task_status, mini_task_reporter,find_reporter.email ,req.user.username, check_task.task_name,"lead");
         
                 }
 
-        if (['Completed', 'Cancelled'].includes(sub_task_status)) {
+        if (['Completed', 'Cancelled'].includes(mini_task_status)) {
             const find_timer = await leadTimerModel.findOne({
                 task_id,
                 lead_id,
                 org_id,
-                'subtaskstime.sub_task_id': sub_task_id
+                'minitaskstime.mini_task_id': mini_task_id
             });
 
             if (find_timer) {
-                for (let subtask of find_timer.subtaskstime) {
-                    if (subtask.sub_task_id.toString() === sub_task_id.toString() && subtask.sub_task_isrunning) {
+                for (let minitask of find_timer.minitaskstime) {
+                    if (minitask.mini_task_id.toString() === mini_task_id.toString() && minitask.mini_task_isrunning) {
                         const current_time = new Date().getTime();
-                        const diff = parseInt(current_time) - parseInt(subtask.sub_task_current);
-                        const total_time =parseInt(subtask.sub_task_time) + diff;
+                        const diff = parseInt(current_time) - parseInt(minitask.mini_task_current);
+                        const total_time =parseInt(minitask.mini_task_time) + diff;
 
                         await leadTimerModel.findOneAndUpdate(
                             {
                                 task_id,
                                 lead_id,
                                 org_id,
-                                'subtaskstime.sub_task_id': sub_task_id
+                                'minitaskstime.mini_task_id': mini_task_id
                             },
                             {
                                 $set: {
-                                    'subtaskstime.$.sub_task_isrunning': false,
-                                    'subtaskstime.$.sub_task_current': current_time,
-                                    'subtaskstime.$.sub_task_time': total_time
+                                    'minitaskstime.$.mini_task_isrunning': false,
+                                    'minitaskstime.$.mini_task_current': current_time,
+                                    'minitaskstime.$.mini_task_time': total_time
                                 }
                             },
                             { new: true, useFindAndModify: false }
@@ -562,7 +529,7 @@ export const updateLeadSubTask = async (req, res) => {
             }
         }
 
-        responseData(res, "Sub Task Updated Successfully", 200, true, "", []);
+        responseData(res, "Mini Task Updated Successfully", 200, true, "", []);
     } catch (err) {
         console.error(err);
         res.status(500).send("Internal Server Error");
@@ -571,12 +538,12 @@ export const updateLeadSubTask = async (req, res) => {
 
 
 
-export const deleteLeadSubTask = async (req, res) => {
+export const deleteLeadMiniTask = async (req, res) => {
     try {
         const user_id = req.body.user_id;
         const lead_id = req.body.lead_id;
         const task_id = req.body.task_id;
-        const sub_task_id = req.body.sub_task_id;
+        const mini_task_id = req.body.mini_task_id;
         const org_id= req.body.org_id;
         if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
@@ -588,8 +555,8 @@ export const deleteLeadSubTask = async (req, res) => {
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
         }
-        else if (!sub_task_id) {
-            responseData(res, "", 404, false, "Sub-task Id required", [])
+        else if (!mini_task_id) {
+            responseData(res, "", 404, false, "Min task Id required", [])
         }
         else if (!org_id) {
             return responseData(res, "", 400, false, "Organization Id is required");
@@ -614,14 +581,14 @@ export const deleteLeadSubTask = async (req, res) => {
                         responseData(res, "", 404, false, "Task not found", [])
                     }
                     else {
-                        const check_subtask = check_task.subtasks.find((subtask) => subtask.sub_task_id == sub_task_id)
+                        const check_minitask = check_task.minitasks.find((minitask) => minitask.mini_task_id == mini_task_id)
                         await leadModel.findOneAndUpdate({ lead_id: lead_id },
                             {
                                 $push: {
                                     lead_update_track: {
                                         username: check_user.username,
                                         role: check_user.role,
-                                        message: ` has deleted subtask ${check_subtask.sub_task_name} in task ${check_task.task_name}.`,
+                                        message: ` has deleted minitask ${check_minitask.mini_task_name} in task ${check_task.task_name}.`,
                                         updated_date: new Date()
                                     }
                                 }
@@ -631,10 +598,10 @@ export const deleteLeadSubTask = async (req, res) => {
                             task_id: task_id,
                             lead_id: lead_id,
                             org_id:org_id,
-                            "subtasks.sub_task_id": sub_task_id
+                            "minitasks.mini_task_id": mini_task_id
                         },
                             {
-                                $pull: { "subtasks": { "sub_task_id": sub_task_id } },
+                                $pull: { "minitasks": { "mini_task_id": mini_task_id } },
 
 
                             },
@@ -643,10 +610,10 @@ export const deleteLeadSubTask = async (req, res) => {
                             { new: true }
                         )
                         if (delete_subtask) {
-                            responseData(res, "Sub Task Deleted Successfully", 200, true, "", [])
+                            responseData(res, "Mini Task Deleted Successfully", 200, true, "", [])
                         }
                         else {
-                            responseData(res, "", 404, false, "Sub Task Not Deleted", [])
+                            responseData(res, "", 404, false, "Mini Task Not Deleted", [])
                         }
                     }
                 }
