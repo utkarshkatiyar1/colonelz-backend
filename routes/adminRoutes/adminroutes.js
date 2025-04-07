@@ -56,8 +56,8 @@ import { AddMemberInLead, listUserInLead, removeMemberInlead } from "../../contr
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
-import { GetSingleSubtimerController, GetSingleTasktimerController, UpdateSubtimerController, UpdateTasktimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
-import { getProjectUser, getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
+import { GetSingleMinitimerController, GetSingleSubtimerController, GetSingleTasktimerController, UpdateMinitimerController, UpdateSubtimerController, UpdateTasktimerController } from "../../controllers/adminControllers/timerControllers/timer.controller.js";
+import { getProjectUser, getProjectUserList, getUserList } from "../../controllers/adminControllers/createuser.controllers/getuser.controller.js";
 import { createAddMember, createContractAccess, createLeadAccess, createLeadTaskAccess, createMomAccess, createOpenTaskAccess, createProjectAccess, createQuotationAccess, CreateRoleAccess, createTaskAccess, CreateUserAccess, deleteAddMember, deleteArchiveAccess, deleteArchiveUserAccess, deletedFileAccess, deleteLeadAccess, deleteLeadTskAccess, deleteMomAccess, deleteOpenTskAccess, deleteRole, deleteTskAccess, deleteUserAccess, GetArchiveUser, GetRole, GetUser, moveOpenTaskAccess, readArchiveAccess, readContractAccess, readFileAccess, readFileCompanyDataAccess, readLeadAccess, readLeadTaskAccess, readMomAccess, readOpenTaskAccess, readProjectAccess, readQuotationAccess, readTaskAccess, restoreArchiveAccess, restoreUserAccess, updateContractAccess, updateLeadAccess, updateLeadTaskAccess, updateMomAccess, updateOpenTaskAccess, updateProjectAccess, updateQuotationAccess, updateRole, updateTaskAccess, updateUserRoleAccess } from "../../middlewares/access.middlewares.js";
 import { createRole, DeleteRole, getRole, roleName, roleWiseAccess, UpdateRole } from "../../controllers/adminControllers/createRoleControllers/role.controllers.js";
 import { verify } from "crypto";
@@ -70,6 +70,7 @@ import { GetSingleOpenSubtimerController, GetSingleOpenTasktimerController, Upda
 import { createImage, deleteMainImage, getAllMainImage, getAllPanoImagesFromFileManager, getImageById } from "../../controllers/adminControllers/threeImageControllers/threeImage.controller.js";
 import { addUserToFile, getFilesForUser } from "../../controllers/adminControllers/leadController/approval.controller.js";
 import { createLeadMiniTask, deleteLeadMiniTask, getAllLeadMiniTask, getSingleLeadMiniTask, updateLeadMiniTask } from "../../controllers/adminControllers/leadTaskControllers/minitask.controller.js";
+import { createMiniTask, deleteMiniTask, getAllMiniTask, getSingleMiniTask, updateMiniTask } from "../../controllers/adminControllers/taskControllers/minitask.controller.js";
 import { deleteProjectExecutionTask, deleteProjectExecutionTaskDetails, getProjectExecutionTask, projectExecutionTask, updateProjectExecutionTask, updateProjectExecutionTaskDetails } from "../../controllers/adminControllers/project_execution_timeline/project_execution_task.js";
 import { createProjectExecutionSubtask, deleteProjectExecutionSubtask, deleteProjectExecutionSubtaskDetails, updateProjectExecutionSubtask, updateProjectExecutionSubtaskDetails } from "../../controllers/adminControllers/project_execution_timeline/project_execution_subtask.js";
 
@@ -743,6 +744,7 @@ router.route("/update/project").put(verifyJWT, updateProjectAccess, updateProjec
 
 router.route("/remove/member/project").post(verifyJWT, deleteAddMember, removeMemberInProject);
 router.route("/get/user/project").get(verifyJWT, getProjectUser);
+router.route("/get/userlist/project").get(verifyJWT, getProjectUserList);
 /**
  * @swagger
  * paths:
@@ -3620,6 +3622,14 @@ router.route("/update/subtask").put(verifyJWT, updateSubTask);
 router.route("/delete/subtask").delete(verifyJWT, deleteSubTask);
 router.route("/update/subtask/time").put(verifyJWT, UpdateSubtimerController);
 router.route("/get/subtask/time").get(verifyJWT, GetSingleSubtimerController);
+
+router.route("/create/minitask").post(verifyJWT, createMiniTask);
+router.route("/get/all/minitask").get(verifyJWT, getAllMiniTask);
+router.route("/get/single/minitask").get(verifyJWT, getSingleMiniTask);
+router.route("/update/minitask").put(verifyJWT, updateMiniTask);
+router.route("/delete/minitask").delete(verifyJWT, deleteMiniTask);
+router.route("/update/minitask/time").put(verifyJWT, UpdateMinitimerController);
+router.route("/get/minitask/time").get(verifyJWT, GetSingleMinitimerController);
 
 
 //lead task

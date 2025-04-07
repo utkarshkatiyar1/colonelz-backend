@@ -7,6 +7,7 @@ export const getUserList = async (req, res) => {
     try {
         const userId = req.query.user_id;
 
+
         // Validate user ID
         if (!userId) {
             return responseData(res, "", 400, false, "User Id is required");
@@ -93,6 +94,42 @@ export const getProjectUser = async (req, res) => {
         const userList = [...new Set(users.map(user => user.username))];
 
         responseData(res, "List of Users in Project", 200, true, "", userList);
+    } catch (err) {
+        console.error(err);
+        responseData(res, "", 500, false, "Internal Server Error", []);
+    }
+};
+
+export const getProjectUserList = async (req, res) => {
+    try {
+        const project_id = req.query.project_id;
+        const org_id= req.query.org_id;
+
+
+        if (!project_id) {
+            return responseData(res, "", 400, false, "Project ID is required", []);
+        }
+        if(!org_id)
+        {
+            return responseData(res, "", 404, false, "Org Id required", []);
+        }
+
+        const check_org = await orgModel.findOne({ _id: org_id })
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+        // Fetch project users and senior admins in a single query
+        const users = await registerModel.find({
+            $or: [
+                { 'data.projectData.project_id': project_id },
+                { role: { $in: ['Senior Architect', 'ADMIN'] }, status: true, organization: org_id }
+            ]
+        }).lean(); // Use lean for better performance
+
+        // Extract unique usernames using a Set
+        const userList = [...new Set(users.map(user => user.username))];
+
+        responseData(res, "List of Users in Project", 200, true, "", users);
     } catch (err) {
         console.error(err);
         responseData(res, "", 500, false, "Internal Server Error", []);
