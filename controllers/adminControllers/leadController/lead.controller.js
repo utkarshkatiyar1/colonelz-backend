@@ -365,7 +365,6 @@ export const getAllLead = async (req, res) => {
           status: 1,
           date: { $arrayElemAt: ["$lead_details.date", 0] },
           lead_status: 1,
-          name: { $arrayElemAt: ["$lead_details.name", 0] },
           count_task: { $size: "$leadTask" }, // Calculate task count
           // contract: 1,
           hasPendingContract: { // Calculate if any contract has "pending" admin_status
