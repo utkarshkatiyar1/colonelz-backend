@@ -34,7 +34,7 @@ export const getFileData = async (req, res) => {
         .select('project_id client project_type project_status')
         .lean(),
       leadModel.find({ lead_id: { $in: leadIds }, org_id: org_id })
-        .select('lead_id lead_details status date')
+        .select('lead_id name email lead_details status date')
         .lean(),
     ]);
 
@@ -58,12 +58,12 @@ export const getFileData = async (req, res) => {
       .filter(element => !element?.type && element.lead_id && leadMap.has(element.lead_id))
       .map(element => {
         const lead = leadMap.get(element.lead_id);
-        const firstLeadDetail = lead?.lead_details?.[0] || {}; 
+        const firstLeadDetail = lead?.lead_details?.[0] || {};
 
         return {
           lead_id: element.lead_id,
-          lead_name: firstLeadDetail.name || lead.name, 
-          lead_email: firstLeadDetail.email || lead.email, 
+          lead_name: firstLeadDetail.name || lead.name || '',
+          lead_email: firstLeadDetail.email || lead.email || '',
           lead_status: lead.status,
           lead_date: lead.date,
         };
@@ -106,17 +106,17 @@ export const getleadData = async (req, res) => {
       return responseData(res, "Data Not Found!", 200, true, "");
     }
 
-    const drawingData = await fileuploadModel.find({ lead_id, org_id, type:"Drawing" }).lean();
+    const drawingData = await fileuploadModel.find({ lead_id, org_id, type: "Drawing" }).lean();
     // console.log("drawingData", drawingData)
     const uniqueFolders = new Set();
 
-    if(drawingData) {
+    if (drawingData) {
       drawingData?.forEach((obj) => {
-      obj.files?.forEach((item) => {
+        obj.files?.forEach((item) => {
           if (item.sub_folder_name_first) {
-          uniqueFolders.add(item.sub_folder_name_first);
+            uniqueFolders.add(item.sub_folder_name_first);
           }
-      });
+        });
       });
     }
 
@@ -177,17 +177,17 @@ export const getprojectData = async (req, res) => {
     }
 
 
-    const drawingData = await fileuploadModel.find({ project_id, org_id, type:"Drawing" }).lean();
+    const drawingData = await fileuploadModel.find({ project_id, org_id, type: "Drawing" }).lean();
     // console.log("drawingData", drawingData)
     const uniqueFolders = new Set();
 
-    if(drawingData) {
+    if (drawingData) {
       drawingData?.forEach((obj) => {
-      obj.files?.forEach((item) => {
+        obj.files?.forEach((item) => {
           if (item.sub_folder_name_first) {
-          uniqueFolders.add(item.sub_folder_name_first);
+            uniqueFolders.add(item.sub_folder_name_first);
           }
-      });
+        });
       });
     }
 
@@ -310,12 +310,12 @@ export const getDrawingData = async (req, res) => {
 
     let data = [];
 
-   
-      data = await fileuploadModel.find({ org_id: org_id, lead_id: lead_id ? lead_id: null, project_id:project_id ? project_id: null, type:type }).lean();
 
-    
+    data = await fileuploadModel.find({ org_id: org_id, lead_id: lead_id ? lead_id : null, project_id: project_id ? project_id : null, type: type }).lean();
 
- 
+
+
+
 
     // console.log(data)
 
@@ -326,25 +326,25 @@ export const getDrawingData = async (req, res) => {
 
     const templateData = await Promise.all(data.map(async (element) => {
       // if (element.lead_id === null && element.project_id === null) {
-        const files = element.files
-          .filter(file => file.folder_name
-            //  === type && file.sub_folder_name_first === type2
-          )
-          .map(file => ({
-            folder_name: file.folder_name,
-            folder_id: file.folder_id,
-            sub_folder_name_first: file.sub_folder_name_first,
-            sub_folder_name_second: file.sub_folder_name_second,
-            updated_date: file.updated_date,
-            total_files: file.files.length,
-            files: file.files,
-          }));
+      const files = element.files
+        .filter(file => file.folder_name
+          //  === type && file.sub_folder_name_first === type2
+        )
+        .map(file => ({
+          folder_name: file.folder_name,
+          folder_id: file.folder_id,
+          sub_folder_name_first: file.sub_folder_name_first,
+          sub_folder_name_second: file.sub_folder_name_second,
+          updated_date: file.updated_date,
+          total_files: file.files.length,
+          files: file.files,
+        }));
 
-          if(!files) {
-            return null;
-          }
+      if (!files) {
+        return null;
+      }
 
-        return files.length > 0 ? { type: element.type, files } : null;
+      return files.length > 0 ? { type: element.type, files } : null;
       // }
     }));
     const filteredTemplateData = templateData.filter(item => item !== null);
