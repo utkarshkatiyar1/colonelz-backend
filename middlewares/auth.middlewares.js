@@ -30,7 +30,7 @@ export const verifyJWT = async (req, res, next) => {
       return responseData(res, "", 401, false, "Unauthorized: User is not active");
     }
 
-    req.user = user; 
+    req.user = user;
     next();
   } catch (err) {
     console.error("Error in verifyJWT:", err);
@@ -160,7 +160,7 @@ export const checkAvailableUserIsAdminInFile = async (req, res, next) => {
 
 export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
   try {
-    
+
     const { role, data } = req.user;
 
     // If user has admin privileges, proceed to the next middleware
@@ -173,24 +173,27 @@ export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
 
     // Fetch the leads in a single query
     const leads = await leadModel.find({ lead_id: { $in: leadIds } }).lean();
-    const formattedLeads = await Promise.all (leads.map(async (lead) => 
-      {
+    const formattedLeads = await Promise.all(leads.map(async (lead) => {
+      const leadDetails = lead.lead_details?.[0] || {};
 
-        const count_task = await leadTaskModel.countDocuments({ lead_id: lead.lead_id });
-        
-        return {
-          name: lead.name,
-          lead_id: lead.lead_id,
-          email: lead.email,
-          phone: lead.phone,
-          location: lead.location,
-          status: lead.status,
-          date: lead.date,
-          count_task,
-          hasPendingContract: lead.contract.some(item => item.admin_status === "pending"),
+      const count_task = await leadTaskModel.countDocuments({ lead_id: lead.lead_id });
+      console.log(lead)
 
-        }
-  }));
+      return {
+        name: leadDetails.name || lead.name,
+        lead_id: lead.lead_id,
+        email: leadDetails.email || lead.email,
+        phone: leadDetails.phone ||  lead.phone,
+        location: leadDetails.location || lead.location,
+        status: leadDetails.status || lead.status,
+        date: leadDetails.date || lead.date,
+        count_task,
+        hasPendingContract: Array.isArray(lead.contract)
+          ? lead.contract.some(item => item.admin_status === "pending")
+          : false,
+
+      }
+    }));
 
     // Return the leads in the response
     return responseData(res, "User data found", 200, true, "", { leads: formattedLeads.reverse() });
@@ -216,10 +219,10 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
 
     // Fetch projects in a single query
     const projects1 = await projectModel.find({ project_id: { $in: projectIds } }).lean();
-    
-     
 
-    const projectData =  await Promise.all (projects1.map(async (project) => {
+
+
+    const projectData = await Promise.all(projects1.map(async (project) => {
       const count_task = await taskModel.countDocuments({ project_id: project.project_id });
       const {
         project_id, project_name, project_status, project_start_date, project_end_date, project_type, designer, client,
@@ -316,8 +319,8 @@ export const checkAvailableUserIsAdmininProjectByLeadid = async (req, res, next)
 
     // // Fetch projects in a single query
     // const projects1 = await projectModel.find({ project_id: { $in: projectIds } }).lean();
-    
-     
+
+
 
     // const projectData =  await Promise.all (projects1.map(async (project) => {
     //   const count_task = await taskModel.countDocuments({ project_id: project.project_id });
@@ -413,16 +416,16 @@ export const checkOpenTaskReadAccess = async (req, res, next) => {
     const task_status = req.query.task_status;
 
     const token = req.cookies?.auth ||
-            req.header("Authorization")?.replace("Bearer", "").trim();
+      req.header("Authorization")?.replace("Bearer", "").trim();
 
     if (!token) {
-        return responseData(
-            res,
-            "",
-            403,
-            false,
-            "Unauthorized: No token provided"
-        );
+      return responseData(
+        res,
+        "",
+        403,
+        false,
+        "Unauthorized: No token provided"
+      );
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -430,7 +433,7 @@ export const checkOpenTaskReadAccess = async (req, res, next) => {
     const user = await registerModel.findById(decodedToken?.id);
 
     if (!user) {
-        return responseData(res, "", 403, false, "Unauthorized: User not found");
+      return responseData(res, "", 403, false, "Unauthorized: User not found");
     }
 
     const opentaskReadAccess = user.access?.opentask?.includes('read')
@@ -443,106 +446,106 @@ export const checkOpenTaskReadAccess = async (req, res, next) => {
     }
     else {
 
-        // Declare arrays to store the tasks based on permissions
-        let projectTasks = [];
-        let leadTasks = [];
-        let openTasks = [];
+      // Declare arrays to store the tasks based on permissions
+      let projectTasks = [];
+      let leadTasks = [];
+      let openTasks = [];
 
-        // Fetch data based on permissions
-        if (projecttaskReadAccess) {
-            projectTasks = await taskModel.find({ org_id });
-        }
+      // Fetch data based on permissions
+      if (projecttaskReadAccess) {
+        projectTasks = await taskModel.find({ org_id });
+      }
 
-        if (leadtaskReadAccess) {
-            leadTasks = await leadTaskModel.find({ org_id });
-        }
+      if (leadtaskReadAccess) {
+        leadTasks = await leadTaskModel.find({ org_id });
+      }
 
-        if (opentaskReadAccess) {
-            openTasks = await openTaskModel.find({ org_id });
-        }
+      if (opentaskReadAccess) {
+        openTasks = await openTaskModel.find({ org_id });
+      }
 
-        // Fetch related data only if the user has access to the relevant task type
-        const [projects, leads] = await Promise.all([
-            projecttaskReadAccess ? projectModel.find({ org_id, project_id: { $in: projectTasks.map(task => task.project_id) } }) : [],
-            leadtaskReadAccess ? leadModel.find({ org_id, lead_id: { $in: leadTasks.map(task => task.lead_id) } }) : [],
-        ]);
+      // Fetch related data only if the user has access to the relevant task type
+      const [projects, leads] = await Promise.all([
+        projecttaskReadAccess ? projectModel.find({ org_id, project_id: { $in: projectTasks.map(task => task.project_id) } }) : [],
+        leadtaskReadAccess ? leadModel.find({ org_id, lead_id: { $in: leadTasks.map(task => task.lead_id) } }) : [],
+      ]);
 
-        // Map project tasks
-        const projectTaskDetails = projectTasks.map(task => {
-            const project = projects.find(p => p.project_id === task.project_id);
-            return {
-                project_id: task.project_id,
-                name: project ? project.project_name : "Unknown",
-                type: "project type",
-                task_id: task.task_id,
-                org_id: task.org_id,
-                task_name: task.task_name,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date,
-                task_end_date: task.estimated_task_end_date
-            };
-        });
+      // Map project tasks
+      const projectTaskDetails = projectTasks.map(task => {
+        const project = projects.find(p => p.project_id === task.project_id);
+        return {
+          project_id: task.project_id,
+          name: project ? project.project_name : "Unknown",
+          type: "project type",
+          task_id: task.task_id,
+          org_id: task.org_id,
+          task_name: task.task_name,
+          task_status: task.task_status,
+          task_priority: task.task_priority,
+          task_assignee: task.task_assignee,
+          task_start_date: task.estimated_task_start_date,
+          task_end_date: task.estimated_task_end_date
+        };
+      });
 
-        // Map lead tasks
-        const leadTaskDetails = leadTasks.map(task => {
-            const lead = leads.find(l => l.lead_id === task.lead_id);
-            return {
-                lead_id: task.lead_id,
-                name: lead ? lead.name : "Unknown",
-                type: "lead type",
-                task_id: task.task_id,
-                org_id: task.org_id,
-                task_name: task.task_name,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date,
-                task_end_date: task.estimated_task_end_date
-            };
-        });
+      // Map lead tasks
+      const leadTaskDetails = leadTasks.map(task => {
+        const lead = leads.find(l => l.lead_id === task.lead_id);
+        return {
+          lead_id: task.lead_id,
+          name: lead ? lead.name : "Unknown",
+          type: "lead type",
+          task_id: task.task_id,
+          org_id: task.org_id,
+          task_name: task.task_name,
+          task_status: task.task_status,
+          task_priority: task.task_priority,
+          task_assignee: task.task_assignee,
+          task_start_date: task.estimated_task_start_date,
+          task_end_date: task.estimated_task_end_date
+        };
+      });
 
-        // Map open tasks
-        const openTaskDetails = openTasks.map(task => {
-            return {
-                name: "Unknown",
-                type: "open type",
-                task_id: task.task_id,
-                org_id: task.org_id,
-                task_name: task.task_name,
-                task_status: task.task_status,
-                task_priority: task.task_priority,
-                task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date,
-                task_end_date: task.estimated_task_end_date
-            };
-        });
+      // Map open tasks
+      const openTaskDetails = openTasks.map(task => {
+        return {
+          name: "Unknown",
+          type: "open type",
+          task_id: task.task_id,
+          org_id: task.org_id,
+          task_name: task.task_name,
+          task_status: task.task_status,
+          task_priority: task.task_priority,
+          task_assignee: task.task_assignee,
+          task_start_date: task.estimated_task_start_date,
+          task_end_date: task.estimated_task_end_date
+        };
+      });
 
-        // Combine all tasks based on permissions
-        const allTasks = [
-            ...projecttaskReadAccess ? projectTaskDetails : [],
-            ...leadtaskReadAccess ? leadTaskDetails : [],
-            ...opentaskReadAccess ? openTaskDetails : []
-        ];
+      // Combine all tasks based on permissions
+      const allTasks = [
+        ...projecttaskReadAccess ? projectTaskDetails : [],
+        ...leadtaskReadAccess ? leadTaskDetails : [],
+        ...opentaskReadAccess ? openTaskDetails : []
+      ];
 
-        // Apply additional filters if provided
-        const filterConditions = {};
-        if (task_assignee) filterConditions.task_assignee = task_assignee;
-        if (task_status) filterConditions.task_status = task_status;
-        if (task_priority) filterConditions.task_priority = task_priority;
+      // Apply additional filters if provided
+      const filterConditions = {};
+      if (task_assignee) filterConditions.task_assignee = task_assignee;
+      if (task_status) filterConditions.task_status = task_status;
+      if (task_priority) filterConditions.task_priority = task_priority;
 
-        const filteredTasks = filterTasks(allTasks, filterConditions);
+      const filteredTasks = filterTasks(allTasks, filterConditions);
 
-        // Return filtered tasks in the response
-        return responseData(res, "All tasks fetched successfully", 200, true, "", filteredTasks);
+      // Return filtered tasks in the response
+      return responseData(res, "All tasks fetched successfully", 200, true, "", filteredTasks);
 
 
-      
-      
-    } 
 
-    
+
+    }
+
+
   } catch (err) {
     console.error("Error in checkOPenTaskReadAccess:", err);
     return responseData(res, "", 500, false, "Internal Server Error");

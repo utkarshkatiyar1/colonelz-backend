@@ -71,6 +71,8 @@ import { createImage, deleteMainImage, getAllMainImage, getAllPanoImagesFromFile
 import { addUserToFile, getFilesForUser } from "../../controllers/adminControllers/leadController/approval.controller.js";
 import { createLeadMiniTask, deleteLeadMiniTask, getAllLeadMiniTask, getSingleLeadMiniTask, updateLeadMiniTask } from "../../controllers/adminControllers/leadTaskControllers/minitask.controller.js";
 import { createMiniTask, deleteMiniTask, getAllMiniTask, getSingleMiniTask, updateMiniTask } from "../../controllers/adminControllers/taskControllers/minitask.controller.js";
+import { deleteProjectExecutionTask, deleteProjectExecutionTaskDetails, getProjectExecutionTask, projectExecutionTask, updateProjectExecutionTask, updateProjectExecutionTaskDetails } from "../../controllers/adminControllers/project_execution_timeline/project_execution_task.js";
+import { createProjectExecutionSubtask, deleteProjectExecutionSubtask, deleteProjectExecutionSubtaskDetails, updateProjectExecutionSubtask, updateProjectExecutionSubtaskDetails } from "../../controllers/adminControllers/project_execution_timeline/project_execution_subtask.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -3694,6 +3696,22 @@ router.route("/delete/mainimage").delete(verifyJWT, deleteMainImage);
 router.route("/get/threeimage").get(verifyJWT, getImageById);
 router.route("/get/all/mainthreeimage").get(verifyJWT, getAllMainImage);
 router.route("/get/all/panoimages").get(verifyJWT, getAllPanoImagesFromFileManager);
+
+router.route("/create/project/execution/task").post(verifyJWT, projectExecutionTask);
+router.route("/get/project/execution/tasks").get(verifyJWT, getProjectExecutionTask);
+router.route("/update/project/execution/task").put(verifyJWT, updateProjectExecutionTask);
+router.route("/delete/project/execution/task").delete(verifyJWT, deleteProjectExecutionTask);
+router.route("/delete/project/execution/task/details").delete(verifyJWT, deleteProjectExecutionTaskDetails);
+router.route("/update/project/execution/task/details").put(verifyJWT, updateProjectExecutionTaskDetails);
+
+
+router.route("/create/project/execution/subtask").post(verifyJWT, createProjectExecutionSubtask);
+router.route("/update/project/execution/subtask").put(verifyJWT, updateProjectExecutionSubtask);
+router.route("/delete/project/execution/subtask").delete(verifyJWT, deleteProjectExecutionSubtask);
+router.route("/delete/project/execution/subtask/details").delete(verifyJWT, deleteProjectExecutionSubtaskDetails);
+router.route("/update/project/execution/subtask/details").put(verifyJWT, updateProjectExecutionSubtaskDetails);
+
+
 
 
 
