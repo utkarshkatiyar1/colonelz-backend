@@ -62,8 +62,8 @@ export const getFileData = async (req, res) => {
 
         return {
           lead_id: element.lead_id,
-          lead_name: firstLeadDetail.name || "", 
-          lead_email: firstLeadDetail.email || "", 
+          lead_name: firstLeadDetail.name || lead.name, 
+          lead_email: firstLeadDetail.email || lead.email, 
           lead_status: lead.status,
           lead_date: lead.date,
         };
