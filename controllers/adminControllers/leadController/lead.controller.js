@@ -333,23 +333,20 @@ export const getAllLead = async (req, res) => {
   try {
     const org_id = req.query.org_id;
 
-    // Check if org_id is provided
     if (!org_id) {
       return responseData(res, "", 400, false, "Org ID is required", []);
     }
 
-    // Check if the organization exists
     const check_org = await orgModel.findOne({ _id: org_id });
     if (!check_org) {
       return responseData(res, "", 404, false, "Org not found");
     }
 
-    // Aggregate leads with task count
     const leads = await leadModel.aggregate([
-      { $match: { org_id: org_id } }, // Match leads with the provided org_id
+      { $match: { org_id: org_id } },
       {
         $lookup: {
-          from: "leadTask", // Collection name for tasks
+          from: "leadTask",
           localField: "lead_id",
           foreignField: "lead_id",
           as: "leadTask"
@@ -357,35 +354,56 @@ export const getAllLead = async (req, res) => {
       },
       {
         $project: {
-          name: { $arrayElemAt: ["$lead_details.name", 0] }, 
           lead_id: 1,
-          email: { $arrayElemAt: ["$lead_details.email", 0] },
-          phone: { $arrayElemAt: ["$lead_details.phone", 0] }, 
-          location: { $arrayElemAt: ["$lead_details.location", 0] },
           status: 1,
-          date: { $arrayElemAt: ["$lead_details.date", 0] },
           lead_status: 1,
           count_task: { $size: "$leadTask" }, // Calculate task count
           // contract: 1,
           hasPendingContract: { // Calculate if any contract has "pending" admin_status
+
             $cond: [
-              { $gt: [{ $size: { $filter: { input: "$contract", as: "item", cond: { $eq: ["$$item.admin_status", "pending"] } } } }, 0] },
+              {
+                $gt: [{
+                  $size: {
+                    $filter: {
+                      input: "$contract",
+                      as: "item",
+                      cond: { $eq: ["$$item.admin_status", "pending"] }
+                    }
+                  }
+                }, 0]
+              },
               true,
               false
             ]
+          },
+          name: {
+            $ifNull: [{ $arrayElemAt: ["$lead_details.name", 0] }, "$name"]
+          },
+          email: {
+            $ifNull: [{ $arrayElemAt: ["$lead_details.email", 0] }, "$email"]
+          },
+          phone: {
+            $ifNull: [{ $arrayElemAt: ["$lead_details.phone", 0] },"$phone"]
+          },
+          location: {
+            $ifNull: [{ $arrayElemAt: ["$lead_details.location", 0] }, "$location"]
+          },
+          date: {
+            $ifNull: [{ $arrayElemAt: ["$lead_details.date", 0] }, "$date"]
           }
         }
       },
-      { $sort: { createdAt: -1 } } // Sort leads by createdAt field
+      { $sort: { createdAt: -1 } }
     ]);
 
-    // Return the response in the same format
     responseData(res, "All Lead Data", 200, true, "", { leads });
   } catch (error) {
-    console.error(error); // Log the error for debugging
+    console.error(error);
     responseData(res, "", 500, false, error.message);
   }
 };
+
 
 
 
@@ -1019,7 +1037,7 @@ export const leadToMultipleProject = async (req, res) => {
                     lead_update_track: [],
                     contract_Status: false
                   },
-                  $push:{
+                  $push: {
                     lead_details: {
                       $each: [{
                         name: name,
@@ -1030,7 +1048,7 @@ export const leadToMultipleProject = async (req, res) => {
                         date: date,
                         lead_manager: lead_manager,
                       }],
-                      $position: 0 
+                      $position: 0
                     }
                   }
                 }
