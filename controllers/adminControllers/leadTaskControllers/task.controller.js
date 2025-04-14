@@ -634,7 +634,7 @@ export const getAllLeadTaskWithData = async (req, res) => {
 
                         response.push({
                             task_name: check_task[i].task_name,
-                            percentage: percentage
+                            percentage: check_task[i].task_status === 'Completed' ? 100 : percentage,
 
 
                         })

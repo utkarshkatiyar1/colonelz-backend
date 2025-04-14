@@ -7,6 +7,9 @@ const SubtaskSchema = new mongoose.Schema({
     sub_task_name: { type: String, required: true },
     sub_task_end_date: { type: String, required: true },
     sub_task_start_date: { type: String, required: true },
+    color:{
+      type:String,
+    },
     sub_task_details:[] 
     
 });
@@ -36,6 +39,9 @@ const project_execution_Schema = new mongoose.Schema({
   end_date:{
     type:String,
     required:true,
+  },
+  color:{
+    type:String,
   },
   task_details:[],
     subtasks: [SubtaskSchema],

@@ -357,8 +357,10 @@ export const getAllLead = async (req, res) => {
           lead_id: 1,
           status: 1,
           lead_status: 1,
-          count_task: { $size: "$leadTask" },
-          hasPendingContract: {
+          count_task: { $size: "$leadTask" }, // Calculate task count
+          // contract: 1,
+          hasPendingContract: { // Calculate if any contract has "pending" admin_status
+
             $cond: [
               {
                 $gt: [{
