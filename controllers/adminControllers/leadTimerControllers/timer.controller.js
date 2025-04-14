@@ -215,25 +215,7 @@ export const UpdateLeadTasktimerController = async (req, res) => {
                     return responseData(res, "", 400, false, "Task is already completed or cancelled")
                 }
                 else {
-                    const check_subtask = check_task.subtasks
-                    if (check_subtask.length > 0) {
-                        await leadTimerModel.findOneAndUpdate({
-                            task_id: task_id,
-                            lead_id: lead_id,
-                            'taskstime.task_id': task_id
-                        },
-                            {
-                                $set: {
-                                    'taskstime.$.task_isrunning': false,
-
-                                }
-                            },
-                            { new: true, useFindAndModify: false }
-                        )
-                        return responseData(res, "", 400, false, "This task already has subtasks")
-
-                    }
-                    else {
+                    
 
                         if (check_task.task_status === 'Completed' || check_task.task_status === 'Cancelled') {
                             await leadTimerModel.findOneAndUpdate({
@@ -281,7 +263,7 @@ export const UpdateLeadTasktimerController = async (req, res) => {
                                 return responseData(res, "", 400, false, "Timer not updated")
                             }
                         }
-                    }
+                    
                 }
 
             }

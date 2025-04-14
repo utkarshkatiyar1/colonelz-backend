@@ -14,7 +14,7 @@ function generateSixDigitNumber() {
 
 export const createProjectExecutionSubtask = async (req, res) => {
     try {
-        const { org_id, project_id, task_id, subtask_name, subtask_start_date, subtask_end_date } = req.body;
+        const { org_id, project_id, task_id, subtask_name, subtask_start_date, subtask_end_date, color } = req.body;
         if (!org_id) {
             return responseData(res, "", 400, false, "Org id is required", []);
         }
@@ -47,7 +47,7 @@ export const createProjectExecutionSubtask = async (req, res) => {
             if (!check_task) {
                 return responseData(res, "", 400, false, "Task not found", []);
             }
-            const create_subtask = await projectExecutionModel.updateOne({ task_id: task_id, project_id: project_id, org_id: org_id }, { $push: { subtasks: { sub_task_id: subtask_id, sub_task_name: subtask_name, sub_task_start_date: subtask_start_date, sub_task_end_date: subtask_end_date } } });
+            const create_subtask = await projectExecutionModel.updateOne({ task_id: task_id, project_id: project_id, org_id: org_id }, { $push: { subtasks: { sub_task_id: subtask_id, sub_task_name: subtask_name, sub_task_start_date: subtask_start_date, sub_task_end_date: subtask_end_date, color:color } } });
             if (create_subtask) {
                 return responseData(res, "Subtask created successfully", 200, true, "", []);
             }
@@ -73,10 +73,14 @@ export const updateProjectExecutionSubtask = async (req, res) => {
             subtask_name,
             subtask_start_date,
             subtask_end_date,
+            color,
+
+
             subtask_details_start_date,
             subtask_details_end_date,
             subtask_comment,
-            subtask_type
+            subtask_type,
+            detail_color
         } = req.body;
 
         if (!org_id || !project_id || !task_id || !subtask_id || !subtask_name || !subtask_start_date || !subtask_end_date) {
@@ -96,7 +100,8 @@ export const updateProjectExecutionSubtask = async (req, res) => {
             $set: {
                 'subtasks.$.sub_task_name': subtask_name,
                 'subtasks.$.sub_task_start_date': subtask_start_date,
-                'subtasks.$.sub_task_end_date': subtask_end_date
+                'subtasks.$.sub_task_end_date': subtask_end_date,
+                'subtasks.$.color': color
             }
         };
         if (subtask_details_start_date && subtask_details_end_date && subtask_comment && subtask_type) {
@@ -107,7 +112,8 @@ export const updateProjectExecutionSubtask = async (req, res) => {
                     subtask_details_start_date,
                     subtask_details_end_date,
                     subtask_comment,
-                    subtask_type
+                    subtask_type,
+                    color: detail_color
                 }
             };
         }
@@ -214,7 +220,8 @@ export const updateProjectExecutionSubtaskDetails = async (req, res) => {
             subtask_details_start_date,
             subtask_details_end_date,
             subtask_comment,
-            subtask_type
+            subtask_type,
+            detail_color,
         } = req.body;
 
         if (!org_id || !project_id || !task_id || !subtask_id || !subtask_details_id || !subtask_details_start_date || !subtask_details_end_date) {
@@ -242,7 +249,8 @@ export const updateProjectExecutionSubtaskDetails = async (req, res) => {
                     'subtasks.$[subtask].sub_task_details.$[detail].subtask_details_start_date': subtask_details_start_date,
                     'subtasks.$[subtask].sub_task_details.$[detail].subtask_details_end_date': subtask_details_end_date,
                     'subtasks.$[subtask].sub_task_details.$[detail].subtask_comment': subtask_comment,
-                    'subtasks.$[subtask].sub_task_details.$[detail].subtask_type': subtask_type
+                    'subtasks.$[subtask].sub_task_details.$[detail].subtask_type': subtask_type,
+                    'subtasks.$[subtask].sub_task_details.$[detail].color': detail_color
                 }
             },
             {

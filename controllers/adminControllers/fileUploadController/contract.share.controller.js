@@ -779,7 +779,7 @@ export const contractStatus = async (req, res) => {
 
         for (let i = 0; i < check_status.contract.length; i++) {
             if (check_status.contract[i].itemId == itemId) {
-                if (check_status.contract[i].admin_status !== "pending") {
+                if (check_status.contract[i].admin_status !== "pending" && check_status.contract[i].admin_status !== "notsend") {
 
                     return responseData(res, "", 400, false, "you are already submit your response");
                 }

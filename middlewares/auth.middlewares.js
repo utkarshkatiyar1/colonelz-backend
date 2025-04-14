@@ -186,6 +186,7 @@ export const checkAvailableUserIsAdminInLead = async (req, res, next) => {
         phone: leadDetails.phone ||  lead.phone,
         location: leadDetails.location || lead.location,
         status: leadDetails.status || lead.status,
+        lead_status: lead.lead_status,
         date: leadDetails.date || lead.date,
         count_task,
         hasPendingContract: Array.isArray(lead.contract)

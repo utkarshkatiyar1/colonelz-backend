@@ -14,7 +14,7 @@ function generateSixDigitNumber() {
 }
 export const projectExecutionTask = async (req, res) => {
     try {
-        const { project_id, org_id, task_name, start_date, end_date } = req.body;
+        const { project_id, org_id, task_name, start_date, end_date, color } = req.body;
         if (!project_id) {
             responseData(res, "", 400, false, "Project ID is required");
         }
@@ -49,7 +49,8 @@ export const projectExecutionTask = async (req, res) => {
                 task_name: task_name,
                 task_id: task_id,
                 start_date: start_date,
-                end_date: end_date
+                end_date: end_date,
+                color: color,
             });
             responseData(res, "Project execution task created successfully", 200, true, "", []);
 
@@ -103,6 +104,9 @@ export const updateProjectExecutionTask = async (req, res) => {
             task_name,
             start_date,
             end_date,
+            color,
+
+
             details_start_date,
             details_end_date,
             comment,
@@ -123,7 +127,8 @@ export const updateProjectExecutionTask = async (req, res) => {
             $set: {
                 task_name,
                 start_date,
-                end_date
+                end_date,
+                color
             }
         };
 
