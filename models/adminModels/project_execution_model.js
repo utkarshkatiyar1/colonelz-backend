@@ -10,7 +10,8 @@ const SubtaskSchema = new mongoose.Schema({
     color:{
       type:String,
     },
-    sub_task_details:[] 
+    sub_task_details:[],
+    other_subtask_affects:[],
     
 });
 
@@ -44,7 +45,8 @@ const project_execution_Schema = new mongoose.Schema({
     type:String,
   },
   task_details:[],
-    subtasks: [SubtaskSchema],
+  subtasks: [SubtaskSchema],
+  other_task_affects:[],
   createdAt: {
     type: Date,
     default: Date.now,
