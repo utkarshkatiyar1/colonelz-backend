@@ -121,7 +121,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use("/v1/api/admin", adminRoutes);
 app.use("/v1/api/users", usersRouter);
-app.use("/v1/api/org", orgRouter);
+app.use("/v1/api/org", orgRouter); 
 app.use("/v1/api/bill", billRouter);
 
 setupSwaggerDocs(app);
