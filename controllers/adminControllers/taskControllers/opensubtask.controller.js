@@ -189,10 +189,10 @@ export const getAllOpenSubTask = async (req, res) => {
                             sub_task_id: check_task.subtasks[i].sub_task_id,
                             sub_task_name: check_task.subtasks[i].sub_task_name,
                             sub_task_description: check_task.subtasks[i].sub_task_description,
-                            actual_sub_task_start_date: check_task.subtasks[i].actual_sub_task_start_date,
-                            actual_sub_task_end_date: check_task.subtasks[i].actual_sub_task_end_date,
-                            estimated_sub_task_end_date: check_task.subtasks[i].estimated_sub_task_end_date,
-                            estimated_sub_task_start_date: check_task.subtasks[i].estimated_sub_task_start_date,
+                            actual_sub_task_start_date: check_task.subtasks[i].actual_sub_task_start_date ?? null,
+                            actual_sub_task_end_date: check_task.subtasks[i].actual_sub_task_end_date ?? null,
+                            estimated_sub_task_start_date: check_task.subtasks[i].estimated_sub_task_start_date ?? null,
+                            estimated_sub_task_end_date: check_task.subtasks[i].estimated_sub_task_end_date ?? null,
                             sub_task_status: check_task.subtasks[i].sub_task_status,
                             sub_task_priority: check_task.subtasks[i].sub_task_priority,
                             sub_task_assignee: check_task.subtasks[i].sub_task_assignee,
@@ -200,7 +200,6 @@ export const getAllOpenSubTask = async (req, res) => {
                             sub_task_createdOn: check_task.subtasks[i].sub_task_createdOn,
                             sub_task_reporter: check_task.subtasks[i].sub_task_reporter,
                             remark: check_task.subtasks[i].remark
-
                         })
                     }
                     responseData(res, "All sub task fetch successfully", 200, false, "", response)
@@ -242,7 +241,7 @@ export const getSingleOpenSubTask = async (req, res) => {
                 responseData(res, "", 404, false, "User not found", [])
             }
             else {                
-                const check_task = await oprnTaskModel.findOne({ task_id: task_id, org_id: org_id })
+                const check_task = await openTaskModel.findOne({ task_id: task_id, org_id: org_id })
                 if (!check_task) {
                     responseData(res, "", 404, false, "Task not found", [])
                 }
