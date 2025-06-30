@@ -19,7 +19,7 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, task_name, task_description, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, task_name, task_description, /*estimated_task_start_date,*/ estimated_task_end_date, task_status, task_priority, reporter, actual_task_start_date, actual_task_end_date) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new openTaskModel({
@@ -27,8 +27,10 @@ const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, tas
         org_id,
         task_name,
         task_description,
-        estimated_task_start_date,
+        // estimated_task_start_date, // Commented out
         estimated_task_end_date,
+        actual_task_start_date,
+        actual_task_end_date,
         task_status,
         task_priority,
         task_assignee,
@@ -138,8 +140,10 @@ export const Alltask = async (req, res) => {
                 task_status: task.task_status,
                 task_priority: task.task_priority,
                 task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date, // <-- ADD THIS LINE
+                // task_start_date: task.estimated_task_start_date, // Commented out
                 task_end_date: task.estimated_task_end_date,
+                actual_task_start_date: task.actual_task_start_date,
+                actual_task_end_date: task.actual_task_end_date,
             }));
     
             
@@ -209,8 +213,10 @@ export const Alltask = async (req, res) => {
                 task_status: task.task_status,
                 task_priority: task.task_priority,
                 task_assignee: task.task_assignee,
-                task_start_date: task.estimated_task_start_date, // <-- ADD THIS LINE
+                // task_start_date: task.estimated_task_start_date, // Commented out
                 task_end_date: task.estimated_task_end_date,
+                actual_task_start_date: task.actual_task_start_date,
+                actual_task_end_date: task.actual_task_end_date,
             }));
 
             const allTasks = [...projectTaskDetails, ...leadTaskDetails, ...openTaskDetails];
@@ -239,7 +245,9 @@ export const createOpenTask = async (req, res) => {
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const estimated_task_end_date = req.body.estimated_task_end_date;
-        const estimated_task_start_date = req.body.estimated_task_start_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date; // Commented out
+        const actual_task_start_date = req.body.actual_task_start_date;
+        const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -251,7 +259,7 @@ export const createOpenTask = async (req, res) => {
         }
         if (!task_priority) return responseData(res, "", 404, false, "Task priority required", []);
         if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
-         if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task end date required", []);
+        // if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []); // Commented out
         if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
         if (!org_id) return responseData(res, "", 400, false, "Org Id required");
         // Check if the user exists
@@ -262,13 +270,15 @@ export const createOpenTask = async (req, res) => {
         const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
-        await createTaskAndTimer(res,req,  org_id, check_user, task_assignee, task_name, task_description, estimated_task_start_date, estimated_task_end_date, task_status, task_priority, reporter);      
-
+        await createTaskAndTimer(
+            res, req, org_id, check_user, task_assignee, task_name, task_description,
+            /*estimated_task_start_date,*/ estimated_task_end_date, task_status, task_priority, reporter,
+            actual_task_start_date, actual_task_end_date
+        );
     } catch (err) {
         console.log(err);
         res.status(500).send({ error: 'Internal Server Error', details: err });
     }
-
 }
 
 export const getSingleOpenTask = async (req, res) => {
@@ -303,7 +313,9 @@ export const getSingleOpenTask = async (req, res) => {
                     task_name: 1,
                     task_description: 1,
                     estimated_task_end_date: 1,
-                    estimated_task_start_date: { $ifNull: ["$estimated_task_start_date", null] }, // Always present
+                    // estimated_task_start_date: { $ifNull: ["$estimated_task_start_date", null] }, // Commented out
+                    actual_task_start_date: 1,
+                    actual_task_end_date: 1,
                     task_status: 1,
                     task_priority: 1,
                     task_createdOn: 1,
@@ -335,7 +347,9 @@ export const updateOpenTask = async (req, res) => {
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const estimated_task_end_date = req.body.estimated_task_end_date;
-        const estimated_task_start_date = req.body.estimated_task_start_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date; // Commented out
+        const actual_task_start_date = req.body.actual_task_start_date;
+        const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -357,9 +371,9 @@ export const updateOpenTask = async (req, res) => {
         else if (!estimated_task_end_date) {
             responseData(res, "", 404, false, "Task end date required", [])
         }
-        else if (!estimated_task_start_date) {
-            responseData(res, "", 404, false, "Task start date required", [])
-        }
+        // else if (!estimated_task_start_date) {
+        //     responseData(res, "", 404, false, "Task start date required", [])
+        // }
         else if (!task_status) {
             responseData(res, "", 404, false, "Task status required", [])
         }
@@ -387,7 +401,7 @@ export const updateOpenTask = async (req, res) => {
                     let findUser;
                     if(task_assignee) {
                         findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
-    
+
                         if (!findUser) {
                             return responseData(res, "", 404, false, "User not found");
                             
@@ -399,7 +413,9 @@ export const updateOpenTask = async (req, res) => {
                                 task_name: task_name,
                                 task_description: task_description,
                                 estimated_task_end_date: estimated_task_end_date,
-                                estimated_task_start_date: estimated_task_start_date,
+                                // estimated_task_start_date: estimated_task_start_date, // Commented out
+                                actual_task_start_date: actual_task_start_date,
+                                actual_task_end_date: actual_task_end_date,
                                 task_status: task_status,
                                 task_priority: task_priority,
                                 task_assignee: task_assignee,
@@ -615,7 +631,8 @@ export const MoveTask = async (req, res) => {
             task_assignee: check_task.task_assignee,
             task_status: check_task.task_status,
             estimated_task_end_date: check_task.estimated_task_end_date,
-            estimated_task_start_date: check_task.estimated_task_start_date,
+            actual_task_start_date: check_task.actual_task_start_date,
+            actual_task_end_date: check_task.actual_task_end_date,
             task_description: check_task.task_description,
             task_priority: check_task.task_priority,
             task_createdBy: check_task.task_createdBy,
