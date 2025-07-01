@@ -111,7 +111,7 @@ export const Alltask = async (req, res) => {
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
                     task_end_date: task.estimated_task_end_date,
-                    task_start_date: task.estimated_task_start_date // <-- ADD THIS LINE
+                   
                 };
             });
             const leadTaskDetails = leadTasks.map(task => {
@@ -127,7 +127,7 @@ export const Alltask = async (req, res) => {
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
                     task_end_date: task.estimated_task_end_date,
-                    task_start_date: task.estimated_task_start_date // <-- ADD THIS LINE
+                    
                 };
             });
     
@@ -140,7 +140,6 @@ export const Alltask = async (req, res) => {
                 task_status: task.task_status,
                 task_priority: task.task_priority,
                 task_assignee: task.task_assignee,
-                // task_start_date: task.estimated_task_start_date, // Commented out
                 task_end_date: task.estimated_task_end_date,
                 actual_task_start_date: task.actual_task_start_date,
                 actual_task_end_date: task.actual_task_end_date,
@@ -183,7 +182,6 @@ export const Alltask = async (req, res) => {
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
                     task_end_date: task.estimated_task_end_date,
-                    task_start_date: task.estimated_task_start_date // <-- ADD THIS LINE
                 };
             });
 
@@ -200,8 +198,7 @@ export const Alltask = async (req, res) => {
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
                     task_end_date: task.estimated_task_end_date,
-                    task_start_date: task.estimated_task_start_date // <-- ADD THIS LINE
-                };
+S                };
             });
 
             const openTaskDetails = openTasks.map(task => ({

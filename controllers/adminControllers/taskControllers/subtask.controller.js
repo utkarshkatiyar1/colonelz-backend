@@ -18,7 +18,7 @@ function generateSixDigitNumber() {
 const createSubTaskAndTimer = async (data, res, req) => {
     try {
         const {org_id, project_id, task_id, sub_task_name, sub_task_description,
-             estimated_sub_task_start_date, estimated_sub_task_end_date, actual_sub_task_start_date, actual_sub_task_end_date,
+            /* estimated_sub_task_start_date */ estimated_sub_task_end_date, actual_sub_task_start_date, actual_sub_task_end_date,
             sub_task_status, sub_task_priority, sub_task_assignee, sub_task_reporter, check_user, check_task } = data;
 
         const sub_task_id = `STK-${generateSixDigitNumber()}`;
@@ -32,7 +32,7 @@ const createSubTaskAndTimer = async (data, res, req) => {
             $push: {
                 subtasks: {
                     sub_task_id, sub_task_name, sub_task_description,
-                    estimated_sub_task_start_date, estimated_sub_task_end_date,
+                    estimated_sub_task_end_date,
                     actual_sub_task_start_date, actual_sub_task_end_date,
                     sub_task_status, sub_task_priority, sub_task_assignee,
                     sub_task_createdBy: check_user.username, sub_task_createdOn: new Date(),
@@ -86,7 +86,7 @@ export const createSubTask = async (req, res) => {
         const sub_task_name = req.body.sub_task_name;
         const sub_task_description = req.body.sub_task_description;
         const actual_sub_task_start_date = req.body.actual_sub_task_start_date;
-        const estimated_sub_task_start_date = req.body.estimated_sub_task_start_date;
+        // const estimated_sub_task_start_date = req.body.estimated_sub_task_start_date;
         const estimated_sub_task_end_date = req.body.estimated_sub_task_end_date;
         const actual_sub_task_end_date = req.body.actual_sub_task_end_date;
         const sub_task_status = req.body.sub_task_status;
@@ -105,7 +105,7 @@ export const createSubTask = async (req, res) => {
         if (!sub_task_name || !onlyAlphabetsValidation(sub_task_name) || sub_task_name.length <= 3)
             return responseData(res, "", 404, false, "Subtask Name should be alphabets and more than 3 characters", []);
         if (!sub_task_priority) return responseData(res, "", 404, false, "Subtask priority required", []);
-        if (!estimated_sub_task_start_date) return responseData(res, "", 404, false, "Subtask start date required", []);
+        // if (!estimated_sub_task_start_date) return responseData(res, "", 404, false, "Subtask start date required", []);
         if (!estimated_sub_task_end_date) return responseData(res, "", 404, false, "Subtask end date required", []);
         if (!sub_task_status) return responseData(res, "", 404, false, "Subtask status required", []);
         if (!org_id) return responseData(res, "", 404, false, "Org Id required", []);
@@ -163,7 +163,7 @@ export const createSubTask = async (req, res) => {
 
             await createSubTaskAndTimer({
                 org_id, project_id, task_id, sub_task_name, sub_task_description,
-                estimated_sub_task_start_date, estimated_sub_task_end_date,
+                estimated_sub_task_end_date,
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
@@ -177,7 +177,7 @@ export const createSubTask = async (req, res) => {
             }
             await createSubTaskAndTimer({
                org_id, project_id, task_id, sub_task_name, sub_task_description,
-                estimated_sub_task_start_date, estimated_sub_task_end_date,
+                estimated_sub_task_end_date,
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
@@ -191,7 +191,7 @@ export const createSubTask = async (req, res) => {
             }
             await createSubTaskAndTimer({
                org_id, project_id, task_id, sub_task_name, sub_task_description,
-                estimated_sub_task_start_date, estimated_sub_task_end_date,
+                estimated_sub_task_end_date,
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
@@ -212,7 +212,7 @@ export const createSubTask = async (req, res) => {
 
             await createSubTaskAndTimer({
                org_id, project_id, task_id, sub_task_name, sub_task_description,
-                estimated_sub_task_start_date, estimated_sub_task_end_date,
+                estimated_sub_task_end_date,
                 actual_sub_task_start_date, actual_sub_task_end_date,
                 sub_task_status, sub_task_priority, sub_task_assignee,
                 sub_task_reporter, check_user, check_task
@@ -277,7 +277,7 @@ export const getAllSubTask = async (req, res) => {
                                 sub_task_description: check_task.subtasks[i].sub_task_description,
                                 actual_sub_task_start_date: check_task.subtasks[i].actual_sub_task_start_date ?? null,
                                 actual_sub_task_end_date: check_task.subtasks[i].actual_sub_task_end_date ?? null,
-                                estimated_sub_task_start_date: check_task.subtasks[i].estimated_sub_task_start_date ?? null,
+                                // estimated_sub_task_start_date: check_task.subtasks[i].estimated_sub_task_start_date ?? null,
                                 estimated_sub_task_end_date: check_task.subtasks[i].estimated_sub_task_end_date,
                                 sub_task_status: check_task.subtasks[i].sub_task_status,
                                 sub_task_priority: check_task.subtasks[i].sub_task_priority,
@@ -375,7 +375,7 @@ export const updateSubTask = async (req, res) => {
             sub_task_name,
             sub_task_description,
             actual_sub_task_start_date,
-            estimated_sub_task_start_date,
+            // estimated_sub_task_start_date,
             estimated_sub_task_end_date,
             actual_sub_task_end_date,
             sub_task_status,
@@ -394,7 +394,7 @@ export const updateSubTask = async (req, res) => {
             { key: sub_task_id, message: "Sub-task Id required" },
             { key: sub_task_name && onlyAlphabetsValidation(sub_task_name) && sub_task_name.length > 3, message: "Sub task Name should be alphabets and longer than 3 characters" },
             { key: sub_task_priority, message: "Sub task priority required" },
-            { key: estimated_sub_task_start_date, message: "Sub task start date required" },
+            // { key: estimated_sub_task_start_date, message: "Sub task start date required" },
             { key: estimated_sub_task_end_date, message: "Sub task end date required" },
             { key: sub_task_status, message: "Sub task status required" },
             // { key: sub_task_assignee, message: "Sub task assignee required" },
@@ -481,7 +481,7 @@ export const updateSubTask = async (req, res) => {
         const updateFields = {
             "subtasks.$.sub_task_name": sub_task_name,
             "subtasks.$.sub_task_description": sub_task_description,
-            "subtasks.$.estimated_sub_task_start_date": estimated_sub_task_start_date,
+            // "subtasks.$.estimated_sub_task_start_date": estimated_sub_task_start_date,
             "subtasks.$.estimated_sub_task_end_date": estimated_sub_task_end_date,
             "subtasks.$.actual_sub_task_start_date": actual_sub_task_start_date,
             "subtasks.$.actual_sub_task_end_date": actual_sub_task_end_date,
