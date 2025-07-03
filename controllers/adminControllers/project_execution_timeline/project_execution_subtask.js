@@ -159,7 +159,7 @@ export const updateProjectExecutionSubtask = async (req, res) => {
 
 
         
-        if(affection.length > 0 && subtask_type === 'Delay') {
+        if (Array.isArray(affection) && affection.length > 0 && subtask_type === 'Delay') {
 
             // actual extension in task and subtask in child
 
