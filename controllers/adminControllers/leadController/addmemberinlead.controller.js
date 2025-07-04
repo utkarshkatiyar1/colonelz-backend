@@ -101,7 +101,7 @@ export const AddMemberInLead = async (req, res) => {
 
         catch (err) {
             console.log(err)
-            responseData(res, "", 500, false, "Invernal  Server Error", err)
+            responseData(res, "", 500, false, "Internal  Server Error", err)
         }
 
     }
@@ -167,7 +167,7 @@ export const removeMemberInlead = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        responseData(res, "", 500, false, "Invernal  Server Error")
+        responseData(res, "", 500, false, "Internal  Server Error")
     }
 }
 
