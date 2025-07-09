@@ -160,11 +160,15 @@ export const Alltask = async (req, res) => {
                 leadTaskModel.find({ org_id }),
                 openTaskModel.find({ org_id }) 
             ]);
-            const assignedProjectAndLead = await registerModel.find({ _id: user_id,organization: org_id })
+            const assignedProjectAndLead = await registerModel.find({ _id: user_id, organization: org_id });
+
+            const userData = assignedProjectAndLead[0]?.data?.[0];
+            const projectIds = Array.isArray(userData?.projectData) ? userData.projectData.map(p => p.project_id) : [];
+            const leadIds = Array.isArray(userData?.leadData) ? userData.leadData.map(l => l.lead_id) : [];
 
             const [projects, leads] = await Promise.all([
-                projectModel.find({ org_id, project_id: { $in: assignedProjectAndLead[0].data[0].projectData.map(p => p.project_id) } }),
-                leadModel.find({ org_id, lead_id: { $in: assignedProjectAndLead[0].data[0].leadData.map(l => l.lead_id) } }),
+                projectModel.find({ org_id, project_id: { $in: projectIds } }),
+                leadModel.find({ org_id, lead_id: { $in: leadIds } }),
             ]);
             
             // console.log(assignedProjectAndLead)
@@ -533,24 +537,24 @@ export const MoveTask = async (req, res) => {
         }
 
         const checkAssignee = async (task, projectIdOrLeadId, type) => {
-            const assigneeData = type === "project"
-                ? await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id })
-                : await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id });
+            const assigneeData = await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id });
+            if (!assigneeData || !Array.isArray(assigneeData.data) || !assigneeData.data[0]) return null;
 
-            if (!assigneeData) return null;
+            const dataObj = assigneeData.data[0];
+            const arr = type === "project" ? dataObj.projectData : dataObj.leadData;
+            if (!Array.isArray(arr)) return null;
 
-            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
-                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+            return arr.find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
         };
         const checkReporter = async (task, projectIdOrLeadId, type) => {
-            const assigneeData = type === "project"
-                ? await registerModel.findOne({ username: task.reporter, status: true, organization: org_id })
-                : await registerModel.findOne({ username: task.reporter, status: true, organization: org_id });
+            const assigneeData = await registerModel.findOne({ username: task.reporter, status: true, organization: org_id });
+            if (!assigneeData || !Array.isArray(assigneeData.data) || !assigneeData.data[0]) return null;
 
-            if (!assigneeData) return null;
+            const dataObj = assigneeData.data[0];
+            const arr = type === "project" ? dataObj.projectData : dataObj.leadData;
+            if (!Array.isArray(arr)) return null;
 
-            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
-                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+            return arr.find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
         };
 
         // Check for the appropriate assignee and reporter
@@ -566,8 +570,8 @@ export const MoveTask = async (req, res) => {
             if (check_task.reporter) {
                 task_reporter = await checkReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
             }
-    
             if (!task_reporter) {
+            
                 return responseData(res, "", 404, false, "Reporter not found in the project or lead", []);
             }
 
