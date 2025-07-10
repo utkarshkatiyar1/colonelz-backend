@@ -25,7 +25,7 @@ function generateSixDigitNumber() {
 
 
 
-const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, project_id, task_name, task_description,  estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new taskModel({
@@ -104,6 +104,7 @@ export const createTask = async (req, res) => {
         const project_id = req.body.project_id;
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
+        // const estimated_task_start_date = req.body.estimated_task_start_date;
         const estimated_task_end_date = req.body.estimated_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
@@ -199,7 +200,7 @@ export const createTask = async (req, res) => {
                 if (!exitsreportproject) return responseData(res, "", 404, false, "Reporter is not part of this project", []);
             }
             // Create task if validation passes
-            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description,  estimated_task_end_date, task_status, task_priority, reporter);
+            await createTaskAndTimer(res, req, org_id, check_user, task_assignee, project_id, task_name, task_description, estimated_task_end_date, task_status, task_priority, reporter);
         }
 
 

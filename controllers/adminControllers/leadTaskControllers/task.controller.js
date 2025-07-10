@@ -20,7 +20,7 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, estimated_task_end_date,  task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, lead_id, task_name, task_description, estimated_task_end_date, task_status, task_priority, reporter) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new leadTaskModel({
@@ -30,6 +30,7 @@ const createTaskAndTimer = async (res, req, org_id, check_user, task_assignee, l
         task_name,
         task_description,
         task_note: "",
+        // estimated_task_start_date: estimated_task_start_date,
         estimated_task_end_date: estimated_task_end_date,
         task_status,
         task_priority,
@@ -117,7 +118,7 @@ export const createLeadTask = async (req, res) => {
         }
         if (!task_priority) return responseData(res, "", 404, false, "Task priority required", []);
         // if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []);
-        // if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
+        if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
         if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
         // if (!task_assignee) return responseData(res, "", 404, false, "Task assignee required", []);
         // if (!reporter) return responseData(res, "", 404, false, "Task reporter required", []);
@@ -298,7 +299,8 @@ export const getAllLeadTasks = async (req, res) => {
             task_assignee: task.task_assignee,
             reporter: task.reporter,
             task_description: task.task_description,
-            task_note: task?.task_note
+            task_note: task?.task_note,
+            // estimated_task_start_date: task.estimated_task_start_date
 
 
         }));
@@ -354,6 +356,7 @@ export const getSingleLeadTask = async (req, res) => {
                     task_description: 1,
                     task_note: 1,
                     estimated_task_end_date: 1,
+                    // estimated_task_start_date: 1,
                     task_status: 1,
                     task_priority: 1,
                     task_createdOn: 1,
@@ -389,6 +392,7 @@ export const updateLeadTask = async (req, res) => {
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const estimated_task_end_date = req.body.estimated_task_end_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -453,12 +457,14 @@ export const updateLeadTask = async (req, res) => {
                             }
 
                         }
-                        const update_task = await leadTaskModel.findOneAndUpdate({ task_id: task_id, lead_id: lead_id, org_id: org_id },
+                        const update_task = await leadTaskModel.findOneAndUpdate(
+                            { task_id: task_id, lead_id: lead_id, org_id: org_id },
                             {
                                 $set: {
                                     task_name: task_name,
                                     task_description: task_description,
                                     task_note: task_note,
+                                    // estimated_task_start_date: estimated_task_start_date,
                                     estimated_task_end_date: estimated_task_end_date,
                                     task_status: task_status,
                                     task_priority: task_priority,
