@@ -20,7 +20,7 @@ function generateSixDigitNumber() {
 }
 
 
-const storeOrUpdateContract = async (res, existingContractData, userId, userEmail, check_lead, leadUpdate,checkUser, isFirst = false) => {
+const storeOrUpdateContract = async (res, existingContractData, userId, userEmail, check_lead, leadUpdate, checkUser, isFirst = false) => {
     try {
 
         const username = checkUser.username.trim().split(" ")
@@ -98,12 +98,12 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
             </html>
             `,
         };
-        
+
 
         if (isFirst) {
             // Find the approval document that matches lead_id
-            const approval = await Approval.findOne({ lead_id:existingContractData.lead_id, org_id:existingContractData.org_id });
-    
+            const approval = await Approval.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
+
             if (!approval) {
                 return responseData(res, "", 400, false, "Approval document not found", []);
             }
@@ -111,7 +111,7 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
 
             // Find the file inside the files array that matches file_id
             const file = approval.files.find(f => f.file_id === existingContractData.contractData.itemId);
-    
+
             if (!file) {
                 return responseData(res, "", 400, false, "File not found in approval document", []);
             }
@@ -123,16 +123,16 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
                 },
                 { new: true } // Return the updated document
             );
-    
+
             // Add user_id to the file's users list if not already present
             if (!file.users.includes(userId)) {
                 file.users.push(userId);
             }
-    
+
             // Save the updated approval document
             await approval.save();
 
-            
+
 
             await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
 
@@ -141,7 +141,7 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
                     console.log(error);
                     responseData(res, "", 400, false, "Failed to send email for approval");
                 }
-                    else {
+                else {
                     responseData(
                         res,
                         "Contract shared and Email for approval has been send",
@@ -155,16 +155,16 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
             return responseData(res, `Contract shared successfully`, 200, true, "");
         } else {
             // Find the approval document that matches lead_id
-            const approval = await Approval.findOne({ lead_id:existingContractData.lead_id, org_id:existingContractData.org_id });
+            const approval = await Approval.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
 
-    
+
             if (!approval) {
                 return responseData(res, "", 400, false, "Approval document not found", []);
             }
 
             // Find the file inside the files array that matches file_id
             const file = approval.files.find(f => f.file_id === existingContractData.contractData.itemId);
-    
+
             if (!file) {
                 return responseData(res, "", 400, false, "File not found in approval document", []);
             }
@@ -191,12 +191,12 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
 
                 // Update the status to pending
                 file.status = "pending";
-        
+
                 // Save the updated approval document
 
                 await approval.save();
 
-                
+
 
                 await createOrUpdateTimeline(existingContractData.lead_id, "", existingContractData.org_id, leadUpdate, {}, res);
 
@@ -205,7 +205,7 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
                         console.log(error);
                         responseData(res, "", 400, false, "Failed to send email for approval");
                     }
-                        else {
+                    else {
                         responseData(
                             res,
                             "Contract shared and Email for approval has been send",
@@ -229,7 +229,7 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
                 if (!file.users.includes(userId)) {
                     file.users.push(userId);
                 }
-                
+
                 // Save the updated approval document
                 await approval.save();
 
@@ -240,7 +240,7 @@ const storeOrUpdateContract = async (res, existingContractData, userId, userEmai
                         console.log(error);
                         responseData(res, "", 400, false, "Failed to send email for approval");
                     }
-                        else {
+                    else {
                         responseData(
                             res,
                             "Contract shared and Email for approval has been send",
@@ -274,17 +274,17 @@ const uploadImage = async (req, file, lead_id, org_id, fileName) => {
             Key: newFileName,
             Body: file.data,
             ContentType: file.mimetype,
-           
+
         })
         .promise();
-            
-            const signedUrl = s3.getSignedUrl('getObject', {
-                Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/Quotation`,
-                Key: newFileName,
-                Expires: 157680000 // URL expires in 5 year
-            });
-            return { status: true, data, signedUrl };
-        
+
+    const signedUrl = s3.getSignedUrl('getObject', {
+        Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/Quotation`,
+        Key: newFileName,
+        Expires: 157680000 // URL expires in 5 year
+    });
+    return { status: true, data, signedUrl };
+
 };
 
 const saveFileUploadData = async (
@@ -392,24 +392,24 @@ export const shareContract = async (req, res) => {
 
             let checkUser = {};
 
-            if(userId) {
+            if (userId) {
                 checkUser = await registerModel.findById(userId);
                 if (!checkUser) {
                     return responseData(res, "", 404, false, "user not found");
                 }
             }
 
-            
+
             const currUser = await registerModel.findById(user_id);
             if (!currUser) {
                 return responseData(res, "", 404, false, "user not found");
             }
 
-            
+
 
             if (type === 'Internal') {
-               
-                const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id  });
+
+                const check_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
                 // console.log("check_lead", check_lead)
                 if (!check_lead) {
                     return responseData(res, "", 400, false, "Lead not found");
@@ -456,13 +456,13 @@ export const shareContract = async (req, res) => {
                             }
                         }
                     });
-        
+
                     if (check_status3) {
                         return responseData(res, "", 400, false, "This Contract approved");
                     }
 
 
-                    
+
 
 
 
@@ -483,7 +483,7 @@ export const shareContract = async (req, res) => {
                             remark: "",
 
                         };
-                        
+
                         const leadUpdate = {
                             username: currUser.username,
                             role: currUser.role,
@@ -491,7 +491,7 @@ export const shareContract = async (req, res) => {
                             updated_date: new Date(),
                             tags: [],
                             type: 'contract share'
-                          }
+                        }
 
                         if (check_lead.contract.length < 1) {
 
@@ -554,7 +554,7 @@ export const shareContract = async (req, res) => {
                 }
 
                 // Upload quotation image
-                const response = await uploadImage(req, quotation, lead_id,org_id, quotation.name);
+                const response = await uploadImage(req, quotation, lead_id, org_id, quotation.name);
                 if (!response.status) {
                     return responseData(res, "", 400, false, "Failed to upload quotation");
                 }
@@ -571,7 +571,9 @@ export const shareContract = async (req, res) => {
                 const existingFile = await fileuploadModel.findOne({ lead_id, org_id });
                 if (existingFile) {
                     const mailOptions = {
+                        // from: process.env.ADMIN_USER_EMAIL,
                         from: process.env.INFO_USER_EMAIL,
+
                         to: client_email,
                         subject: "Contract Share Notification",
                         html: createEmailBody(client_name, project_name, site_location, file_url.fileUrl, response.signedUrl)
@@ -753,7 +755,7 @@ export const contractStatus = async (req, res) => {
         const remark = req.body.remark;
         const org_id = req.body.org_id;
         const user_id = req.body.user_id;
-        
+
         const check_org = await orgModel.findOne({ _id: org_id })
         if (!check_org) {
             return responseData(res, "", 404, false, "Org not found");
@@ -767,8 +769,8 @@ export const contractStatus = async (req, res) => {
             "contract.$.itemId": itemId
         })
 
-        const approval = await Approval.findOne({ lead_id:lead_id, org_id:org_id });
-        
+        const approval = await Approval.findOne({ lead_id: lead_id, org_id: org_id });
+
         if (!approval) {
             return responseData(res, "", 400, false, "Approval document not found", []);
         }
@@ -834,10 +836,10 @@ export const contractStatus = async (req, res) => {
                             updated_date: new Date(),
                             tags: [],
                             type: 'contract acceptance'
-                  
-                          }
 
-                          await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+                        }
+
+                        await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
                         responseData(res, "Contract  approved Successfully", 200, true, "");
 
                     }
@@ -871,10 +873,10 @@ export const contractStatus = async (req, res) => {
                             updated_date: new Date(),
                             tags: [],
                             type: 'contract rejection'
-                  
-                          }
 
-                          await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
+                        }
+
+                        await createOrUpdateTimeline(lead_id, '', org_id, leadUpdate, {}, res);
 
                         responseData(res, "Contract  rejected Successfully", 200, true, "");
                     }
@@ -899,8 +901,7 @@ export const getContractData = async (req, res) => {
         if (!lead_id) {
             return responseData(res, "", 400, false, "Lead id is required");
         }
-        else if(!org_id)
-        {
+        else if (!org_id) {
             return responseData(res, "", 400, false, "Org id is required");
         }
         else {
