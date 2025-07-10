@@ -571,8 +571,8 @@ export const shareContract = async (req, res) => {
                 const existingFile = await fileuploadModel.findOne({ lead_id, org_id });
                 if (existingFile) {
                     const mailOptions = {
-                        from: process.env.ADMIN_USER_EMAIL,
-                        // from: process.env.INFO_USER_EMAIL,
+                        // from: process.env.ADMIN_USER_EMAIL,
+                        from: process.env.INFO_USER_EMAIL,
 
                         to: client_email,
                         subject: "Contract Share Notification",
