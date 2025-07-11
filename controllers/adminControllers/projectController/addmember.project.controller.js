@@ -161,7 +161,7 @@ export const removeMemberInProject = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        responseData(res, "", 500, false, "Invernal  Server Error")
+        responseData(res, "", 500, false, "Internal  Server Error")
     }
 }
 

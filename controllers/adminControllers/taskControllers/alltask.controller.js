@@ -19,7 +19,7 @@ function generateSixDigitNumber() {
     return randomNumber;
 }
 
-const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, task_name, task_description,   estimated_task_end_date, task_status, task_priority, reporter) => {
+const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, task_name, task_description, /*estimated_task_start_date,*/ estimated_task_end_date, task_status, task_priority, reporter, actual_task_start_date, actual_task_end_date) => {
     const task_id = `TK-${generateSixDigitNumber()}`;
 
     const task = new openTaskModel({
@@ -27,7 +27,10 @@ const createTaskAndTimer = async (res,req,org_id, check_user, task_assignee, tas
         org_id,
         task_name,
         task_description,
+        // estimated_task_start_date, // Commented out
         estimated_task_end_date,
+        actual_task_start_date,
+        actual_task_end_date,
         task_status,
         task_priority,
         task_assignee,
@@ -107,7 +110,8 @@ export const Alltask = async (req, res) => {
                     task_status: task.task_status,
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
-                    task_end_date: task.estimated_task_end_date
+                    task_end_date: task.estimated_task_end_date,
+                   
                 };
             });
             const leadTaskDetails = leadTasks.map(task => {
@@ -122,23 +126,24 @@ export const Alltask = async (req, res) => {
                     task_status: task.task_status,
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
-                    task_end_date: task.estimated_task_end_date
+                    task_end_date: task.estimated_task_end_date,
+                    
                 };
             });
     
-            const openTaskDetails = openTasks.map(task => {
-                return {
-                    name: "Unknown",
-                    type: "open",
-                    task_id: task.task_id,
-                    org_id: task.org_id,
-                    task_name: task.task_name,
-                    task_status: task.task_status,
-                    task_priority: task.task_priority,
-                    task_assignee: task.task_assignee,
-                    task_end_date: task.estimated_task_end_date
-                };
-            });
+            const openTaskDetails = openTasks.map(task => ({
+                name: "Unknown",
+                type: "open",
+                task_id: task.task_id,
+                org_id: task.org_id,
+                task_name: task.task_name,
+                task_status: task.task_status,
+                task_priority: task.task_priority,
+                task_assignee: task.task_assignee,
+                task_end_date: task.estimated_task_end_date,
+                actual_task_start_date: task.actual_task_start_date,
+                actual_task_end_date: task.actual_task_end_date,
+            }));
     
             
             const allTasks = [...projectTaskDetails, ...leadTaskDetails, ...openTaskDetails];
@@ -155,11 +160,15 @@ export const Alltask = async (req, res) => {
                 leadTaskModel.find({ org_id }),
                 openTaskModel.find({ org_id }) 
             ]);
-            const assignedProjectAndLead = await registerModel.find({ _id: user_id,organization: org_id })
+            const assignedProjectAndLead = await registerModel.find({ _id: user_id, organization: org_id });
+
+            const userData = assignedProjectAndLead[0]?.data?.[0];
+            const projectIds = Array.isArray(userData?.projectData) ? userData.projectData.map(p => p.project_id) : [];
+            const leadIds = Array.isArray(userData?.leadData) ? userData.leadData.map(l => l.lead_id) : [];
 
             const [projects, leads] = await Promise.all([
-                projectModel.find({ org_id, project_id: { $in: assignedProjectAndLead[0].data[0].projectData.map(p => p.project_id) } }),
-                leadModel.find({ org_id, lead_id: { $in: assignedProjectAndLead[0].data[0].leadData.map(l => l.lead_id) } }),
+                projectModel.find({ org_id, project_id: { $in: projectIds } }),
+                leadModel.find({ org_id, lead_id: { $in: leadIds } }),
             ]);
             
             // console.log(assignedProjectAndLead)
@@ -176,7 +185,7 @@ export const Alltask = async (req, res) => {
                     task_status: task.task_status,
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
-                    task_end_date: task.estimated_task_end_date
+                    task_end_date: task.estimated_task_end_date,
                 };
             });
 
@@ -192,23 +201,24 @@ export const Alltask = async (req, res) => {
                     task_status: task.task_status,
                     task_priority: task.task_priority,
                     task_assignee: task.task_assignee,
-                    task_end_date: task.estimated_task_end_date
-                };
+                    task_end_date: task.estimated_task_end_date,
+S                };
             });
 
-            const openTaskDetails = openTasks.map(task => {
-                return {
-                    name: "Unknown",
-                    type: "open",
-                    task_id: task.task_id,
-                    org_id: task.org_id,
-                    task_name: task.task_name,
-                    task_status: task.task_status,
-                    task_priority: task.task_priority,
-                    task_assignee: task.task_assignee,
-                    task_end_date: task.estimated_task_end_date
-                };
-            });
+            const openTaskDetails = openTasks.map(task => ({
+                name: "Unknown",
+                type: "open",
+                task_id: task.task_id,
+                org_id: task.org_id,
+                task_name: task.task_name,
+                task_status: task.task_status,
+                task_priority: task.task_priority,
+                task_assignee: task.task_assignee,
+                // task_start_date: task.estimated_task_start_date, // Commented out
+                task_end_date: task.estimated_task_end_date,
+                actual_task_start_date: task.actual_task_start_date,
+                actual_task_end_date: task.actual_task_end_date,
+            }));
 
             const allTasks = [...projectTaskDetails, ...leadTaskDetails, ...openTaskDetails];
             const filterConditions = {};
@@ -236,6 +246,9 @@ export const createOpenTask = async (req, res) => {
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const estimated_task_end_date = req.body.estimated_task_end_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date; // Commented out
+        const actual_task_start_date = req.body.actual_task_start_date;
+        const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -247,6 +260,7 @@ export const createOpenTask = async (req, res) => {
         }
         if (!task_priority) return responseData(res, "", 404, false, "Task priority required", []);
         if (!estimated_task_end_date) return responseData(res, "", 404, false, "Task end date required", []);
+        // if (!estimated_task_start_date) return responseData(res, "", 404, false, "Task start date required", []); // Commented out
         if (!task_status) return responseData(res, "", 404, false, "Task status required", []);
         if (!org_id) return responseData(res, "", 400, false, "Org Id required");
         // Check if the user exists
@@ -257,13 +271,15 @@ export const createOpenTask = async (req, res) => {
         const check_user = await registerModel.findOne({ _id: user_id,organization: org_id });
         if (!check_user) return responseData(res, "", 404, false, "User not found", []);
 
-        await createTaskAndTimer(res,req,  org_id, check_user, task_assignee, task_name, task_description,  estimated_task_end_date, task_status, task_priority, reporter);      
-
+        await createTaskAndTimer(
+            res, req, org_id, check_user, task_assignee, task_name, task_description,
+            /*estimated_task_start_date,*/ estimated_task_end_date, task_status, task_priority, reporter,
+            actual_task_start_date, actual_task_end_date
+        );
     } catch (err) {
         console.log(err);
         res.status(500).send({ error: 'Internal Server Error', details: err });
     }
-
 }
 
 export const getSingleOpenTask = async (req, res) => {
@@ -298,6 +314,9 @@ export const getSingleOpenTask = async (req, res) => {
                     task_name: 1,
                     task_description: 1,
                     estimated_task_end_date: 1,
+                    // estimated_task_start_date: { $ifNull: ["$estimated_task_start_date", null] }, // Commented out
+                    actual_task_start_date: 1,
+                    actual_task_end_date: 1,
                     task_status: 1,
                     task_priority: 1,
                     task_createdOn: 1,
@@ -305,7 +324,7 @@ export const getSingleOpenTask = async (req, res) => {
                     task_assignee: 1,
                     task_createdBy: 1,
                     number_of_subtasks: { $size: "$subtasks" },
-                    assignee_name: { $arrayElemAt: ["$assignee_info.name", 0] }, // Adjust based on your user schema
+                    assignee_name: { $arrayElemAt: ["$assignee_info.name", 0] },
                 },
             },
         ]);
@@ -329,6 +348,9 @@ export const updateOpenTask = async (req, res) => {
         const task_name = req.body.task_name;
         const task_description = req.body.task_description;
         const estimated_task_end_date = req.body.estimated_task_end_date;
+        // const estimated_task_start_date = req.body.estimated_task_start_date; // Commented out
+        const actual_task_start_date = req.body.actual_task_start_date;
+        const actual_task_end_date = req.body.actual_task_end_date;
         const task_status = req.body.task_status;
         const task_priority = req.body.task_priority;
         const task_assignee = req.body.task_assignee;
@@ -337,8 +359,8 @@ export const updateOpenTask = async (req, res) => {
         if (!user_id) {
             responseData(res, "", 404, false, "User Id required", [])
         }
-        else if (!onlyAlphabetsValidation(task_name) && task_name.length > 3) {
-            responseData(res, "", 404, false, "Task Name should be alphabets", [])
+        else if (!onlyAlphabetsValidation(task_name) || task_name.length < 3) {
+            responseData(res, "", 404, false, "Task Name should be alphabets and at least 3 characters long", [])
         }
         else if (!task_id) {
             responseData(res, "", 404, false, "Task Id required", [])
@@ -350,6 +372,9 @@ export const updateOpenTask = async (req, res) => {
         else if (!estimated_task_end_date) {
             responseData(res, "", 404, false, "Task end date required", [])
         }
+        // else if (!estimated_task_start_date) {
+        //     responseData(res, "", 404, false, "Task start date required", [])
+        // }
         else if (!task_status) {
             responseData(res, "", 404, false, "Task status required", [])
         }
@@ -377,7 +402,7 @@ export const updateOpenTask = async (req, res) => {
                     let findUser;
                     if(task_assignee) {
                         findUser = await registerModel.findOne({ username: task_assignee, organization: org_id });
-    
+
                         if (!findUser) {
                             return responseData(res, "", 404, false, "User not found");
                             
@@ -389,6 +414,9 @@ export const updateOpenTask = async (req, res) => {
                                 task_name: task_name,
                                 task_description: task_description,
                                 estimated_task_end_date: estimated_task_end_date,
+                                // estimated_task_start_date: estimated_task_start_date, // Commented out
+                                actual_task_start_date: actual_task_start_date,
+                                actual_task_end_date: actual_task_end_date,
                                 task_status: task_status,
                                 task_priority: task_priority,
                                 task_assignee: task_assignee,
@@ -509,24 +537,24 @@ export const MoveTask = async (req, res) => {
         }
 
         const checkAssignee = async (task, projectIdOrLeadId, type) => {
-            const assigneeData = type === "project"
-                ? await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id })
-                : await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id });
+            const assigneeData = await registerModel.findOne({ username: task.task_assignee, status: true, organization: org_id });
+            if (!assigneeData || !Array.isArray(assigneeData.data) || !assigneeData.data[0]) return null;
 
-            if (!assigneeData) return null;
+            const dataObj = assigneeData.data[0];
+            const arr = type === "project" ? dataObj.projectData : dataObj.leadData;
+            if (!Array.isArray(arr)) return null;
 
-            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
-                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+            return arr.find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
         };
         const checkReporter = async (task, projectIdOrLeadId, type) => {
-            const assigneeData = type === "project"
-                ? await registerModel.findOne({ username: task.reporter, status: true, organization: org_id })
-                : await registerModel.findOne({ username: task.reporter, status: true, organization: org_id });
+            const assigneeData = await registerModel.findOne({ username: task.reporter, status: true, organization: org_id });
+            if (!assigneeData || !Array.isArray(assigneeData.data) || !assigneeData.data[0]) return null;
 
-            if (!assigneeData) return null;
+            const dataObj = assigneeData.data[0];
+            const arr = type === "project" ? dataObj.projectData : dataObj.leadData;
+            if (!Array.isArray(arr)) return null;
 
-            return assigneeData.data[0][type === "project" ? "projectData" : "leadData"]
-                .find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
+            return arr.find(item => item[type === "project" ? "project_id" : "lead_id"] === projectIdOrLeadId);
         };
 
         // Check for the appropriate assignee and reporter
@@ -542,8 +570,8 @@ export const MoveTask = async (req, res) => {
             if (check_task.reporter) {
                 task_reporter = await checkReporter(check_task, project_id || lead_id, project_id ? "project" : "lead");
             }
-    
             if (!task_reporter) {
+            
                 return responseData(res, "", 404, false, "Reporter not found in the project or lead", []);
             }
 
@@ -604,12 +632,14 @@ export const MoveTask = async (req, res) => {
             task_assignee: check_task.task_assignee,
             task_status: check_task.task_status,
             estimated_task_end_date: check_task.estimated_task_end_date,
+            actual_task_start_date: check_task.actual_task_start_date,
+            actual_task_end_date: check_task.actual_task_end_date,
             task_description: check_task.task_description,
             task_priority: check_task.task_priority,
             task_createdBy: check_task.task_createdBy,
             task_createdOn: check_task.task_createdOn,
             reporter: check_task.reporter,
-            task_subtasks: check_task.task_subtasks
+            subtasks: check_task.subtasks
         };
 
         let newTask;

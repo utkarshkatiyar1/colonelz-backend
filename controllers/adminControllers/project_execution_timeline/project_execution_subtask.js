@@ -159,7 +159,7 @@ export const updateProjectExecutionSubtask = async (req, res) => {
 
 
         
-        if(affection.length > 0 && subtask_type === 'Delay') {
+        if (Array.isArray(affection) && affection.length > 0 && subtask_type === 'Delay') {
 
             // actual extension in task and subtask in child
 
@@ -299,11 +299,16 @@ export const deleteProjectExecutionSubtaskDetails = async (req, res) => {
 
 
         const find_subtask = check_task.subtasks.find((subtask) => subtask.sub_task_id === subtask_id);
-        if (!find_subtask) return responseData(res, "", 400, false, "Subtask not found", []);
+        if (!find_subtask) {
+            console.error("Subtask not found:", subtask_id);
+            return responseData(res, "", 400, false, "Subtask not found", []);
+        }
 
         const find_detail = find_subtask.sub_task_details.find((detail) => detail.subtask_details_id === subtask_details_id);
-
-        if (!find_detail) return responseData(res, "", 400, false, "Detail not found", []);
+        if (!find_detail) {
+            console.error("Subtask detail not found:", subtask_details_id);
+            return responseData(res, "", 400, false, "Subtask detail not found", []);
+        }
 
 
         if (find_detail.subtask_type === 'Delay') {
@@ -478,12 +483,21 @@ export const updateProjectExecutionSubtaskDetails = async (req, res) => {
 
         const find_detail = find_subtask.sub_task_details.find((detail) => detail.subtask_details_id === subtask_details_id);
 
-
+        console.log("find_subtask:", find_subtask);
+        console.log("find_detail:", find_detail);
 
 
         const updateObject = {
             $set: {
-                'subtasks.$.sub_task_end_date': subtask_type === 'Delay' ? extendTaskEndDateUpdate(find_subtask.sub_task_end_date, subtask_details_start_date, subtask_details_end_date, find_detail.subtask_details_start_date, find_detail.subtask_details_end_date) : subtask_end_date,
+                'subtasks.$.sub_task_end_date': subtask_type === 'Delay'
+    ? extendTaskEndDateUpdate(
+        find_subtask.sub_task_end_date,
+        subtask_details_start_date,
+        subtask_details_end_date,
+        find_detail.subtask_details_start_date,
+        find_detail.subtask_details_end_date
+    )
+    : subtaskEndDateToUse,
             }
         };
         const updateSubtask = await projectExecutionModel.updateOne(
