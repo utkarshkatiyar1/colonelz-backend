@@ -1,12 +1,25 @@
 import mongoose from "mongoose";
 
-const contractSchema = new mongoose.Schema({
-  admin_status: String,
-  itemId: String,
-  file_name: String,
-  files: [],
-  remark: String,
+// const contractSchema = new mongoose.Schema({
+//   admin_status: String,
+//   itemId: String,
+//   file_name: String,
+//   files: [],
+//   remark: String,
 
+// });
+
+const contractSchema = new mongoose.Schema({
+  admin_status: { type: String, default: "notsend" },
+  itemId: { type: String, required: true },
+  file_name: { type: String },
+  files: [{ type: String }], // array of file URLs
+  remark: { type: String, default: "" },
+
+  // ✅ Contract details
+  project_type: { type: String },
+  project_name: { type: String },
+  createdAt: { type: Date },
 });
 
 
