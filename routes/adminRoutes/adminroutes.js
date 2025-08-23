@@ -3691,11 +3691,11 @@ router.route("/rolewise/access").get(verifyJWT, roleWiseAccess);
 router.route("/get/rolename").get(verifyJWT, roleName);
 
 
-router.route("/create/threeimage").post(verifyJWT, createImage);
-router.route("/delete/mainimage").delete(verifyJWT, deleteMainImage);
-router.route("/get/threeimage").get(verifyJWT, getImageById);
-router.route("/get/all/mainthreeimage").get(verifyJWT, getAllMainImage);
-router.route("/get/all/panoimages").get(verifyJWT, getAllPanoImagesFromFileManager);
+router.route("/create/threeimage").post(createImage);
+router.route("/delete/mainimage").delete(deleteMainImage);
+router.route("/get/threeimage").get(getImageById);
+router.route("/get/all/mainthreeimage").get(getAllMainImage);
+router.route("/get/all/panoimages").get(getAllPanoImagesFromFileManager);
 
 router.route("/create/project/execution/task").post(verifyJWT, projectExecutionTask); 
 router.route("/get/project/execution/tasks").get(verifyJWT, getProjectExecutionTask); 
