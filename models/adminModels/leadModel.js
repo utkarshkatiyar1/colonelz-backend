@@ -19,9 +19,8 @@ const contractSchema = new mongoose.Schema({
   // ✅ Contract details
   project_type: { type: String },
   project_name: { type: String },
-  createdAt: { type: Date },
+  // createdAt: { type: Date },
 });
-
 
 const lead = new mongoose.Schema({
   name: {
@@ -32,11 +31,11 @@ const lead = new mongoose.Schema({
     type: String,
     required: true,
   },
-  org_id:{
-    type:String,
-    require:true,
+  org_id: {
+    type: String,
+    require: true,
   },
-  lead_details:[],
+  lead_details: [],
   lead_manager: {
     type: String,
     required: true,
@@ -62,7 +61,7 @@ const lead = new mongoose.Schema({
     type: String,
     // You can define specific sources based on your needs
   },
-  contract:[contractSchema],
+  contract: [contractSchema],
   date: {
     type: String,
     require: true,
@@ -87,17 +86,17 @@ const lead = new mongoose.Schema({
       },
     },
   ],
-  lead_update_track:[],
+  lead_update_track: [],
   lead_status: {
     type: String,
   },
-  contract_Status:{
+  contract_Status: {
     type: Boolean,
-    
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
+
 export default mongoose.model("Lead", lead, "Lead");

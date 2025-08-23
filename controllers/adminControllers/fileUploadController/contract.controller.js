@@ -57,8 +57,8 @@
 
 //           await approval.save();
 //           return responseData(res, "Contract shared successfully", 200, true, "");
-//       } 
-      
+//       }
+
 //       const check_lead = await leadModel.findOne({ lead_id: existingContractData.lead_id, org_id: existingContractData.org_id });
 
 //       if (check_lead) {
@@ -92,7 +92,6 @@
 //   }
 // };
 
-
 // const uploadImage = async (req, filePath, lead_id, org_id, fileName) => {
 
 //   if (typeof fileName !== 'string') {
@@ -104,26 +103,21 @@
 //       Key: fileName,
 //       Body: fs.createReadStream(filePath),
 //       ContentType: 'application/pdf',
-   
+
 //     })
 //     .promise();
-  
+
 //       const signedUrl = s3.getSignedUrl('getObject', {
 //         Bucket: `${process.env.S3_BUCKET_NAME}/${org_id}/${lead_id}/Contract`,
 //         Key: fileName,
 //         Expires: 157680000 // URL expires in 5 year
 //       });
 //       return { status: true, data, signedUrl };
-    
+
 // };
 
-const saveFileUploadData = async (
-  res,
-  existingFileUploadData,
-
-) => {
+const saveFileUploadData = async (res, existingFileUploadData) => {
   try {
-
     // Use update query to push data
     const updateResult = await fileuploadModel.updateOne(
       {
@@ -136,7 +130,6 @@ const saveFileUploadData = async (
           "files.$.updated_date": existingFileUploadData.updated_Date,
         },
         $push: {
-
           "files.$.files": { $each: existingFileUploadData.files },
         },
       },
@@ -152,7 +145,10 @@ const saveFileUploadData = async (
     } else {
       // If the folder does not exist, create a new folder object
       const updateNewFolderResult = await fileuploadModel.updateOne(
-        { lead_id: existingFileUploadData.lead_id, org_id: existingFileUploadData.org_id },
+        {
+          lead_id: existingFileUploadData.lead_id,
+          org_id: existingFileUploadData.org_id,
+        },
         {
           $push: {
             files: {
@@ -165,7 +161,9 @@ const saveFileUploadData = async (
       );
 
       if (updateNewFolderResult.modifiedCount === 1) {
-        console.log("New Folder Created and File Upload Data Updated Successfully");
+        console.log(
+          "New Folder Created and File Upload Data Updated Successfully"
+        );
       } else {
         console.log("Lead not found or file data already updated");
         responseData(
@@ -177,7 +175,6 @@ const saveFileUploadData = async (
         );
       }
     }
-
   } catch (error) {
     console.error("Error saving file upload data:", error);
     responseData(
@@ -220,7 +217,6 @@ const saveFileUploadData = async (
 //   const terrace_open_area_in_sft = req.body.terrace_open_area_in_sft;
 //   const additional_note = req.body.additional_note;
 
-
 //   if (!lead_id) {
 //     return responseData(res, "", 400, false, "lead_id is required");
 //   } else if (!userId) {
@@ -240,15 +236,15 @@ const saveFileUploadData = async (
 //       return responseData(res, "", 400, false, "You are not a registered User");
 //     }
 
-    // const lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
-    // if (!lead) {
-    //   return responseData(res, "", 400, false, "Lead Not Found");
-    // }
+// const lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
+// if (!lead) {
+//   return responseData(res, "", 400, false, "Lead Not Found");
+// }
 
-    // const check_lead = await fileuploadModel.findOne({ lead_id: lead_id, org_id: org_id });
-    // if (!check_lead) {
-    //   return responseData(res, "", 400, false, "This Lead Converted Into Project");
-    // }
+// const check_lead = await fileuploadModel.findOne({ lead_id: lead_id, org_id: org_id });
+// if (!check_lead) {
+//   return responseData(res, "", 400, false, "This Lead Converted Into Project");
+// }
 
 //     const contract_pdf = req.files.file;
 //     const filePath = path.join("contract", contract_pdf.name);
@@ -265,15 +261,15 @@ const saveFileUploadData = async (
 //         if (response.status) {
 //           const fileId = `FL-${generateSixDigitNumber()}`;
 //           const fileName = decodeURIComponent(response.data.Location.split("/").pop().replace(/\+/g, " "));
-          // let fileUrls = [
-          //   {
-          //     fileUrl: response.signedUrl,
-          //     fileName,
-          //     fileId,
-          //     fileSize: `${contract_pdf.size / 1024} KB`,
-          //     date: new Date(),
-          //   },
-          // ];
+// let fileUrls = [
+//   {
+//     fileUrl: response.signedUrl,
+//     fileName,
+//     fileId,
+//     fileSize: `${contract_pdf.size / 1024} KB`,
+//     date: new Date(),
+//   },
+// ];
 
 //         const contractData = {
 //           itemId: fileId,
@@ -306,23 +302,23 @@ const saveFileUploadData = async (
 //           terrace_open_area_in_sft,
 //           additional_note,
 //           // ✅ Automatically store creation timestamp
-//           createdAt: new Date().toISOString(), 
+//           createdAt: new Date().toISOString(),
 //         };
 
-          // const existingFile = await fileuploadModel.findOne({ lead_id: lead_id, org_id: org_id });
-          // const folder_name = `Contract`;
-          // const lead_Name = existingFile.name;
+// const existingFile = await fileuploadModel.findOne({ lead_id: lead_id, org_id: org_id });
+// const folder_name = `Contract`;
+// const lead_Name = existingFile.name;
 
-          // if (existingFile) {
-          //   await saveFileUploadData(res, {
-          //     lead_id,
-          //     org_id,
-          //     lead_Name,
-          //     folder_name,
-          //     updated_date: new Date(),
-          //     files: fileUrls,
-          //   });
-          // }
+// if (existingFile) {
+//   await saveFileUploadData(res, {
+//     lead_id,
+//     org_id,
+//     lead_Name,
+//     folder_name,
+//     updated_date: new Date(),
+//     files: fileUrls,
+//   });
+// }
 
 //           await leadModel.findOneAndUpdate(
 //             { lead_id: lead_id, org_id: org_id },
@@ -380,7 +376,6 @@ const saveFileUploadData = async (
 //     return responseData(res, "", 500, false, "Internal Server Error");
 //   }
 // };
-
 
 import { responseData } from "../../../utils/respounse.js";
 import nodemailer from "nodemailer";
@@ -459,35 +454,46 @@ const storeOrUpdateContract = async (contractData, fileUrls, isFirst) => {
   );
 };
 
-
 export const contractShare = async (req, res) => {
   try {
-    const {
-      lead_id,
-      user_id,
-      org_id,
-      project_type,
-      project_name,
-      date,
-    } = req.body;
+    const { lead_id, user_id, org_id, project_type, project_name } = req.body;
 
     if (!lead_id || !user_id || !org_id) {
-      return responseData(res, "", 400, false, "lead_id, user_id, org_id are required");
+      return responseData(
+        res,
+        "",
+        400,
+        false,
+        "lead_id, user_id, org_id are required"
+      );
     }
 
     // ✅ Check org, user, lead
     const check_org = await orgModel.findById(org_id);
     if (!check_org) return responseData(res, "", 404, false, "Org not found");
 
-    const find_user = await registerModel.findOne({ _id: user_id, organization: org_id });
-    if (!find_user) return responseData(res, "", 400, false, "Not a registered User");
+    const find_user = await registerModel.findOne({
+      _id: user_id,
+      organization: org_id,
+    });
+    if (!find_user)
+      return responseData(res, "", 400, false, "Not a registered User");
 
     const lead = await leadModel.findOne({ lead_id, org_id });
     if (!lead) return responseData(res, "", 404, false, "Lead Not Found");
 
-    const check_lead = await fileuploadModel.findOne({ lead_id: lead_id, org_id: org_id });
+    const check_lead = await fileuploadModel.findOne({
+      lead_id: lead_id,
+      org_id: org_id,
+    });
     if (!check_lead) {
-      return responseData(res, "", 400, false, "This Lead Converted Into Project");
+      return responseData(
+        res,
+        "",
+        400,
+        false,
+        "This Lead Converted Into Project"
+      );
     }
 
     // ✅ Handle File Upload
@@ -496,7 +502,12 @@ export const contractShare = async (req, res) => {
 
     await contract_pdf.mv(filePath);
 
-    const response = await uploadImage(filePath, lead_id, org_id, contract_pdf.name);
+    const response = await uploadImage(
+      filePath,
+      lead_id,
+      org_id,
+      contract_pdf.name
+    );
 
     // ✅ Prepare file info
     const fileId = `FL-${generateSixDigitNumber()}`;
@@ -523,27 +534,25 @@ export const contractShare = async (req, res) => {
       remark: "",
       project_type,
       project_name,
-      date,
-      createdAt: new Date(),
     };
 
-    console.log("contract data to send : ", contractData);
+    const existingFile = await fileuploadModel.findOne({
+      lead_id: lead_id,
+      org_id: org_id,
+    });
+    const folder_name = `Contract`;
+    const lead_Name = existingFile.name;
 
-
-    const existingFile = await fileuploadModel.findOne({ lead_id: lead_id, org_id: org_id });
-        const folder_name = `Contract`;
-        const lead_Name = existingFile.name;
-
-        if (existingFile) {
-          await saveFileUploadData(res, {
-            lead_id,
-            org_id,
-            lead_Name,
-            folder_name,
-            updated_date: new Date(),
-            files: fileUrls,
-          });
-        }
+    if (existingFile) {
+      await saveFileUploadData(res, {
+        lead_id,
+        org_id,
+        lead_Name,
+        folder_name,
+        updated_date: new Date(),
+        files: fileUrls,
+      });
+    }
 
     // ✅ Update Lead & Push Contract
     await leadModel.findOneAndUpdate(
@@ -581,16 +590,34 @@ export const contractShare = async (req, res) => {
 
     // ✅ Store in Approval (if needed)
     const isFirst = lead.contract.length < 1;
-    await storeOrUpdateContract({ lead_id, org_id, contractData }, fileUrls, isFirst);
+    await storeOrUpdateContract(
+      { lead_id, org_id, contractData },
+      fileUrls,
+      isFirst
+    );
 
     // ✅ Delete local file
     fs.unlink(filePath, (err) => {
       if (err) console.error("Error deleting local PDF file:", err);
     });
 
-    return responseData(res, "Contract created successfully", 200, true, "", response.signedUrl);
+    return responseData(
+      res,
+      "Contract created successfully",
+      200,
+      true,
+      "",
+      response.signedUrl
+    );
   } catch (error) {
     console.error("Error in contractShare:", error);
-    return responseData(res, "", 500, false, "Internal Server Error", error.message);
+    return responseData(
+      res,
+      "",
+      500,
+      false,
+      "Internal Server Error",
+      error.message
+    );
   }
 };
