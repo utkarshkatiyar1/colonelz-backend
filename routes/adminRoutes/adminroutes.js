@@ -34,6 +34,7 @@ import {
   updateProjectDetails,
   deactivateProject,
   deleteInactiveProject,
+  reactivateProject,
 } from "../../controllers/adminControllers/projectController/project.controller.js";
 import {
   getQuotationData,
@@ -657,8 +658,9 @@ router.route("/getsingle/project").get(verifyJWT, readProjectAccess, getSinglePr
 
 router.route("/update/project").put(verifyJWT, updateProjectAccess, updateProjectDetails);
 
-// Project deletion routes
+// Project status management routes
 router.route("/deactivate/project").put(verifyJWT, updateProjectAccess, deactivateProject);
+router.route("/reactivate/project").put(verifyJWT, updateProjectAccess, reactivateProject);
 router.route("/delete/inactive/project").delete(verifyJWT, deleteProjectAccess, deleteInactiveProject);
 
 /**
