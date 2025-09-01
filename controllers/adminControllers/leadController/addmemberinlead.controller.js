@@ -224,3 +224,125 @@ export const listUserInLead = async (req, res) => {
         return responseData(res, "", 500, false, "Internal Server Error");
     }
 };
+
+// New bulk assignment function for leads
+export const addBulkMembersToLead = async (req, res) => {
+    const { id, lead_id, users, org_id } = req.body;
+
+    if (!id) {
+        return responseData(res, "", 400, false, "Please provide Id");
+    }
+    if (!lead_id) {
+        return responseData(res, "", 400, false, "Please provide lead Id");
+    }
+    if (!users || !Array.isArray(users) || users.length === 0) {
+        return responseData(res, "", 400, false, "Please provide users array");
+    }
+    if (!org_id) {
+        return responseData(res, "", 400, false, "org id is required");
+    }
+
+    try {
+        const check_org = await orgModel.findOne({ _id: org_id });
+        if (!check_org) {
+            return responseData(res, "", 404, false, "Org not found");
+        }
+
+        const find_lead = await leadModel.findOne({ lead_id: lead_id, org_id: org_id });
+        if (!find_lead) {
+            return responseData(res, "", 404, false, "Lead not found");
+        }
+
+        const find_user = await registerModel.findOne({ _id: id, organization: org_id });
+        if (!find_user) {
+            return responseData(res, "", 404, false, "User not found");
+        }
+
+        const results = [];
+        const errors = [];
+
+        for (const user of users) {
+            const { user_name, role } = user;
+
+            if (!user_name || !role) {
+                errors.push(`Missing user_name or role for user: ${JSON.stringify(user)}`);
+                continue;
+            }
+
+            try {
+                const find_user_name = await registerModel.findOne({ username: user_name, organization: org_id });
+                if (!find_user_name) {
+                    errors.push(`User ${user_name} not found`);
+                    continue;
+                }
+
+                let leadDataIndex = find_user_name.data.findIndex(item => item.leadData);
+                if (leadDataIndex === -1) {
+                    find_user_name.data.push({ leadData: [] });
+                    leadDataIndex = find_user_name.data.length - 1;
+                }
+
+                const find_data = find_user_name.data[leadDataIndex].leadData.find(lead => lead.lead_id === lead_id);
+                if (find_data) {
+                    errors.push(`User ${user_name} already exists in this lead`);
+                    continue;
+                }
+
+                // Add user to lead
+                await registerModel.findOneAndUpdate(
+                    { username: user_name, organization: org_id },
+                    {
+                        $push: {
+                            "data.$[outer].leadData": {
+                                lead_id: lead_id,
+                                role: role,
+                            }
+                        }
+                    },
+                    {
+                        arrayFilters: [{ "outer.leadData": { $exists: true } }]
+                    }
+                );
+
+                // Add notification
+                await registerModel.updateOne(
+                    { username: user_name, organization: org_id },
+                    {
+                        $push: {
+                            "data.$[elem].notificationData": {
+                                _id: new Mongoose.Types.ObjectId(),
+                                itemId: lead_id,
+                                notification_id: generatedigitnumber(),
+                                type: "lead",
+                                status: false,
+                                message: `You are added in lead ${find_lead.name}`,
+                                createdAt: new Date()
+                            }
+                        }
+                    },
+                    { arrayFilters: [{ "elem.leadData": { $exists: true } }] }
+                );
+
+                results.push({ user_name, role, status: "success" });
+            } catch (userError) {
+                errors.push(`Error adding user ${user_name}: ${userError.message}`);
+            }
+        }
+
+        if (results.length === 0) {
+            return responseData(res, "", 400, false, "No users were added", { errors });
+        }
+
+        const message = results.length === users.length
+            ? "All members added successfully"
+            : `${results.length} of ${users.length} members added successfully`;
+
+        return responseData(res, message, 200, true, "", {
+            successful: results,
+            errors: errors.length > 0 ? errors : undefined
+        });
+
+    } catch (err) {
+        return responseData(res, "", 500, false, err.message);
+    }
+};

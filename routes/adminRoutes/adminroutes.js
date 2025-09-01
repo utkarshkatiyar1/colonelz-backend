@@ -49,13 +49,13 @@ import { getSingleTemplateFile, templateFileUpload } from "../../controllers/adm
 import { deleteFile, deleteFolder } from "../../controllers/adminControllers/fileUploadController/delete.file.controller.js";
 import { shareQuotation, updateStatus, updateStatusAdmin } from "../../controllers/adminControllers/quotationController/quotation.approval.controller.js";
 import { archiveUser, createUser, deleteUser, deleteUserArchive, getUser, restoreUser, updateUserRole } from "../../controllers/adminControllers/createuser.controllers/createuser.controller.js";
-import { addMember, listUserInProject, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
+import { addMember, addBulkMembers, listUserInProject, removeMemberInProject } from "../../controllers/adminControllers/projectController/addmember.project.controller.js";
 import { checkAvailableUserIsAdmin, checkAvailableUserIsAdminInFile, checkAvailableUserIsAdminInLead, checkAvailableUserIsAdminInMom, checkAvailableUserIsAdmininProject, checkAvailableUserIsAdmininProjectByLeadid, checkOpenTaskReadAccess, isAdmin } from "../../middlewares/auth.middlewares.js";
 
 
 import { verifyJWT } from "../../middlewares/auth.middlewares.js";
 import { contractStatus, getContractData, shareContract } from "../../controllers/adminControllers/fileUploadController/contract.share.controller.js";
-import { AddMemberInLead, listUserInLead, removeMemberInlead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
+import { AddMemberInLead, addBulkMembersToLead, listUserInLead, removeMemberInlead } from "../../controllers/adminControllers/leadController/addmemberinlead.controller.js";
 import { archive, deletearchive, restoreData } from "../../controllers/adminControllers/archiveControllers/archive.controller.js";
 import { createTask, deleteTask, getAllTaskWithData, getAllTasks, getSingleTask, updateTask } from "../../controllers/adminControllers/taskControllers/task.controller.js";
 import { createSubTask, deleteSubTask, getAllSubTask, getSingleSubTask, updateSubTask } from "../../controllers/adminControllers/taskControllers/subtask.controller.js";
@@ -232,6 +232,7 @@ router.route("/create/user").post(verifyJWT, CreateUserAccess, createUser);
  */
 
 router.route("/add/member").post(verifyJWT, createAddMember, addMember);
+router.route("/add/bulk/members").post(verifyJWT, createAddMember, addBulkMembers);
 /**
  * @swagger
  * /v1/api/admin/get/alluser:
@@ -2019,6 +2020,7 @@ router.route("/create/lead/project").post(verifyJWT, createProjectAccess, leadTo
  */
 
 router.route("/add/member/lead").post(verifyJWT, createAddMember, AddMemberInLead);
+router.route("/add/bulk/members/lead").post(verifyJWT, createAddMember, addBulkMembersToLead);
 /**
  * @swagger
  * paths:
