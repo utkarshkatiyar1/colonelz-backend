@@ -169,6 +169,7 @@ export const getAllProject = async (req, res) => {
           project_id: 1,
           project_name: 1,
           project_status: 1,
+          status: 1, // Include Active/Inactive status
           project_start_date: 1,
           project_end_date: 1,
           project_type: 1,
@@ -296,6 +297,7 @@ export const getAllProjectByLeadId = async (req, res) => {
           project_id: 1,
           project_name: 1,
           project_status: 1,
+          status: 1, // Include Active/Inactive status
           project_start_date: 1,
           project_end_date: 1,
           project_type: 1,

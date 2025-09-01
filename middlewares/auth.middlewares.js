@@ -226,13 +226,14 @@ export const checkAvailableUserIsAdmininProject = async (req, res, next) => {
     const projectData = await Promise.all(projects1.map(async (project) => {
       const count_task = await taskModel.countDocuments({ project_id: project.project_id });
       const {
-        project_id, project_name, project_status, project_start_date, project_end_date, project_type, designer, client,
+        project_id, project_name, project_status, status, project_start_date, project_end_date, project_type, designer, client,
       } = project;
 
       return {
         project_id,
         project_name,
         project_status,
+        status, // Include Active/Inactive status
         project_start_date,
         project_end_date,
         client_name: client[0]?.client_name || "",
