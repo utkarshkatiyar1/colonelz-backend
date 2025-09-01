@@ -423,6 +423,7 @@ export const getSingleProject = async (req, res) => {
       project_name: project.project_name,
       project_type: project.project_type,
       project_status: project.project_status,
+      status: project.status, // Add the Active/Inactive status field
       timeline_date: project.timeline_date,
       project_budget: project.project_budget,
       description: project.description,
@@ -803,6 +804,105 @@ export const deleteInactiveProject = async (req, res) => {
     ]);
 
     return responseData(res, "Project deleted successfully.", 200, true, "");
+
+  } catch (err) {
+    console.error(err);
+    return responseData(res, "", 500, false, "Something went wrong", err);
+  }
+};
+
+export const reactivateProject = async (req, res) => {
+  try {
+    const user = req.user;
+    const { project_id, org_id, content = '' } = req.body;
+    const update = new Date();
+
+    // Validate user and required fields
+    if (!user) {
+      return responseData(res, "", 403, false, "User not found.");
+    }
+
+    if (!project_id) {
+      return responseData(res, "", 400, false, "project_id is required.");
+    }
+
+    if (!org_id) {
+      return responseData(res, "", 400, false, "org_id is required.");
+    }
+
+    // Check organization exists
+    const check_org = await orgModel.findOne({ _id: org_id });
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Organization not found");
+    }
+
+    // Check user exists in organization
+    const check_user = await userModel.findOne({ _id: user._id, org_id: org_id });
+    if (!check_user) {
+      return responseData(res, "", 404, false, "User not found in organization");
+    }
+
+    // Check for the project and ensure it's inactive
+    const find_project = await projectModel.findOne({
+      project_id: project_id,
+      org_id: org_id,
+      status: 'Inactive'
+    });
+
+    if (!find_project) {
+      return responseData(res, "", 404, false, "Inactive project not found.");
+    }
+
+    const formatedDate = formatDate(update);
+    const newDate = new Date();
+
+    // Update project status to Active
+    const update_project = await projectModel.findOneAndUpdate(
+      { project_id: project_id, org_id: org_id },
+      {
+        $set: {
+          status: "Active",
+        },
+        $push: {
+          project_updated_by: {
+            username: check_user.username,
+            role: check_user.role,
+            message: `has reactivated project ${find_project.project_name}.`,
+            updated_date: newDate,
+            action: "reactivate"
+          }
+        },
+      },
+      {
+        new: true,
+        useFindAndModify: false,
+      }
+    );
+
+    // Create timeline entry
+    const projectUpdate = {
+      username: check_user.username,
+      role: check_user.role,
+      message: `has reactivated project ${find_project.project_name}.`,
+      updated_date: newDate,
+      tags: [],
+      type: 'project reactivation'
+    };
+
+    await createOrUpdateTimeline('', project_id, org_id, {}, projectUpdate, res);
+
+    // Create notification
+    const newNotification = new notificationModel({
+      type: "project",
+      org_id: org_id,
+      notification_id: generateSixDigitNumber(),
+      itemId: project_id,
+      message: `Project reactivated: Project ${find_project.project_name} was reactivated on ${formatedDate}.`,
+      status: false,
+    });
+    await newNotification.save();
+
+    responseData(res, "Project reactivated successfully", 200, true, "", []);
 
   } catch (err) {
     console.error(err);
