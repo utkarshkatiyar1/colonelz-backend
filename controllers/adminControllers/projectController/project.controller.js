@@ -13,6 +13,10 @@ import taskModel from "../../../models/adminModels/task.model.js";
 import orgModel from "../../../models/orgmodels/org.model.js";
 import leadModel from "../../../models/adminModels/leadModel.js";
 import { createOrUpdateTimeline } from "../../../utils/timeline.utils.js";
+import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
+import archiveModel from "../../../models/adminModels/archive.model.js";
+import projectExecutionModel from "../../../models/adminModels/project_execution_model.js";
+import { s3 } from "../../../utils/function.js";
 dotenv.config();
 function generateSixDigitNumber() {
   const min = 100000;
@@ -22,6 +26,76 @@ function generateSixDigitNumber() {
   return randomNumber;
 }
 
+// Helper function to delete S3 folders
+async function deleteFolder(bucket, folder) {
+  try {
+    // Validate inputs
+    if (!bucket || !folder) {
+      console.error('deleteFolder: bucket and folder parameters are required');
+      throw new Error('Missing required parameters: bucket or folder');
+    }
+
+    // Validate environment variables
+    if (!process.env.S3_BUCKET_NAME) {
+      console.error('deleteFolder: S3_BUCKET_NAME environment variable is not set');
+      throw new Error('S3_BUCKET_NAME environment variable is required');
+    }
+
+    console.log(`Attempting to delete S3 folder: ${folder} from bucket: ${bucket}`);
+
+    // List all objects in the folder
+    const listParams = {
+      Bucket: bucket,
+      Prefix: folder
+    };
+
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+    if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+      console.log(`Folder ${folder} is already empty or does not exist.`);
+      return { success: true, message: 'Folder is empty or does not exist' };
+    }
+
+    // Create a list of objects to delete
+    const deleteParams = {
+      Bucket: bucket,
+      Delete: {
+        Objects: [],
+        Quiet: false
+      }
+    };
+
+    listedObjects.Contents.forEach(({ Key }) => {
+      deleteParams.Delete.Objects.push({ Key });
+    });
+
+    console.log(`Deleting ${deleteParams.Delete.Objects.length} objects from folder: ${folder}`);
+
+    // Delete the objects
+    const deleteResult = await s3.deleteObjects(deleteParams).promise();
+
+    // Log any errors from the delete operation
+    if (deleteResult.Errors && deleteResult.Errors.length > 0) {
+      console.error('Some objects failed to delete:', deleteResult.Errors);
+    }
+
+    // If there are more objects, continue deleting
+    if (listedObjects.IsTruncated) {
+      console.log('More objects to delete, continuing...');
+      return await deleteFolder(bucket, folder);
+    } else {
+      console.log(`Folder ${folder} and all its contents deleted successfully.`);
+      return {
+        success: true,
+        message: 'Folder deleted successfully',
+        deletedCount: deleteParams.Delete.Objects.length
+      };
+    }
+  } catch (error) {
+    console.error(`Error deleting folder ${folder}:`, error);
+    throw new Error(`Failed to delete folder ${folder}: ${error.message}`);
+  }
+}
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -563,6 +637,176 @@ export const projectActivity = async (req, res) => {
   } catch (err) {
     console.error(err); // Log the error for debugging
     responseData(res, "", 400, false, "Error fetching project activity", err);
+  }
+};
+
+export const deactivateProject = async (req, res) => {
+  try {
+    const user = req.user;
+    const { project_id, org_id, content = '' } = req.body;
+    const update = new Date();
+
+    // Validate user and required fields
+    if (!user) {
+      return responseData(res, "", 403, false, "User not found.");
+    }
+
+    if (!project_id) {
+      return responseData(res, "", 400, false, "project_id is required.");
+    }
+
+    if (!org_id) {
+      return responseData(res, "", 400, false, "org_id is required.");
+    }
+
+    // Check organization exists
+    const check_org = await orgModel.findOne({ _id: org_id });
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Organization not found");
+    }
+
+    // Find the project and ensure it's active
+    const find_project = await projectModel.findOne({
+      project_id: project_id,
+      org_id: org_id,
+      status: "Active"
+    });
+
+    if (!find_project) {
+      return responseData(res, "", 404, false, "Active project not found.");
+    }
+
+    // Get user details
+    const check_user = await registerModel.findOne({ _id: user._id, organization: org_id });
+    if (!check_user) {
+      return responseData(res, "", 404, false, "User not found in organization.");
+    }
+
+    const formatedDate = formatDate(update);
+    const newDate = new Date();
+
+    // Update project status to Inactive
+    const update_project = await projectModel.findOneAndUpdate(
+      { project_id: project_id, org_id: org_id },
+      {
+        $set: {
+          status: "Inactive",
+        },
+        $push: {
+          project_updated_by: {
+            username: check_user.username,
+            role: check_user.role,
+            message: `has deactivated project ${find_project.project_name}.`,
+            updated_date: newDate,
+            action: "deactivate"
+          }
+        },
+      },
+      {
+        new: true,
+        useFindAndModify: false,
+      }
+    );
+
+    // Create timeline entry
+    const projectUpdate = {
+      username: check_user.username,
+      role: check_user.role,
+      message: `has deactivated project ${find_project.project_name}.`,
+      updated_date: newDate,
+      tags: [],
+      type: 'project deactivation'
+    };
+
+    await createOrUpdateTimeline('', project_id, org_id, {}, projectUpdate, res);
+
+    // Create notification
+    const newNotification = new notificationModel({
+      type: "project",
+      org_id: org_id,
+      notification_id: generateSixDigitNumber(),
+      itemId: project_id,
+      message: `Project deactivated: Project ${find_project.project_name} was deactivated on ${formatedDate}.`,
+      status: false,
+    });
+    await newNotification.save();
+
+    responseData(res, "Project deactivated successfully", 200, true, "", []);
+
+  } catch (err) {
+    console.error(err);
+    return responseData(res, "", 500, false, "Something went wrong", err);
+  }
+};
+
+export const deleteInactiveProject = async (req, res) => {
+  try {
+    const user = req.user;
+    const project_id = req.query.project_id;
+    const org_id = req.query.org_id;
+
+    // Validate user and required fields
+    if (!user) {
+      return responseData(res, "", 403, false, "User not found.");
+    }
+
+    if (!project_id) {
+      return responseData(res, "", 400, false, "project_id is required.");
+    }
+
+    if (!org_id) {
+      return responseData(res, "", 400, false, "org_id is required.");
+    }
+
+    // Check organization exists
+    const check_org = await orgModel.findOne({ _id: org_id });
+    if (!check_org) {
+      return responseData(res, "", 404, false, "Organization not found");
+    }
+
+    // Check for the project and ensure it's inactive
+    const check_project = await projectModel.findOne({
+      project_id,
+      status: 'Inactive',
+      org_id
+    });
+
+    if (!check_project) {
+      return responseData(res, "", 404, false, "Inactive project not found.");
+    }
+
+    // Delete S3 folder first (with error handling)
+    try {
+      await deleteFolder(process.env.S3_BUCKET_NAME, `${project_id}/`);
+      console.log(`S3 folder deleted successfully for project: ${project_id}`);
+    } catch (error) {
+      console.error(`Failed to delete S3 folder for project ${project_id}:`, error);
+      // Continue with database deletions even if S3 deletion fails
+    }
+
+    // Perform cascading database deletions
+    await Promise.all([
+      // Delete the project itself
+      projectModel.findOneAndDelete({ project_id, org_id, status: 'Inactive' }),
+
+      // Delete related file uploads
+      fileuploadModel.findOneAndDelete({ project_id, org_id }),
+
+      // Delete archive records
+      archiveModel.deleteMany({ project_id, org_id }),
+
+      // Delete project tasks
+      taskModel.deleteMany({ project_id, org_id }),
+
+      // Delete project execution records
+      projectExecutionModel.deleteMany({ project_id, org_id }),
+    ]);
+
+    return responseData(res, "Project deleted successfully.", 200, true, "");
+
+  } catch (err) {
+    console.error(err);
+    return responseData(res, "", 500, false, "Something went wrong", err);
   }
 };
 

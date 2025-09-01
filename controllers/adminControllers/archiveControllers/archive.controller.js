@@ -3,11 +3,14 @@ import arvhiveModel from "../../../models/adminModels/archive.model.js";
 import registerModel from "../../../models/usersModels/register.model.js";
 import { responseData } from "../../../utils/respounse.js";
 import archiveModel from "../../../models/adminModels/archive.model.js";
-import { s3 } from "../../../utils/function.js"
+import { s3 } from "../../../utils/function.js";
 import cron from "node-cron";
 import fileuploadModel from "../../../models/adminModels/fileuploadModel.js";
 import moment from "moment-timezone";
 import orgModel from "../../../models/orgmodels/org.model.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 // Configure AWS SDK
 
 
@@ -98,6 +101,20 @@ export const archive = async (req, res) => {
 
 async function deleteFolder(bucket, folder) {
     try {
+        // Validate inputs
+        if (!bucket || !folder) {
+            console.error('deleteFolder: bucket and folder parameters are required');
+            throw new Error('Missing required parameters: bucket or folder');
+        }
+
+        // Validate environment variables
+        if (!process.env.S3_BUCKET_NAME) {
+            console.error('deleteFolder: S3_BUCKET_NAME environment variable is not set');
+            throw new Error('S3_BUCKET_NAME environment variable is required');
+        }
+
+        console.log(`Attempting to delete S3 folder: ${folder} from bucket: ${bucket}`);
+
         // List all objects in the folder
         const listParams = {
             Bucket: bucket,
@@ -106,32 +123,49 @@ async function deleteFolder(bucket, folder) {
 
         const listedObjects = await s3.listObjectsV2(listParams).promise();
 
-        if (listedObjects.Contents.length === 0) {
-            console.log('Folder is already empty or does not exist.');
-            return;
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+            console.log(`Folder ${folder} is already empty or does not exist.`);
+            return { success: true, message: 'Folder is empty or does not exist' };
         }
 
         // Create a list of objects to delete
         const deleteParams = {
             Bucket: bucket,
-            Delete: { Objects: [] }
+            Delete: {
+                Objects: [],
+                Quiet: false
+            }
         };
 
         listedObjects.Contents.forEach(({ Key }) => {
             deleteParams.Delete.Objects.push({ Key });
         });
 
+        console.log(`Deleting ${deleteParams.Delete.Objects.length} objects from folder: ${folder}`);
+
         // Delete the objects
-        await s3.deleteObjects(deleteParams).promise();
+        const deleteResult = await s3.deleteObjects(deleteParams).promise();
+
+        // Log any errors from the delete operation
+        if (deleteResult.Errors && deleteResult.Errors.length > 0) {
+            console.error('Some objects failed to delete:', deleteResult.Errors);
+        }
 
         // If there are more objects, continue deleting
         if (listedObjects.IsTruncated) {
-            await deleteFolder(bucket, folder);
+            console.log('More objects to delete, continuing...');
+            return await deleteFolder(bucket, folder);
         } else {
-            console.log('Folder and all its contents deleted successfully.');
+            console.log(`Folder ${folder} and all its contents deleted successfully.`);
+            return {
+                success: true,
+                message: 'Folder deleted successfully',
+                deletedCount: deleteParams.Delete.Objects.length
+            };
         }
     } catch (error) {
-        console.error('Error deleting folder:', error);
+        console.error(`Error deleting folder ${folder}:`, error);
+        throw new Error(`Failed to delete folder ${folder}: ${error.message}`);
     }
 }
 
@@ -195,14 +229,18 @@ export const deletearchive = async (req, res) => {
                                     },
                                 );
 
-                                filesData.files.map(async (item) => {
-
+                                // Delete S3 folders for all nested folders
+                                for (const item of filesData.files) {
                                     const obj = item[0];
-
                                     if(obj.sub_folder_name_first && obj.sub_folder_name_second) {
-                                        deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        try {
+                                            await deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        } catch (error) {
+                                            console.error(`Failed to delete S3 folder for lead ${lead_id}:`, error);
+                                            // Continue with other deletions even if one fails
+                                        }
                                     }
-                                })
+                                }
 
                                 const deletedFolder = await archiveModel.deleteOne(
                                     {
@@ -239,14 +277,18 @@ export const deletearchive = async (req, res) => {
                                     },
                                 );
 
-                                filesData.files.map(async (item) => {
-
+                                // Delete S3 folders for all nested folders
+                                for (const item of filesData.files) {
                                     const obj = item[0];
-
                                     if(obj.sub_folder_name_first && obj.sub_folder_name_second) {
-                                        deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        try {
+                                            await deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        } catch (error) {
+                                            console.error(`Failed to delete S3 folder for lead ${lead_id}:`, error);
+                                            // Continue with other deletions even if one fails
+                                        }
                                     }
-                                })
+                                }
 
                                 const deletedFolder = await archiveModel.deleteOne(
                                     {
@@ -285,14 +327,18 @@ export const deletearchive = async (req, res) => {
                                         },
                                     );
     
-                                    filesData.files.map(async (item) => {
-    
+                                    // Delete S3 folders for all nested folders
+                                    for (const item of filesData.files) {
                                         const obj = item[0];
-    
                                         if(obj.sub_folder_name_first && obj.sub_folder_name_second) {
-                                            deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                            try {
+                                                await deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${lead_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                            } catch (error) {
+                                                console.error(`Failed to delete S3 folder for lead ${lead_id}:`, error);
+                                                // Continue with other deletions even if one fails
+                                            }
                                         }
-                                    })
+                                    }
     
                                     const deletedFolder = await archiveModel.deleteOne(
                                         {
@@ -384,14 +430,18 @@ export const deletearchive = async (req, res) => {
                                     },
                                 );
 
-                                filesData.files.map(async (item) => {
-
+                                // Delete S3 folders for all nested folders
+                                for (const item of filesData.files) {
                                     const obj = item[0];
-
                                     if(obj.sub_folder_name_first && obj.sub_folder_name_second) {
-                                        deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${project_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        try {
+                                            await deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${project_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        } catch (error) {
+                                            console.error(`Failed to delete S3 folder for project ${project_id}:`, error);
+                                            // Continue with other deletions even if one fails
+                                        }
                                     }
-                                })
+                                }
 
                                 const deletedFolder = await archiveModel.deleteOne(
                                     {
@@ -428,14 +478,18 @@ export const deletearchive = async (req, res) => {
                                     },
                                 );
 
-                                filesData.files.map(async (item) => {
-
+                                // Delete S3 folders for all nested folders
+                                for (const item of filesData.files) {
                                     const obj = item[0];
-
                                     if(obj.sub_folder_name_first && obj.sub_folder_name_second) {
-                                        deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${project_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        try {
+                                            await deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${project_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                        } catch (error) {
+                                            console.error(`Failed to delete S3 folder for project ${project_id}:`, error);
+                                            // Continue with other deletions even if one fails
+                                        }
                                     }
-                                })
+                                }
 
                                 const deletedFolder = await archiveModel.deleteOne(
                                     {
@@ -474,14 +528,18 @@ export const deletearchive = async (req, res) => {
                                         },
                                     );
     
-                                    filesData.files.map(async (item) => {
-    
+                                    // Delete S3 folders for all nested folders
+                                    for (const item of filesData.files) {
                                         const obj = item[0];
-    
                                         if(obj.sub_folder_name_first && obj.sub_folder_name_second) {
-                                            deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${project_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                            try {
+                                                await deleteFolder(process.env.S3_BUCKET_NAME, `${org_id}/${project_id}/Drawing/${folder_name}/${sub_folder_name_first}/${sub_folder_name_second}`);
+                                            } catch (error) {
+                                                console.error(`Failed to delete S3 folder for project ${project_id}:`, error);
+                                                // Continue with other deletions even if one fails
+                                            }
                                         }
-                                    })
+                                    }
     
                                     const deletedFolder = await archiveModel.deleteOne(
                                         {
@@ -572,7 +630,13 @@ export const deletearchive = async (req, res) => {
 
                         );
 
-                        deleteFolder(process.env.S3_BUCKET_NAME, `template/${filesData.folder_name}/${filesData.sub_folder_name_first}/${filesData.sub_folder_name_second}`);
+                        try {
+                            await deleteFolder(process.env.S3_BUCKET_NAME, `template/${filesData.folder_name}/${filesData.sub_folder_name_first}/${filesData.sub_folder_name_second}`);
+                        } catch (error) {
+                            console.error(`Failed to delete S3 template folder:`, error);
+                            // Continue with database deletion even if S3 deletion fails
+                        }
+
                         data = await archiveModel.findOneAndDelete(
                             {
                                 $and: [
@@ -651,7 +715,13 @@ export const deletearchive = async (req, res) => {
                             if (!project_id) {
                                 folderName = lead_id
                             }
-                            deleteFolder(process.env.S3_BUCKET_NAME, `${folderName}/${filesData.files[0].folder_name}/`);
+                            try {
+                                await deleteFolder(process.env.S3_BUCKET_NAME, `${folderName}/${filesData.files[0].folder_name}/`);
+                            } catch (error) {
+                                console.error(`Failed to delete S3 folder for ${folderName}:`, error);
+                                // Continue with database deletion even if S3 deletion fails
+                            }
+
                             data = await archiveModel.findOneAndDelete(
                                 {
                                     $or: [
@@ -745,7 +815,13 @@ async function deleteOldFiles() {
                     );
                 }
                 if (find_data[i].deleted_type === 'folder') {
-                    deleteFolder(process.env.S3_BUCKET_NAME, `template/${find_data[i].folder_name}/${find_data[i].sub_folder_name_first}/${find_data[i].sub_folder_name_second}`);
+                    try {
+                        await deleteFolder(process.env.S3_BUCKET_NAME, `template/${find_data[i].folder_name}/${find_data[i].sub_folder_name_first}/${find_data[i].sub_folder_name_second}`);
+                    } catch (error) {
+                        console.error(`Failed to delete S3 template folder in cron job:`, error);
+                        // Continue with database deletion even if S3 deletion fails
+                    }
+
                     data = await archiveModel.findOneAndDelete(
                         {
                             $and: [
@@ -788,7 +864,13 @@ async function deleteOldFiles() {
                         if (!find_data[i].project_id) {
                             folderName = find_data[i].lead_id
                         }
-                        deleteFolder(process.env.S3_BUCKET_NAME, `${folderName}/${find_data[i].files[0].folder_name}/`);
+                        try {
+                            await deleteFolder(process.env.S3_BUCKET_NAME, `${folderName}/${find_data[i].files[0].folder_name}/`);
+                        } catch (error) {
+                            console.error(`Failed to delete S3 folder in cron job for ${folderName}:`, error);
+                            // Continue with database deletion even if S3 deletion fails
+                        }
+
                         data = await archiveModel.findOneAndDelete(
                             {
                                 $or: [
