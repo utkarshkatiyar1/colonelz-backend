@@ -55,6 +55,12 @@ const projectSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
+  status: {
+    type: String,
+    required: true,
+    default: "Active",
+    enum: ["Active", "Inactive"]
+  },
   project_start_date: {
     type: Date,
     require: true,
