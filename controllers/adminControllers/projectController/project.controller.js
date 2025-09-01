@@ -815,35 +815,44 @@ export const deleteInactiveProject = async (req, res) => {
 
 export const reactivateProject = async (req, res) => {
   try {
+    console.log("Reactivate project request received:", req.body);
     const user = req.user;
     const { project_id, org_id, content = '' } = req.body;
     const update = new Date();
 
     // Validate user and required fields
     if (!user) {
+      console.log("User validation failed");
       return responseData(res, "", 403, false, "User not found.");
     }
 
     if (!project_id) {
+      console.log("Project ID validation failed");
       return responseData(res, "", 400, false, "project_id is required.");
     }
 
     if (!org_id) {
+      console.log("Org ID validation failed");
       return responseData(res, "", 400, false, "org_id is required.");
     }
 
+    console.log("Checking organization:", org_id);
     // Check organization exists
     const check_org = await orgModel.findOne({ _id: org_id });
     if (!check_org) {
+      console.log("Organization not found");
       return responseData(res, "", 404, false, "Organization not found");
     }
 
+    console.log("Checking user in organization:", user._id, org_id);
     // Check user exists in organization
-    const check_user = await userModel.findOne({ _id: user._id, org_id: org_id });
+    const check_user = await registerModel.findOne({ _id: user._id, organization: org_id });
     if (!check_user) {
+      console.log("User not found in organization");
       return responseData(res, "", 404, false, "User not found in organization");
     }
 
+    console.log("Checking for inactive project:", project_id);
     // Check for the project and ensure it's inactive
     const find_project = await projectModel.findOne({
       project_id: project_id,
@@ -852,9 +861,11 @@ export const reactivateProject = async (req, res) => {
     });
 
     if (!find_project) {
+      console.log("Inactive project not found");
       return responseData(res, "", 404, false, "Inactive project not found.");
     }
 
+    console.log("Project found, updating status to Active");
     const formatedDate = formatDate(update);
     const newDate = new Date();
 
@@ -881,6 +892,7 @@ export const reactivateProject = async (req, res) => {
       }
     );
 
+    console.log("Project status updated, creating timeline entry");
     // Create timeline entry
     const projectUpdate = {
       username: check_user.username,
@@ -891,8 +903,15 @@ export const reactivateProject = async (req, res) => {
       type: 'project reactivation'
     };
 
-    await createOrUpdateTimeline('', project_id, org_id, {}, projectUpdate, res);
+    try {
+      await createOrUpdateTimeline('', project_id, org_id, {}, projectUpdate, res);
+      console.log("Timeline entry created successfully");
+    } catch (timelineError) {
+      console.error("Timeline creation failed:", timelineError);
+      // Continue with the process even if timeline fails
+    }
 
+    console.log("Creating notification");
     // Create notification
     const newNotification = new notificationModel({
       type: "project",
@@ -904,10 +923,11 @@ export const reactivateProject = async (req, res) => {
     });
     await newNotification.save();
 
+    console.log("Reactivation completed successfully");
     responseData(res, "Project reactivated successfully", 200, true, "", []);
 
   } catch (err) {
-    console.error(err);
+    console.error("Reactivation error:", err);
     return responseData(res, "", 500, false, "Something went wrong", err);
   }
 };

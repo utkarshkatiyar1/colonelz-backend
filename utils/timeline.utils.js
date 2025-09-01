@@ -146,8 +146,8 @@ export const createOrUpdateTimeline = async (leadId, projectId, org_id, leadUpda
     //   await timeline.save();
       
     } catch (error) {
-      console.log("createor update error", error)
-      throw new Error("Internal server Error", error);
-
+      console.log("createOrUpdateTimeline error:", error);
+      // Don't throw error, just log it to prevent breaking the main flow
+      console.error("Timeline creation failed but continuing with main operation");
     }
   };
