@@ -15,8 +15,17 @@ class GoogleSheetsService {
 
     async initializeAuth() {
         try {
-            let credentials;
             const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+            
+            if (!serviceAccountKey) {
+                throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+            }
+
+            if (!this.spreadsheetId) {
+                throw new Error('GOOGLE_SHEETS_ID environment variable is not set');
+            }
+
+            let credentials;
 
             // Check if it's a file path or inline JSON
             if (serviceAccountKey.startsWith('./') || serviceAccountKey.startsWith('/') || serviceAccountKey.includes('.json')) {
@@ -28,17 +37,29 @@ class GoogleSheetsService {
                     throw new Error(`Google Service Account file not found: ${credentialsPath}`);
                 }
 
-                const credentialsFile = fs.readFileSync(credentialsPath, 'utf8');
-                credentials = JSON.parse(credentialsFile);
+                try {
+                    const credentialsFile = fs.readFileSync(credentialsPath, 'utf8');
+                    credentials = JSON.parse(credentialsFile);
+                } catch (parseError) {
+                    throw new Error(`Failed to parse Google Service Account file: ${parseError.message}`);
+                }
             } else {
                 // It's inline JSON - parse directly
                 console.log('Using inline Google Service Account credentials');
-                credentials = JSON.parse(serviceAccountKey);
+                try {
+                    credentials = JSON.parse(serviceAccountKey);
+                } catch (parseError) {
+                    throw new Error(`Failed to parse inline Google Service Account credentials: ${parseError.message}`);
+                }
             }
 
             // Validate required fields
             if (!credentials.client_email || !credentials.private_key) {
                 throw new Error('Invalid Google Service Account credentials: missing client_email or private_key');
+            }
+
+            if (!credentials.project_id) {
+                throw new Error('Invalid Google Service Account credentials: missing project_id');
             }
 
             console.log('Initializing Google Sheets API with service account:', credentials.client_email);
@@ -49,10 +70,38 @@ class GoogleSheetsService {
             });
 
             this.sheets = google.sheets({ version: 'v4', auth: this.auth });
+            
+            // Test the connection
+            await this.testConnection();
+            
             console.log('Google Sheets API initialized successfully');
         } catch (error) {
             console.error('Error initializing Google Sheets auth:', error);
+            this.auth = null;
+            this.sheets = null;
             throw error;
+        }
+    }
+
+    /**
+     * Test the Google Sheets connection
+     */
+    async testConnection() {
+        try {
+            if (!this.sheets) {
+                throw new Error('Google Sheets API not initialized');
+            }
+            
+            // Try to get spreadsheet metadata to test connection
+            await this.sheets.spreadsheets.get({
+                spreadsheetId: this.spreadsheetId,
+                fields: 'properties.title'
+            });
+            
+            console.log('Google Sheets connection test successful');
+        } catch (error) {
+            console.error('Google Sheets connection test failed:', error);
+            throw new Error(`Google Sheets connection failed: ${error.message}`);
         }
     }
 
@@ -61,9 +110,22 @@ class GoogleSheetsService {
      */
     async getSheetTabs() {
         try {
+            // Ensure Google Sheets is initialized
+            if (!this.sheets) {
+                await this.initializeAuth();
+            }
+
+            if (!this.sheets) {
+                throw new Error('Google Sheets API is not properly initialized');
+            }
+
             const response = await this.sheets.spreadsheets.get({
                 spreadsheetId: this.spreadsheetId,
             });
+
+            if (!response.data || !response.data.sheets) {
+                throw new Error('Invalid response from Google Sheets API');
+            }
 
             return response.data.sheets.map(sheet => ({
                 title: sheet.properties.title,
@@ -71,6 +133,12 @@ class GoogleSheetsService {
             }));
         } catch (error) {
             console.error('Error getting sheet tabs:', error);
+            if (error.code === 404) {
+                throw new Error('Spreadsheet not found. Please check the GOOGLE_SHEETS_ID.');
+            }
+            if (error.code === 403) {
+                throw new Error('Access denied. Please check Google Sheets permissions.');
+            }
             throw error;
         }
     }
@@ -80,8 +148,34 @@ class GoogleSheetsService {
      */
     async createDateSheet(date, teamMembers) {
         try {
+            // Ensure Google Sheets is initialized
+            if (!this.sheets) {
+                await this.initializeAuth();
+            }
+
+            if (!this.sheets) {
+                throw new Error('Google Sheets API is not properly initialized');
+            }
+
+            // Validate inputs
+            if (!date) {
+                throw new Error('Date is required');
+            }
+
+            if (!teamMembers || !Array.isArray(teamMembers) || teamMembers.length === 0) {
+                throw new Error('Team members array is required and must not be empty');
+            }
+
+            console.log(`Creating date sheet for ${date} with team members:`, teamMembers);
+
             // Check if sheet already exists
-            const existingSheets = await this.getSheetTabs();
+            let existingSheets;
+            try {
+                existingSheets = await this.getSheetTabs();
+            } catch (error) {
+                throw new Error(`Failed to check existing sheets: ${error.message}`);
+            }
+            
             const sheetExists = existingSheets.some(sheet => sheet.title === date);
             
             if (sheetExists) {
@@ -106,10 +200,20 @@ class GoogleSheetsService {
                 },
             };
 
-            await this.sheets.spreadsheets.batchUpdate(addSheetRequest);
+            try {
+                await this.sheets.spreadsheets.batchUpdate(addSheetRequest);
+                console.log(`Sheet tab created for ${date}`);
+            } catch (error) {
+                throw new Error(`Failed to create sheet tab: ${error.message}`);
+            }
 
             // Initialize the sheet with headers and time slots
-            await this.initializeSheetStructure(date, teamMembers);
+            try {
+                await this.initializeSheetStructure(date, teamMembers);
+                console.log(`Sheet structure initialized for ${date}`);
+            } catch (error) {
+                throw new Error(`Failed to initialize sheet structure: ${error.message}`);
+            }
 
             return { success: true, message: `Sheet for ${date} created successfully` };
         } catch (error) {
