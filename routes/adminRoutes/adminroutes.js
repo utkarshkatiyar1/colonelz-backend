@@ -3747,4 +3747,31 @@ router.route("/daily-lineup/sheet").post(verifyJWT, createDailyLineUpSheetAccess
 router.route("/daily-lineup/sheet/:date").delete(verifyJWT, createDailyLineUpSheetAccess, deleteDateSheet);
 router.route("/daily-lineup/team-members").get(verifyJWT, readDailyLineUpAccess, getTeamMembers);
 
+// Test endpoint for debugging Google Sheets connection
+router.route("/daily-lineup/test-connection").get(verifyJWT, async (req, res) => {
+    try {
+        const { responseData } = await import("../../../utils/respounse.js");
+        const googleSheetsService = (await import("../../../utils/googleSheets.service.js")).default;
+        
+        // Test the connection
+        await googleSheetsService.testConnection();
+        const sheets = await googleSheetsService.getSheetTabs();
+        
+        return responseData(res, { 
+            connected: true, 
+            spreadsheetId: process.env.GOOGLE_SHEETS_ID,
+            sheetsCount: sheets.length,
+            sheets: sheets.map(s => s.title)
+        }, 200, true, "Google Sheets connection successful");
+    } catch (error) {
+        const { responseData } = await import("../../../utils/respounse.js");
+        console.error("Google Sheets connection test failed:", error);
+        return responseData(res, { 
+            connected: false, 
+            error: error.message,
+            spreadsheetId: process.env.GOOGLE_SHEETS_ID
+        }, 500, false, "Google Sheets connection failed");
+    }
+});
+
 export default router;
