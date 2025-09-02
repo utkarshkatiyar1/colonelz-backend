@@ -152,10 +152,10 @@ export const deleteLeadAccess = async (req, res, next) => {
         if (user.role === 'SUPERADMIN') {
             next();
         }
-        // Check if the user has access to create a lead
+        // Check if the user has access to delete a lead
 
         else if (!user.access?.lead?.includes('delete')) {
-            return responseData(res, "", 403, false, "Forbidden: You do not have access to update leads");
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete leads");
         }
         else {
             next();
@@ -164,6 +164,46 @@ export const deleteLeadAccess = async (req, res, next) => {
 
     } catch (err) {
         return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const deleteProjectAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to delete a project
+
+        else if (!user.access?.project?.includes('delete')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete projects");
+        }
+        else {
+            next();
+        }
+
+    } catch (error) {
+        return responseData(res, "", 500, false, "Internal Server Error");
     }
 };
 
@@ -289,46 +329,7 @@ export const updateProjectAccess = async (req, res, next) => {
         return responseData(res, "", 403, false, "Unauthorized: Invalid token");
     }
 };
-export const deleteProjectAccess = async (req, res, next) => {
-    try {
-        const token = req.cookies?.auth ||
-            req.header("Authorization")?.replace("Bearer", "").trim();
 
-        if (!token) {
-            return responseData(
-                res,
-                "",
-                403,
-                false,
-                "Unauthorized: No token provided"
-            );
-        }
-
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-        const user = await registerModel.findById(decodedToken?.id);
-
-        if (!user) {
-            return responseData(res, "", 403, false, "Unauthorized: User not found");
-        }
-
-        if (user.role === 'SUPERADMIN') {
-            next();
-        }
-        // Check if the user has access to create a lead
-
-        else if (!user.access?.project?.includes('delete')) {
-            return responseData(res, "", 403, false, "Forbidden: You do not have access to delete project");
-        }
-        else {
-            next();
-        }
-
-
-    } catch (err) {
-        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
-    }
-};
 
 //   MOM Access
 
