@@ -10,7 +10,11 @@ class GoogleSheetsService {
         this.auth = null;
         this.sheets = null;
         this.spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-        this.initializeAuth();
+        this.initialized = false;
+        this.initializeAuth().catch(error => {
+            console.error('Google Sheets initialization failed:', error.message);
+            this.initialized = false;
+        });
     }
 
     async initializeAuth() {
@@ -74,11 +78,13 @@ class GoogleSheetsService {
             // Test the connection
             await this.testConnection();
             
+            this.initialized = true;
             console.log('Google Sheets API initialized successfully');
         } catch (error) {
             console.error('Error initializing Google Sheets auth:', error);
             this.auth = null;
             this.sheets = null;
+            this.initialized = false;
             throw error;
         }
     }
@@ -88,7 +94,7 @@ class GoogleSheetsService {
      */
     async testConnection() {
         try {
-            if (!this.sheets) {
+            if (!this.initialized || !this.sheets) {
                 throw new Error('Google Sheets API not initialized');
             }
             
