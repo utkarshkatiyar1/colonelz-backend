@@ -18,7 +18,11 @@ let usingMockService = false;
         sheetsService = mockGoogleSheetsService;
         usingMockService = true;
     }
-})();
+})().catch(error => {
+    console.warn('Failed to initialize sheets service, using mock:', error.message);
+    sheetsService = mockGoogleSheetsService;
+    usingMockService = true;
+});
 
 /**
  * Helper function to get user from JWT token
