@@ -76,6 +76,8 @@ import { createLeadMiniTask, deleteLeadMiniTask, getAllLeadMiniTask, getSingleLe
 import { createMiniTask, deleteMiniTask, getAllMiniTask, getSingleMiniTask, updateMiniTask } from "../../controllers/adminControllers/taskControllers/minitask.controller.js";
 import { deleteProjectExecutionTask, deleteProjectExecutionTaskDetails, downloadExecutionChart, getProjectExecutionTask, projectExecutionTask, updateProjectExecutionTask, updateProjectExecutionTaskDetails } from "../../controllers/adminControllers/project_execution_timeline/project_execution_task.js";
 import { createProjectExecutionSubtask, deleteProjectExecutionSubtask, deleteProjectExecutionSubtaskDetails, getProjectExecutionSubtaskAffections, updateProjectExecutionSubtask, updateProjectExecutionSubtaskDetails } from "../../controllers/adminControllers/project_execution_timeline/project_execution_subtask.js";
+import { getDateSheets, getSheetData, updateCell, batchUpdateCells, createDateSheet, deleteDateSheet, getTeamMembers } from "../../controllers/adminControllers/dailyLineUpControllers/dailyLineUp.controller.js";
+import { readDailyLineUpAccess, updateDailyLineUpAccess, createDailyLineUpSheetAccess } from "../../middlewares/access.middlewares.js";
 
 // router.use(checkAvailableUserIsAdmin)
 
@@ -3736,5 +3738,13 @@ router.route("/get/project/execution/subtask/affections").get(verifyJWT, getProj
 
 
 
+// Daily LineUp Routes
+router.route("/daily-lineup/sheets").get(verifyJWT, readDailyLineUpAccess, getDateSheets);
+router.route("/daily-lineup/sheet/:date").get(verifyJWT, readDailyLineUpAccess, getSheetData);
+router.route("/daily-lineup/sheet/:date/cell").put(verifyJWT, updateDailyLineUpAccess, updateCell);
+router.route("/daily-lineup/sheet/:date/batch").put(verifyJWT, updateDailyLineUpAccess, batchUpdateCells);
+router.route("/daily-lineup/sheet").post(verifyJWT, createDailyLineUpSheetAccess, createDateSheet);
+router.route("/daily-lineup/sheet/:date").delete(verifyJWT, createDailyLineUpSheetAccess, deleteDateSheet);
+router.route("/daily-lineup/team-members").get(verifyJWT, readDailyLineUpAccess, getTeamMembers);
 
 export default router;
