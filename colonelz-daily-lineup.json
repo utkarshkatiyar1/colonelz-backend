@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "colonelz-daily-lineup",
+  "private_key_id": "b975fb52b34eb79c3f5b8892f054573ce2078473",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDvUrAvRQ01aUUZ\nHAdPazPZYXxXqW/omoevSTrTRaEQzRX1Am/ByyP8M5yisvzb1T92FhXu3UnP7h2J\n6rABhlakSjTBRfgJc81R1xcnDKd+PTt8QtfGUVfSyuRphiVzeUtn6Iy2icaESGXT\nf6jOjS9RtCtES8qoT/1dsj5b1mh2hU8uXupuP9rsyFEuPOrKbXX0xWv+TQ3IGKOV\n3OOmS4WFssrIP2hpPwoMJCuOeIGsbU8QQoEsbNSTC1TVTB3Zpt1tHfp5HQ852kiS\na3USrH0+wWTtgcYfLX/tp7S+XvqRlznA7BQXrQHZfTkkan/mgDcohK27nzjEg5u/\nioZxtEGDAgMBAAECggEABUAlVmbSQzLj4wj5jhVWMLWR/U2zLgFp6v9qd3p7w1Bv\nOWNhdqPReSCGwLkNkXh3E8z96TIuAuOrU+ceumyAl8p6/XyJVGfCgEJS+IvaBuEq\ns29h/YYJAmUU0s3bIift7sHW3dBdrHGhg5zgOWaL5w59XoUNKq5/6rTU573nUnul\nDpg8yqvZvcIdAU+qDcz8zdITP7UXku4y5WsBTlVsdiYS4/XHm9Et5RDZb/Qly4Ze\niDjBTHa4ryD5i7fwpyBs0oat6dXEhsksZBr1bMnlcTeTASuBSfMz174+skX3+SrL\nuwhpXOOPaWtZqO7jQiyvvD1LpcF5+F3YljS8pnnW2QKBgQD8jC07/smg3K3hI7ZM\nAkNCL5qmjQ9fT3sAQilUYRAcKYXr552x0dIntBcvAcx2IF50Lh1H4SjVmKfkemys\nJhsU34msbaecZb7FbK0YmVdB9E1m0EUVk15xY8upt/zXS6/VAmzKhz+XMMoFppTC\nlDZE4p1FheJULEKKxqkSBhMkuQKBgQDymDr9WwVFvDXW59YNeSKHEgPqTozkNQ7n\n6cCL+cJY6Fmr+uSOoffAcSQw9ayYJI34L3SChVWn0lv1paePirNJ+KTQhR7p0Bh0\nOyLGCmmi1XliMRZjMXtaVheM/rpJLDAN6wNTqMYmBqlVzcxycTCIFP7H5nxID6qg\nQpBKoX1yGwKBgQDWBSk0ZbiTZVDJsg0EHwrGpTcHHBXB7MZNMsR5qIQRibLfd3px\nPmI9mWXoRTrzhHznMklIJ+0GDoeBnapIvUZICyROBuN7K9Je1rleVlzXHOUXUzqo\njSoFJ9BptO1FuvN4rcRqYfGm/AbIgSIiP546BF3JlCt4r8V4e+C90H4aqQKBgGBZ\nn8wyU2S//K4vA+/z9Yep2w47Rm/4tsPbLhMqDktbdQn+KrqPj6PKC/K6EGOY2R4C\nUwbnx/5QaR+mPGehUdYGQAdlZ8K7WIsJVaVMS2pV2NDr6BVbeL+HQ/FG1lvrheZx\nObAHbzN5H9YpV5L4a6sQk6R3YVMJjd36se5CN12TAoGAeW7nLA6wm9Nu3xb7hxTf\ndvpNj54lxJGYO5JbNJEuEhIYkJkv1+5Nw9u9UWKlLW2ukghLO2hjMQTyurEe7+Ls\nx4ueL7nWCuK8tQe/LlkY8ZoyNMMa+kA0MnnhNmQ/bzV32PRrXJXYQNCfm8g/Ldjc\nQD6/DK3deDmE9WLuwP0Q7I0=\n-----END PRIVATE KEY-----\n",
+  "client_email": "colonelz@colonelz-daily-lineup.iam.gserviceaccount.com",
+  "client_id": "116955552883397147362",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/colonelz%40colonelz-daily-lineup.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

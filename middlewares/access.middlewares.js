@@ -2367,6 +2367,119 @@ export const deletedFilecompanyDataAccess = async (req, res, next) => {
     }
 };
 
+// Daily LineUp Access
+
+export const readDailyLineUpAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to read daily lineup
+        else if (!user.access?.dailyLineUp?.includes('read')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to view Daily LineUp");
+        }
+        else {
+            next();
+        }
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const updateDailyLineUpAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        // Check if the user has access to update daily lineup
+        else if (!user.access?.dailyLineUp?.includes('update')) {
+            return responseData(res, "", 403, false, "Forbidden: You do not have access to update Daily LineUp");
+        }
+        else {
+            next();
+        }
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
+export const createDailyLineUpSheetAccess = async (req, res, next) => {
+    try {
+        const token = req.cookies?.auth ||
+            req.header("Authorization")?.replace("Bearer", "").trim();
+
+        if (!token) {
+            return responseData(
+                res,
+                "",
+                403,
+                false,
+                "Unauthorized: No token provided"
+            );
+        }
+
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const user = await registerModel.findById(decodedToken?.id);
+
+        if (!user) {
+            return responseData(res, "", 403, false, "Unauthorized: User not found");
+        }
+
+        // Only SUPERADMIN can create new date sheets
+        if (user.role === 'SUPERADMIN') {
+            next();
+        }
+        else {
+            return responseData(res, "", 403, false, "Forbidden: Only Superadmins can create new date sheets");
+        }
+
+    } catch (err) {
+        return responseData(res, "", 403, false, "Unauthorized: Invalid token");
+    }
+};
+
 
 
 
