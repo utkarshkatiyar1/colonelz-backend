@@ -1,6 +1,26 @@
 import { responseData } from "../../../utils/respounse.js";
 import googleSheetsService from "../../../utils/googleSheets.service.js";
 import registerModel from "../../../models/usersModels/register.model.js";
+import jwt from "jsonwebtoken";
+
+/**
+ * Helper function to get user from JWT token
+ */
+const getUserFromToken = async (req) => {
+    const token = req.cookies?.auth || req.header("Authorization")?.replace("Bearer", "").trim();
+    if (!token) {
+        throw new Error("No token provided");
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const user = await registerModel.findById(decodedToken?.id);
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    return user;
+};
 
 /**
  * Get all available date sheets
@@ -50,11 +70,12 @@ export const updateCell = async (req, res) => {
     try {
         const { date } = req.params;
         const { row, column, value } = req.body;
-        const user = req.user;
 
         if (!date || row === undefined || column === undefined || value === undefined) {
             return responseData(res, "", 400, false, "Date, row, column, and value are required");
         }
+
+        const user = await getUserFromToken(req);
 
         // Get sheet data to check column headers for permission validation
         const sheetData = await googleSheetsService.getSheetData(date);
@@ -89,11 +110,12 @@ export const batchUpdateCells = async (req, res) => {
     try {
         const { date } = req.params;
         const { updates } = req.body;
-        const user = req.user;
 
         if (!date || !updates || !Array.isArray(updates)) {
             return responseData(res, "", 400, false, "Date and updates array are required");
         }
+
+        const user = await getUserFromToken(req);
 
         // Get sheet data to check column headers for permission validation
         const sheetData = await googleSheetsService.getSheetData(date);
@@ -128,11 +150,12 @@ export const batchUpdateCells = async (req, res) => {
 export const createDateSheet = async (req, res) => {
     try {
         const { date } = req.body;
-        const user = req.user;
 
         if (!date) {
             return responseData(res, "", 400, false, "Date is required");
         }
+
+        const user = await getUserFromToken(req);
 
         // Validate date format (YYYY-MM-DD)
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -201,9 +224,9 @@ export const deleteDateSheet = async (req, res) => {
  */
 export const getTeamMembers = async (req, res) => {
     try {
-        const user = req.user;
+        const user = await getUserFromToken(req);
         const teamMembers = await getTeamMembersFromOrg(user.organization);
-        
+
         return responseData(res, teamMembers, 200, true, "Team members retrieved successfully");
     } catch (error) {
         console.error("Error getting team members:", error);
